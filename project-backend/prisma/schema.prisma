@@ -1,0 +1,221 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model addresses {
+  id              Int            @id @default(autoincrement())
+  province_id     Int?
+  district_id     Int?
+  sub_district_id Int?
+  zip_code_id     Int?
+  detail          String?        @db.VarChar(255)
+  districts       districts?     @relation(fields: [district_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  provinces       provinces?     @relation(fields: [province_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sub_districts   sub_districts? @relation(fields: [sub_district_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  zip_codes       zip_codes?     @relation(fields: [zip_code_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users           users[]
+}
+
+model answers {
+  id          Int        @id @default(autoincrement())
+  response_id Int?
+  question_id Int?
+  choice_id   Int?
+  choices     choices?   @relation(fields: [choice_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  questions   questions? @relation(fields: [question_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  responses   responses? @relation(fields: [response_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model appointments {
+  id                                 Int       @id @default(autoincrement())
+  user_id                            Int?
+  staff_id                           Int?
+  appointment_type                   String?   @db.VarChar(20)
+  appointment_date                   DateTime? @db.Date
+  status                             String?   @db.VarChar(20)
+  time_select                        String?   @db.VarChar(255)
+  slip_file                          String?   @db.VarChar(255)
+  users_appointments_staff_idTousers users?    @relation("appointments_staff_idTousers", fields: [staff_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users_appointments_user_idTousers  users?    @relation("appointments_user_idTousers", fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model choices {
+  id          Int        @id @default(autoincrement())
+  question_id Int?
+  choice_text String?    @db.VarChar(255)
+  weight      Int?
+  answers     answers[]
+  questions   questions? @relation(fields: [question_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model consultations {
+  id                                       Int                  @id @default(autoincrement())
+  user_id                                  Int?
+  staff_id                                 Int?
+  pharmacist_id                            Int?
+  note                                     String?
+  created_at                               DateTime?            @default(now()) @db.Timestamp(6)
+  status                                   String?              @db.VarChar(20)
+  tracking                                 String?              @db.VarChar(255)
+  users_consultations_pharmacist_idTousers users?               @relation("consultations_pharmacist_idTousers", fields: [pharmacist_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users_consultations_staff_idTousers      users?               @relation("consultations_staff_idTousers", fields: [staff_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users_consultations_user_idTousers       users?               @relation("consultations_user_idTousers", fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  prescription_items                       prescription_items[]
+  receipts                                 receipts[]
+}
+
+model districts {
+  id            Int             @id @default(autoincrement())
+  name          String?         @db.VarChar(255)
+  province_id   Int?
+  addresses     addresses[]
+  provinces     provinces?      @relation(fields: [province_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sub_districts sub_districts[]
+}
+
+model fees {
+  id              Int       @id @default(autoincrement())
+  price_per_hours Float?
+  created_at      DateTime? @db.Date
+}
+
+model medications {
+  id                 Int                  @id @default(autoincrement())
+  name               String               @db.VarChar(255)
+  retail             Float?
+  price              Float?
+  prescription_items prescription_items[]
+  receipt_details    receipt_details[]
+}
+
+model prescription_items {
+  id              Int            @id @default(autoincrement())
+  consultation_id Int?
+  medication_id   Int?
+  comment         String?        @db.VarChar(100)
+  quantity        Int?
+  consultations   consultations? @relation(fields: [consultation_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  medications     medications?   @relation(fields: [medication_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model provinces {
+  id        Int         @id @default(autoincrement())
+  name      String?     @db.VarChar(255)
+  addresses addresses[]
+  districts districts[]
+}
+
+model questionnaires {
+  id         Int         @id @default(autoincrement())
+  title      String?     @db.VarChar(255)
+  status     String?     @db.VarChar(20)
+  created_at DateTime?   @default(now()) @db.Timestamp(6)
+  questions  questions[]
+  responses  responses[]
+}
+
+model questions {
+  id               Int             @id @default(autoincrement())
+  questionnaire_id Int?
+  question_text    String?         @db.VarChar(255)
+  answers          answers[]
+  choices          choices[]
+  questionnaires   questionnaires? @relation(fields: [questionnaire_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model receipt_details {
+  id             Int          @id @default(autoincrement())
+  receipt_id     Int?
+  medication_id  Int?
+  medicine_price Float?
+  medications    medications? @relation(fields: [medication_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  receipts       receipts?    @relation(fields: [receipt_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model receipts {
+  id              Int               @id @default(autoincrement())
+  consultation_id Int?
+  user_id         Int?
+  consult_fee     Float?
+  medicine_total  Float?
+  created_at      DateTime?         @default(now()) @db.Timestamp(6)
+  receipt_details receipt_details[]
+  consultations   consultations?    @relation(fields: [consultation_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users           users?            @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model responses {
+  id               Int             @id @default(autoincrement())
+  questionnaire_id Int?
+  user_id          Int?
+  submitted_at     DateTime?       @db.Date
+  answers          answers[]
+  questionnaires   questionnaires? @relation(fields: [questionnaire_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users            users?          @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model roles {
+  id     Int     @id @default(autoincrement())
+  name   String? @db.VarChar(255)
+  fee_id Int?
+  users  users[]
+}
+
+model sub_districts {
+  id          Int         @id @default(autoincrement())
+  name        String?     @db.VarChar(255)
+  district_id Int?
+  addresses   addresses[]
+  districts   districts?  @relation(fields: [district_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  zip_codes   zip_codes[]
+}
+
+model time_slots {
+  id         Int    @id @default(autoincrement())
+  time_label String @db.VarChar(255)
+}
+
+model users {
+  id                                               Int             @id @default(autoincrement())
+  created_by                                       Int?
+  role_id                                          Int?
+  email                                            String?         @unique @db.VarChar(255)
+  name                                             String          @db.VarChar(255)
+  sur_name                                         String          @db.VarChar(255)
+  phone                                            String?         @db.VarChar(20)
+  nation_id                                        String?         @db.VarChar(255)
+  address_id                                       Int?
+  medical_condition                                String?         @db.VarChar(255)
+  allergy_drug                                     String?         @db.VarChar(255)
+  password_hash                                    String?         @db.VarChar(255)
+  created_at                                       DateTime?       @default(now()) @db.Timestamp(6)
+  file_name                                        String?         @db.VarChar(255)
+  info                                             String?         @db.VarChar(255)
+  degree                                           String?         @db.VarChar(255)
+  license                                          String?         @db.VarChar(255)
+  appointments_appointments_staff_idTousers        appointments[]  @relation("appointments_staff_idTousers")
+  appointments_appointments_user_idTousers         appointments[]  @relation("appointments_user_idTousers")
+  consultations_consultations_pharmacist_idTousers consultations[] @relation("consultations_pharmacist_idTousers")
+  consultations_consultations_staff_idTousers      consultations[] @relation("consultations_staff_idTousers")
+  consultations_consultations_user_idTousers       consultations[] @relation("consultations_user_idTousers")
+  receipts                                         receipts[]
+  responses                                        responses[]
+  addresses                                        addresses?      @relation(fields: [address_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users                                            users?          @relation("usersTousers", fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_users                                      users[]         @relation("usersTousers")
+  roles                                            roles?          @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model zip_codes {
+  id              Int            @id @default(autoincrement())
+  code            String?        @db.VarChar(20)
+  sub_district_id Int?
+  addresses       addresses[]
+  sub_districts   sub_districts? @relation(fields: [sub_district_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
