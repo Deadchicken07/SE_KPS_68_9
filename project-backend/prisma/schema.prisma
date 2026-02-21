@@ -2,7 +2,6 @@ generator client {
   provider = "prisma-client-js"
 }
 
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -206,6 +205,7 @@ model users {
   consultations_consultations_user_idTousers       consultations[] @relation("consultations_user_idTousers")
   receipts                                         receipts[]
   responses                                        responses[]
+  schedule                                         schedule[]
   addresses                                        addresses?      @relation(fields: [address_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users                                            users?          @relation("usersTousers", fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
   other_users                                      users[]         @relation("usersTousers")
@@ -218,4 +218,21 @@ model zip_codes {
   sub_district_id Int?
   addresses       addresses[]
   sub_districts   sub_districts? @relation(fields: [sub_district_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model schedule {
+  id         Int              @id @default(autoincrement())
+  staff_id   Int
+  work_date  DateTime         @db.Date
+  status     schedule_status? @default(working)
+  note       String?          @db.VarChar(255)
+  created_at DateTime?        @default(now()) @db.Timestamp(6)
+  users      users            @relation(fields: [staff_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([staff_id, work_date])
+}
+
+enum schedule_status {
+  working
+  leave
 }
