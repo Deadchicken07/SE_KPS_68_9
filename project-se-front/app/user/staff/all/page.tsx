@@ -1,4 +1,4 @@
-import React from 'react';
+'use client';
 import { Typography, Avatar, Row, Col, Space } from 'antd';
 
 const { Title, Text } = Typography;
@@ -9,21 +9,21 @@ const psychiatrists = [
         name: 'รศ.พญ.สมชาย ใจดี',
         role: 'จิตแพทย์',
         specialty: 'จิตเวชเด็กและวัยรุ่น',
-        image: 'public/docterProfile/docter1.png'
+        image: '/docterProfile/docter1.png'
     },
     {
         id: 2,
         name: 'พญ.สมหยิง สนิมจัย',
         role: 'จิตแพทย์',
         specialty: 'จิตเวชวัยรุ่น ผู้ใหญ่ ผู้สูงอายุ',
-        image: 'public/docterProfile/docter2.png'
+        image: '/docterProfile/docter2.png'
     },
     {
         id: 3,
         name: 'นพ.ลอดช่อง กระด่องแมะ',
         role: 'จิตแพทย์',
         specialty: 'จิตเวชวัยรุ่น ผู้ใหญ่ ผู้สูงอายุ',
-        image: 'public/docterProfile/docter3.png'
+        image: '/docterProfile/docter3.png'
     },
 ];
 
@@ -33,14 +33,14 @@ const psychologists = [
         name: 'ดร.สรรสร้าง ส่งสี',
         role: 'นักจิตวิทยาคลินิก',
         specialty: 'บำบัดความคิดและพฤติกรรม',
-        image: 'public/docterProfile/psy1'
+        image: '/docterProfile/psy1'
     },
     {
         id: 5,
         name: 'ดร.มั่นใจ คารมดี',
         role: 'นักจิตวิทยาการปรึกษา',
         specialty: 'ปัญหาความสัมพันธ์',
-        image: 'public/docterProfile/psy2.jfif'
+        image: '/docterProfile/psy2.jfif'
     },
 ];
 
