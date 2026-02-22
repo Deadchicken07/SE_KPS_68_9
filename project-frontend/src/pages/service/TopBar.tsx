@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 export default function TopBar() {
   return (
     <nav className="service-topbar">
-      <h2 className="service-topbar__brand">manga</h2>
+      <h2 className="service-topbar__brand">jitdee</h2>
       <div className="service-topbar__links">
         <NavLink className={getLinkClassName} to="/">
           หน้าแรก

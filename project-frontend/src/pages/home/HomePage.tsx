@@ -83,10 +83,10 @@ export default function HomePage() {
     <section className="home-page">
       <header className="home-hero">
         <div className="home-hero__content">
-          <p className="home-hero__eyebrow">Manga Care Clinic</p>
+          <p className="home-hero__eyebrow">Jitdee Care Clinic</p>
           <h1 className="home-hero__title">ให้การดูแลสุขภาพใจเป็นเรื่องที่เข้าถึงง่าย</h1>
           <p className="home-hero__subtitle">
-            โครงหน้าแรกนี้อ้างอิงแนวจัดวางจากเว็บไซต์ iSTRONG โดยปรับให้เข้ากับบริการของ Manga Care
+            โครงหน้าแรกนี้อ้างอิงแนวจัดวางจากเว็บไซต์ iSTRONG โดยปรับให้เข้ากับบริการของ Jitdee Care
             ทั้งบริการออนไลน์ แบบประเมิน และทีมผู้เชี่ยวชาญ
           </p>
           <div className="home-hero__actions">
@@ -157,7 +157,7 @@ export default function HomePage() {
 
       <section className="home-section">
         <div className="home-section__heading">
-          <h2 className="home-section__title">ทำไมต้องเลือก Manga Care</h2>
+          <h2 className="home-section__title">ทำไมต้องเลือก Jitdee Care</h2>
         </div>
         <div className="home-grid home-grid--three">
           {reasons.map((item) => (

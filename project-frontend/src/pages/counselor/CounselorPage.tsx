@@ -49,7 +49,7 @@ export default function CounselorPage() {
   return (
     <section className="counselor-page">
       <header className="counselor-page__header">
-        <p className="counselor-page__eyebrow">manga Care Team</p>
+        <p className="counselor-page__eyebrow">jitdee Care Team</p>
         <h2 className="counselor-page__title">ผู้ให้คำปรึกษา</h2>
         <p className="counselor-page__subtitle">
           เลือกผู้เชี่ยวชาญที่ตรงกับสิ่งที่คุณกำลังกังวล แล้วเริ่มพูดคุยอย่างสบายใจ
