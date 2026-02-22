@@ -1,12 +1,12 @@
-﻿
+
 export default function OurService() {
   return (
     <section className="service-page">
       <header className="service-page__header">
         <p className="service-page__eyebrow">jitdee Care</p>
-        <h2 className="service-page__title">à¸šà¸£à¸´à¸à¸²à¸£à¸‚à¸­à¸‡à¹€à¸£à¸²</h2>
+        <h2 className="service-page__title">บริการของเรา</h2>
         <p className="service-page__subtitle">
-          à¹€à¸¥à¸·à¸­à¸à¸Šà¹ˆà¸­à¸‡à¸—à¸²à¸‡à¸—à¸µà¹ˆà¸ªà¸šà¸²à¸¢à¹ƒà¸ˆà¸—à¸µà¹ˆà¸ªà¸¸à¸” à¹à¸¥à¹‰à¸§à¹€à¸£à¸´à¹ˆà¸¡à¸žà¸¹à¸”à¸„à¸¸à¸¢à¸à¸±à¸šà¸œà¸¹à¹‰à¹€à¸Šà¸µà¹ˆà¸¢à¸§à¸Šà¸²à¸à¹„à¸”à¹‰à¸—à¸±à¸™à¸—à¸µ
+          เลือกช่องทางที่สบายใจที่สุด แล้วเริ่มพูดคุยกับผู้เชี่ยวชาญได้ทันที
         </p>
       </header>
 
@@ -43,7 +43,7 @@ function ServiceCard({ title, description, imageUrl, delay, accentClass }: Servi
       <h3 className="service-card__title">{title}</h3>
       <p className="service-card__description">{description}</p>
       <button className="service-card__button" type="button">
-        à¹€à¸£à¸´à¹ˆà¸¡à¸•à¹‰à¸™à¹€à¸¥à¸¢
+        เริ่มต้นเลย
       </button>
     </article>
   );
@@ -53,14 +53,12 @@ function ServiceCard({ title, description, imageUrl, delay, accentClass }: Servi
 const services = [
   {
     title: "Video Call",
-    description: "à¸žà¸¹à¸”à¸„à¸¸à¸¢à¹€à¸«à¹‡à¸™à¸«à¸™à¹‰à¸²à¹à¸šà¸šà¹€à¸£à¸µà¸¢à¸¥à¹„à¸—à¸¡à¹Œ à¹€à¸‚à¹‰à¸²à¹ƒà¸ˆà¸­à¸²à¸£à¸¡à¸“à¹Œà¹„à¸”à¹‰à¸¥à¸¶à¸à¸‚à¸¶à¹‰à¸™",
+    description: "พูดคุยเห็นหน้าแบบเรียลไทม์ เข้าใจอารมณ์ได้ลึกขึ้น",
     imageUrl: "/images/service/photo-1521737604893-d14cc237f11d.avif",
   },
   {
     title: "Onsite Booking",
-    description: "à¸ˆà¸­à¸‡à¸„à¸´à¸§à¸žà¸šà¸œà¸¹à¹‰à¹€à¸Šà¸µà¹ˆà¸¢à¸§à¸Šà¸²à¸à¸—à¸µà¹ˆà¸„à¸¥à¸´à¸™à¸´à¸ à¹ƒà¸à¸¥à¹‰à¸„à¸¸à¸“à¹ƒà¸™à¹€à¸§à¸¥à¸²à¸—à¸µà¹ˆà¸ªà¸°à¸”à¸§à¸",
+    description: "จองคิวพบผู้เชี่ยวชาญที่คลินิก ใกล้คุณในเวลาที่สะดวก",
     imageUrl: "/images/service/photo-1573497019940-1c28c88b4f3e.avif",
   },
 ] as const;
-
-

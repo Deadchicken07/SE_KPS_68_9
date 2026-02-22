@@ -1,7 +1,5 @@
-export default function home(){
-    return(
-        <div>
-            Hello world
-        </div>
-    );
+import { redirect } from "next/navigation";
+
+export default function UserPage() {
+  redirect("/home");
 }

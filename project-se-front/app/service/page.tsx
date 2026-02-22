@@ -1,5 +1,5 @@
-import SiteShell from "@/components/site/SiteShell";
-import OurService from "@/components/site/service/service";
+import SiteShell from "@/app/home/SiteShell";
+import OurService from "@/app/home/service";
 
 export default function ServiceRoute() {
   return (

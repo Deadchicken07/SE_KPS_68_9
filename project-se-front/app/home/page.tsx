@@ -1,5 +1,5 @@
-import SiteShell from "@/components/site/SiteShell";
-import HomePage from "@/components/site/home/HomePage";
+import SiteShell from "./SiteShell";
+import HomePage from "./HomePage";
 
 export default function HomeRoute() {
   return (

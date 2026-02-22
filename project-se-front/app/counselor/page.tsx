@@ -1,5 +1,5 @@
-import SiteShell from "@/components/site/SiteShell";
-import CounselorPage from "@/components/site/counselor/CounselorPage";
+import SiteShell from "@/app/home/SiteShell";
+import CounselorPage from "@/app/home/CounselorPage";
 
 export default function CounselorRoute() {
   return (

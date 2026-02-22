@@ -1,10 +1,5 @@
-import SiteShell from "@/components/site/SiteShell";
-import HomePage from "@/components/site/home/HomePage";
+import { redirect } from "next/navigation";
 
-export default function Home() {
-  return (
-    <SiteShell>
-      <HomePage />
-    </SiteShell>
-  );
+export default function RootPage() {
+  redirect("/home");
 }

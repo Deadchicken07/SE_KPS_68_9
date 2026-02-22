@@ -1,13 +1,13 @@
 ﻿"use client";
 
 import Link from "next/link";
+import type { MouseEvent } from "react";
 import { usePathname } from "next/navigation";
 
 const navLinks = [
   { href: "/", label: "หน้าแรก" },
   { href: "/service", label: "บริการ" },
   { href: "/counselor", label: "ผู้ให้คำปรึกษา" },
-  { href: "/user", label: "login" },
 ] as const;
 
 export default function TopBar() {
@@ -22,12 +22,19 @@ export default function TopBar() {
             {link.label}
           </Link>
         ))}
-        <Link className="service-topbar__signup" href="/staff">
+        <a className="service-topbar__link" href="#" onClick={preventNavigate}>
+          login
+        </a>
+        <a className="service-topbar__signup" href="#" onClick={preventNavigate}>
           Sign Up
-        </Link>
+        </a>
       </div>
     </nav>
   );
+}
+
+function preventNavigate(event: MouseEvent<HTMLAnchorElement>) {
+  event.preventDefault();
 }
 
 function getLinkClassName(pathname: string, href: string) {

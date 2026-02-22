@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import TopBar from "./service/TopBar";
+import TopBar from "./TopBar";
 
 type SiteShellProps = {
   children: ReactNode;
