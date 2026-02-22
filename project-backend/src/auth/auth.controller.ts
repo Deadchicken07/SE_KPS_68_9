@@ -17,3 +17,8 @@ export class AuthController {
     return req.user;
   }
 }
+
+// // ตัวอย่างเอาไปใช้กับ controller อื่น
+// //@UseGuards(JwtAuthGuard, RolesGuard)  เช็คว่ามีการดเเก JWT มั้ย และเช็คว่า role ตรงกับที่กำหนดมั้ย
+// @Roles(1,2) // // กำหนดว่า endpoint นี้ต้องการ role_id = 2 เท่านั้นถึงจะเข้าถึงได้
+// @Get('appointments')
