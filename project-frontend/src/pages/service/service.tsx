@@ -1,4 +1,3 @@
-import chatServiceImage from "./image/photo-1544717305-2782549b5136.avif";
 import videoCallImage from "./image/photo-1521737604893-d14cc237f11d.avif";
 import onsiteBookingImage from "./image/photo-1573497019940-1c28c88b4f3e.avif";
 
@@ -21,6 +20,7 @@ export default function OurService() {
             description={service.description}
             imageUrl={service.imageUrl}
             delay={index * 0.12}
+            accentClass={index === 0 ? "is-video" : "is-onsite"}
           />
         ))}
       </div>
@@ -33,11 +33,12 @@ type ServiceCardProps = {
   description: string;
   imageUrl: string;
   delay: number;
+  accentClass: "is-video" | "is-onsite";
 };
 
-function ServiceCard({ title, description, imageUrl, delay }: ServiceCardProps) {
+function ServiceCard({ title, description, imageUrl, delay, accentClass }: ServiceCardProps) {
   return (
-    <article className="service-card" style={{ animationDelay: `${delay}s` }}>
+    <article className={`service-card ${accentClass}`} style={{ animationDelay: `${delay}s` }}>
       <div className="service-card__image-wrap">
         <img alt={title} className="service-card__image" loading="lazy" src={imageUrl} />
       </div>
@@ -50,12 +51,8 @@ function ServiceCard({ title, description, imageUrl, delay }: ServiceCardProps) 
   );
 }
 
+//content data for service cards, can be fetched from API in real app, hardcoded here for demo purpose
 const services = [
-  {
-    title: "Chat Service",
-    description: "ปรึกษาผ่านข้อความแบบเป็นส่วนตัว ตอบไวและปลอดภัย",
-    imageUrl: chatServiceImage,
-  },
   {
     title: "Video Call",
     description: "พูดคุยเห็นหน้าแบบเรียลไทม์ เข้าใจอารมณ์ได้ลึกขึ้น",

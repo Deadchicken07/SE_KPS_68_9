@@ -5,13 +5,13 @@ export default function TopBar() {
     <nav className="service-topbar">
       <h2 className="service-topbar__brand">manga</h2>
       <div className="service-topbar__links">
-        <NavLink className={getLinkClassName} to="/a">
+        <NavLink className={getLinkClassName} to="/">
           หน้าแรก
         </NavLink>
         <NavLink className={getLinkClassName} to="/service">
           บริการ
         </NavLink>
-        <NavLink className={getLinkClassName} to="/b">
+        <NavLink className={getLinkClassName} to="/counselor">
           ผู้ให้คำปรึกษา
         </NavLink>
         <NavLink className={getLinkClassName} to="/c">
