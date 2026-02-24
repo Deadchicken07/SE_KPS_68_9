@@ -4,7 +4,7 @@ import { Layout, Avatar, Dropdown } from "antd"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { UserOutlined } from "@ant-design/icons"
-import { PhoneOutlined, HeartFilled} from "@ant-design/icons"
+import { PhoneOutlined, HeartFilled } from "@ant-design/icons"
 
 const { Header, Content } = Layout
 
@@ -12,7 +12,7 @@ const links = [
   { name: "หน้าเเรก", href: "/user" },
   { name: "เเบบทดสอบ", href: "/exams" },
   { name: "บริการของเรา", href: "/appointments" },
-  { name: "เกี่ยวกับเรา", href: "/patients" },
+  { name: "เกี่ยวกับเรา", href: "/user/staff/all" },
   { name: "ติดต่อเรา", href: "/contact" },
 ]
 
@@ -32,7 +32,7 @@ export default function ClinicLayout() {
   ]
 
   return (
-    <Layout style={{ minHeight: "auto",}}>
+    <Layout style={{ minHeight: "auto", }}>
 
       <Header
         style={{
@@ -45,7 +45,7 @@ export default function ClinicLayout() {
             // maxWidth: 1200,
             margin: "0 auto",
             display: "flex",
-            justifyContent: "space-between", 
+            justifyContent: "space-between",
             alignItems: "center",
             padding: "0 32px",
             height: "100%"
@@ -55,7 +55,7 @@ export default function ClinicLayout() {
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 10,
+              gap: 5,
               fontSize: 39,
               fontWeight: 700,
               letterSpacing: 1,
@@ -63,8 +63,8 @@ export default function ClinicLayout() {
             }}
           >
             <HeartFilled style={{ color: "#0f766e", fontSize: 22 }} />
-            <span style={{ color: "#111" }}>Mai Me</span>
-            <span style={{ color: "#0f766e" }}>Clinic</span>
+            <span style={{ color: "#111" }}>JitDee</span>
+            <span style={{ color: "#0f766e" }}>.com</span>
           </div>
           <div style={{
             display: "flex",
@@ -77,7 +77,7 @@ export default function ClinicLayout() {
                 gap: 8,
                 backgroundColor: "#e6fffb",
                 padding: "8px 16px",
-                borderRadius: 1000, 
+                borderRadius: 1000,
                 fontWeight: 500,
                 alignItems: "center",
                 color: "#065f46",
@@ -86,10 +86,10 @@ export default function ClinicLayout() {
               }}
             >
               <PhoneOutlined />
-                02-745-4184
+              02-745-4184
             </div>
             <Dropdown menu={{ items: menuItems }}>
-              <div style={{ cursor: "pointer", gap: 10 ,display: "flex",alignItems: "center",}}>
+              <div style={{ cursor: "pointer", gap: 10, display: "flex", alignItems: "center", }}>
                 <Avatar icon={<UserOutlined />} />
                 <span style={{ color: "#000000" }}>{user.name}</span>
               </div>
@@ -123,7 +123,7 @@ export default function ClinicLayout() {
           </Link>
         ))}
       </Header>
-      
+
     </Layout>
   )
 }
