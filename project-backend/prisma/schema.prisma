@@ -32,16 +32,16 @@ model answers {
 }
 
 model appointments {
-  id                                 Int       @id @default(autoincrement())
+  id                                 Int                     @id @default(autoincrement())
   user_id                            Int?
   staff_id                           Int?
-  appointment_type                   String?   @db.VarChar(20)
-  appointment_date                   DateTime? @db.Date
-  status                             String?   @db.VarChar(20)
-  time_select                        String?   @db.VarChar(255)
-  slip_file                          String?   @db.VarChar(255)
-  users_appointments_staff_idTousers users?    @relation("appointments_staff_idTousers", fields: [staff_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  users_appointments_user_idTousers  users?    @relation("appointments_user_idTousers", fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  appointment_type                   appointments_type_enum?
+  appointment_date                   DateTime?               @db.Date
+  status                             pay_type_enum?          @default(Not_paying)
+  time_select                        String?                 @db.VarChar(255)
+  deposit_slip_file                  String?                 @db.VarChar(255)
+  users_appointments_staff_idTousers users?                  @relation("appointments_staff_idTousers", fields: [staff_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users_appointments_user_idTousers  users?                  @relation("appointments_user_idTousers", fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model choices {
@@ -60,8 +60,6 @@ model consultations {
   pharmacist_id                            Int?
   note                                     String?
   created_at                               DateTime?            @default(now()) @db.Timestamp(6)
-  status                                   String?              @db.VarChar(20)
-  tracking                                 String?              @db.VarChar(255)
   users_consultations_pharmacist_idTousers users?               @relation("consultations_pharmacist_idTousers", fields: [pharmacist_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users_consultations_staff_idTousers      users?               @relation("consultations_staff_idTousers", fields: [staff_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users_consultations_user_idTousers       users?               @relation("consultations_user_idTousers", fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -80,15 +78,15 @@ model districts {
 
 model fees {
   id              Int       @id @default(autoincrement())
-  price_per_hours Float?
+  price_per_hours Decimal?  @db.Decimal(10, 2)
   created_at      DateTime? @db.Date
 }
 
 model medications {
   id                 Int                  @id @default(autoincrement())
   name               String               @db.VarChar(255)
-  retail             Float?
-  price              Float?
+  retail             Decimal?             @db.Decimal(10, 2)
+  price              Decimal?             @db.Decimal(10, 2)
   prescription_items prescription_items[]
   receipt_details    receipt_details[]
 }
@@ -111,10 +109,10 @@ model provinces {
 }
 
 model questionnaires {
-  id         Int         @id @default(autoincrement())
-  title      String?     @db.VarChar(255)
-  status     String?     @db.VarChar(20)
-  created_at DateTime?   @default(now()) @db.Timestamp(6)
+  id         Int                       @id @default(autoincrement())
+  title      String?                   @db.VarChar(255)
+  status     questionnaires_type_enum? @default(show)
+  created_at DateTime?                 @default(now()) @db.Timestamp(6)
   questions  questions[]
   responses  responses[]
 }
@@ -129,21 +127,28 @@ model questions {
 }
 
 model receipt_details {
-  id             Int          @id @default(autoincrement())
-  receipt_id     Int?
-  medication_id  Int?
-  medicine_price Float?
-  medications    medications? @relation(fields: [medication_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  receipts       receipts?    @relation(fields: [receipt_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id             Int             @id @default(autoincrement())
+  receipt_id     Int
+  item_name      String?         @db.VarChar(255)
+  item_type      item_type_enum?
+  medicine_id    Int?
+  medicine_price Decimal?        @db.Decimal(10, 2)
+  quantity       Int?
+  unit_price     Decimal?        @db.Decimal(10, 2)
+  total_price    Decimal?        @db.Decimal(10, 2)
+  medications    medications?    @relation(fields: [medicine_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_medicine")
+  receipts       receipts        @relation(fields: [receipt_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_receipt")
 }
 
 model receipts {
   id              Int               @id @default(autoincrement())
   consultation_id Int?
   user_id         Int?
-  consult_fee     Float?
-  medicine_total  Float?
   created_at      DateTime?         @default(now()) @db.Timestamp(6)
+  slip_file       String?           @db.VarChar(255)
+  total           Decimal?          @db.Decimal(10, 2)
+  tracking        String?           @db.VarChar(255)
+  status          String?
   receipt_details receipt_details[]
   consultations   consultations?    @relation(fields: [consultation_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users           users?            @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -188,7 +193,7 @@ model users {
   name                                             String          @db.VarChar(255)
   sur_name                                         String          @db.VarChar(255)
   phone                                            String?         @db.VarChar(20)
-  nation_id                                        String?         @db.VarChar(255)
+  nation_id                                        String?         @unique @db.VarChar(255)
   address_id                                       Int?
   medical_condition                                String?         @db.VarChar(255)
   allergy_drug                                     String?         @db.VarChar(255)
@@ -198,6 +203,7 @@ model users {
   info                                             String?         @db.VarChar(255)
   degree                                           String?         @db.VarChar(255)
   license                                          String?         @db.VarChar(255)
+  status                                           String?         @db.VarChar(255)
   appointments_appointments_staff_idTousers        appointments[]  @relation("appointments_staff_idTousers")
   appointments_appointments_user_idTousers         appointments[]  @relation("appointments_user_idTousers")
   consultations_consultations_pharmacist_idTousers consultations[] @relation("consultations_pharmacist_idTousers")
@@ -235,4 +241,26 @@ model schedule {
 enum schedule_status {
   working
   leave
+}
+
+enum appointments_type_enum {
+  online
+  onsite
+}
+
+enum item_type_enum {
+  medicine
+  service
+  lab
+  fee
+}
+
+enum pay_type_enum {
+  Paid
+  Not_paying @map("Not paying")
+}
+
+enum questionnaires_type_enum {
+  show
+  hidden
 }

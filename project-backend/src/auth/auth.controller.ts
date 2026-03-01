@@ -1,6 +1,8 @@
 import { Controller, Post, Body, Get, UseGuards, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { RegisterDto } from './dto/register.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -16,7 +18,15 @@ export class AuthController {
   getMe(@Req() req) {
     return req.user;
   }
-  
+  @Post('register')
+  async register(@Body() body: RegisterDto) {
+    return this.authService.register(body);
+  }
+  @UseGuards(JwtAuthGuard)
+  @Post('change-password')
+  changePassword(@Req() req, @Body() body: ChangePasswordDto) {
+    return this.authService.changePassword(body, req.user.sub);
+  }
 }
 
 // // ตัวอย่างเอาไปใช้กับ controller อื่น
