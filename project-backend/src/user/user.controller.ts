@@ -15,4 +15,8 @@ export class UserController {
   findOne(@Param('id') id: string) {
     return this.userService.findOne(+id);
   }
+  @Get('by-nation/:nationId')
+  findByNation(@Param('nationId') nationId: string) {
+    return this.userService.findByNationId(nationId);
+  }
 }

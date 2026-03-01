@@ -36,7 +36,7 @@ export class AuthService {
     }
 
     const payload = {
-      sub: user.id,
+      sub: user.user_id,
       email: user.email,
       role_id: user.role_id,
     };
@@ -80,7 +80,7 @@ export class AuthService {
     const { oldPassword, newPassword } = dto;
 
     const user = await this.prisma.users.findUnique({
-      where: { id: userId },
+      where: { user_id: userId },
     });
 
     if (!user || !user.password_hash) {
@@ -96,7 +96,7 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     await this.prisma.users.update({
-      where: { id: userId },
+      where: { user_id: userId },
       data: {
         password_hash: hashedPassword,
       },
