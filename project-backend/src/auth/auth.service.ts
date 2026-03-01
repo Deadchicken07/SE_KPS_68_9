@@ -103,6 +103,5 @@ export class AuthService {
     });
 
     return { message: 'Password changed successfully' };
-  }
-  ฌ;
+  };
 }
