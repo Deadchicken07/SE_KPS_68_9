@@ -16,6 +16,7 @@ export class AuthController {
   getMe(@Req() req) {
     return req.user;
   }
+  
 }
 
 // // ตัวอย่างเอาไปใช้กับ controller อื่น
