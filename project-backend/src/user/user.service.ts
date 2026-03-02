@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   PaginatedUserResponse,
@@ -78,7 +82,6 @@ export class UserService {
     const user = await this.prisma.users.findUnique({
       where: { nation_id: nationId },
       include: {
-        // address ปัจจุบัน
         addresses: {
           include: {
             provinces: true,
@@ -87,8 +90,6 @@ export class UserService {
             zip_codes: true,
           },
         },
-
-        // address ตามบัตร
         addresses_users_address_id_nationToaddresses: {
           include: {
             provinces: true,
@@ -104,8 +105,15 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
 
+    // 🔴 เพิ่มเงื่อนไขตรงนี้
+    if (user.email) {
+      throw new BadRequestException(
+        'บัญชีนี้ถูกใช้งานแล้ว ไม่สามารถสมัครซ้ำได้',
+      );
+    }
+
     return {
-      id: user.user_id, // เพราะ schema ใช้ user_id_
+      id: user.user_id,
       name: user.name,
       surName: user.sur_name,
       phone: user.phone,
@@ -113,7 +121,6 @@ export class UserService {
       medicalCondition: user.medical_condition,
       allergyDrug: user.allergy_drug,
 
-      // ที่อยู่ปัจจุบัน
       currentAddress: user.addresses
         ? {
             provinceId: user.addresses.province_id,
@@ -128,7 +135,6 @@ export class UserService {
           }
         : null,
 
-      // ที่อยู่ตามบัตร
       nationAddress: user.addresses_users_address_id_nationToaddresses
         ? {
             provinceId:

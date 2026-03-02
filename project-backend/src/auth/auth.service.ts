@@ -6,7 +6,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
-import { RegisterDto } from './dto/register.dto';
+import { CreateDoctorDto, RegisterDto } from './dto/register.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Injectable()
@@ -50,31 +50,88 @@ export class AuthService {
     try {
       const hashedPassword = await bcrypt.hash(body.password, 10);
 
-      const user = await this.prisma.users.create({
-        data: {
-          email: body.email,
-          name: body.name,
-          sur_name: body.surName,
-          phone: body.phone ?? null,
-          nation_id: body.nationId ?? null,
-          medical_condition: body.medicalCondition ?? null,
-          allergy_drug: body.allergyDrug ?? null,
-          address_id: body.addressId ?? null,
-          role_id: body.roleId ?? 1,
-          password_hash: hashedPassword,
-        },
+      const result = await this.prisma.$transaction(async (prisma) => {
+        const address = await prisma.addresses.create({
+          data: {
+            province_id: body.address.provinceId,
+            district_id: body.address.districtId,
+            sub_district_id: body.address.subDistrictId,
+            detail: body.address.detail,
+          },
+        });
+
+        let addressNationId: number | null = null;
+
+        if (body.addressNation) {
+          const addressNation = await prisma.addresses.create({
+            data: {
+              province_id: body.addressNation.provinceId,
+              district_id: body.addressNation.districtId,
+              sub_district_id: body.addressNation.subDistrictId,
+              detail: body.addressNation.detail,
+            },
+          });
+
+          addressNationId = addressNation.id;
+        }
+
+        const user = await prisma.users.create({
+          data: {
+            email: body.email,
+            name: body.name,
+            sur_name: body.surName,
+            phone: body.phone ?? null,
+            nation_id: body.nationId ?? null,
+            medical_condition: body.medicalCondition ?? null,
+            allergy_drug: body.allergyDrug ?? null,
+            address_id: address.id,
+            address_id_nation: addressNationId,
+            role_id: 1,
+            password_hash: hashedPassword,
+          },
+        });
+
+        return user;
       });
 
       return {
         message: 'Register success',
-        user,
+        userId: result.user_id,
       };
-    } catch (error: any) {
-      if (error.code === 'P2002') {
+    } catch (error: unknown) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        (error as any).code === 'P2002'
+      ) {
         throw new BadRequestException('Email or Nation ID already exists');
       }
       throw error;
     }
+  }
+  async createDoctor(body: CreateDoctorDto, adminId: number) {
+    const hashedPassword = await bcrypt.hash(body.password, 10);
+
+    await this.prisma.users.create({
+      data: {
+        email: body.email,
+        name: body.name,
+        sur_name: body.surName,
+        degree: body.degree,
+        license: body.license,
+        info: body.info ?? null,
+        file_name: body.fileName ?? null,
+        status: body.status ?? 'ACTIVE',
+        role_id: 2, // doctor role
+        created_by: adminId,
+        password_hash: hashedPassword,
+      },
+    });
+
+    return {
+      message: 'Doctor created successfully',
+    };
   }
   async changePassword(dto: ChangePasswordDto, userId: number) {
     const { oldPassword, newPassword } = dto;

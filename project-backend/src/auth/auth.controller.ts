@@ -1,8 +1,9 @@
 import { Controller, Post, Body, Get, UseGuards, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
-import { RegisterDto } from './dto/register.dto';
+import { CreateDoctorDto, RegisterDto } from './dto/register.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { RolesGuard } from './roles.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -26,6 +27,11 @@ export class AuthController {
   @Post('change-password')
   changePassword(@Req() req, @Body() body: ChangePasswordDto) {
     return this.authService.changePassword(body, req.user.sub);
+  }
+  @Post('admin/create-doctor')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  createDoctor(@Body() dto: CreateDoctorDto, @Req() req) {
+    return this.authService.createDoctor(dto, req.user.user_id);
   }
 }
 
