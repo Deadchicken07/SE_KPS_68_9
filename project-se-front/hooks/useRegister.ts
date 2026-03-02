@@ -1,26 +1,13 @@
-import { useState } from 'react';
-import axios from 'axios';
-
-interface RegisterPayload {
-  email: string;
-  name: string;
-  surName: string;
-  password: string;
-  phone?: string;
-  nationId?: string;
-  medicalCondition?: string;
-  allergyDrug?: string;
-  addressId?: number;
-  addressNationId?: number;
-}
+import { useState } from "react";
+import axios from "axios";
+import { RegisterPayload } from "@/types/Register.types";
 
 export const useRegister = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // ✅ ใส่ port จริงของ backend
-  const API = 'http://localhost:3000/auth/register';
+  const API = "http://localhost:4000/auth/register";
 
   const register = async (data: RegisterPayload) => {
     try {
@@ -31,15 +18,24 @@ export const useRegister = () => {
       await axios.post(API, data);
 
       setSuccess(true);
+      return true;
+
     } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        setError(
-          (err.response?.data as any)?.message ||
-          'Something went wrong'
-        );
-      } else {
-        setError('Something went wrong');
+      let message = "Something went wrong";
+
+      if (axios.isAxiosError<{ message?: string | string[] }>(err)) {
+        const resMessage = err.response?.data?.message;
+
+        if (Array.isArray(resMessage)) {
+          message = resMessage.join(", ");
+        } else if (resMessage) {
+          message = resMessage;
+        }
       }
+
+      setError(message);
+      return false;   // ✅ ไม่ throw แล้ว
+
     } finally {
       setLoading(false);
     }

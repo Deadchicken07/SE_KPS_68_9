@@ -1,46 +1,61 @@
-import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { useEffect, useState } from "react";
+import axios from "axios";
+
+interface LocationItem {
+  id: number;
+  name: string;
+}
 
 export const useLocationDropdown = () => {
-  const [provinces, setProvinces] = useState<any[]>([]);
-  const [districts, setDistricts] = useState<any[]>([]);
-  const [subDistricts, setSubDistricts] = useState<any[]>([]);
+  const [provinces, setProvinces] = useState<LocationItem[]>([]);
+  const [districts, setDistricts] = useState<LocationItem[]>([]);
+  const [subDistricts, setSubDistricts] = useState<LocationItem[]>([]);
 
   const [selectedProvince, setSelectedProvince] = useState<number | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<number | null>(null);
   const [selectedSubDistrict, setSelectedSubDistrict] = useState<number | null>(null);
 
-  const API = 'http://localhost:4000/location'; // ปรับตามของคุณ
+  const API = "http://localhost:4000/location";
 
-  // โหลดจังหวัดตอนเริ่ม
+  // โหลดจังหวัดครั้งเดียว
   useEffect(() => {
     fetchProvinces();
   }, []);
 
-  const fetchProvinces = async (q?: string) => {
-    const res = await axios.get(`${API}/provinces`, {
-      params: { q },
-    });
-    setProvinces(res.data);
+  const fetchProvinces = async () => {
+    try {
+      const res = await axios.get<LocationItem[]>(`${API}/provinces`);
+      setProvinces(res.data);
+    } catch (error) {
+      console.error("โหลดจังหวัดไม่สำเร็จ", error);
+    }
   };
 
-  const fetchDistricts = async (provinceId: number, q?: string) => {
-    const res = await axios.get(`${API}/districts`, {
-      params: { provinceId, q },
-    });
-    setDistricts(res.data);
+  const fetchDistricts = async (provinceId: number) => {
+    try {
+      const res = await axios.get<LocationItem[]>(`${API}/districts`, {
+        params: { provinceId },
+      });
+      setDistricts(res.data);
+    } catch (error) {
+      console.error("โหลดอำเภอไม่สำเร็จ", error);
+    }
   };
 
-  const fetchSubDistricts = async (districtId: number, q?: string) => {
-    const res = await axios.get(`${API}/sub-districts`, {
-      params: { districtId, q },
-    });
-    setSubDistricts(res.data);
+  const fetchSubDistricts = async (districtId: number) => {
+    try {
+      const res = await axios.get<LocationItem[]>(`${API}/sub-districts`, {
+        params: { districtId },
+      });
+      setSubDistricts(res.data);
+    } catch (error) {
+      console.error("โหลดตำบลไม่สำเร็จ", error);
+    }
   };
 
   // เมื่อเลือกจังหวัด
   useEffect(() => {
-    if (selectedProvince) {
+    if (selectedProvince !== null) {
       fetchDistricts(selectedProvince);
       setSelectedDistrict(null);
       setSelectedSubDistrict(null);
@@ -50,7 +65,7 @@ export const useLocationDropdown = () => {
 
   // เมื่อเลือกอำเภอ
   useEffect(() => {
-    if (selectedDistrict) {
+    if (selectedDistrict !== null) {
       fetchSubDistricts(selectedDistrict);
       setSelectedSubDistrict(null);
     }
@@ -66,8 +81,5 @@ export const useLocationDropdown = () => {
     setSelectedProvince,
     setSelectedDistrict,
     setSelectedSubDistrict,
-    fetchProvinces,
-    fetchDistricts,
-    fetchSubDistricts,
   };
 };

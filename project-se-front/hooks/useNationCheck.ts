@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 
 const API = 'http://localhost:4000';
 
@@ -18,6 +18,7 @@ interface NationUserResponse {
   id: number;
   name: string;
   surName: string;
+  email?: string | null;
   phone?: string;
   nationId: string;
   currentAddress?: Address | null;
@@ -25,15 +26,23 @@ interface NationUserResponse {
 }
 
 interface ErrorResponse {
-  message: string;
+  message?: string;
 }
+
+type NationCheckResult =
+  | { status: 'not_found' }
+  | { status: 'completed' }
+  | { status: 'incomplete'; data: NationUserResponse };
 
 export const useNationCheck = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [userData, setUserData] = useState<NationUserResponse | null>(null);
+  const [userData, setUserData] =
+    useState<NationUserResponse | null>(null);
 
-  const checkNation = async (nationId: string) => {
+  const checkNation = async (
+    nationId: string
+  ): Promise<NationCheckResult> => {
     try {
       setLoading(true);
       setError(null);
@@ -43,27 +52,34 @@ export const useNationCheck = () => {
         `${API}/users/by-nation/${nationId}`
       );
 
-      setUserData(res.data);
+      const user = res.data;
+      setUserData(user);
 
-      return {
-        exists: true,
-        data: res.data,
-      };
-    } catch (err) {
-      const axiosError = err as AxiosError<ErrorResponse>;
-
-      if (axiosError.response?.status === 404) {
-        // ไม่เจอ user = สมัครใหม่
-        return { exists: false };
+      if (user.email && user.email.trim() !== '') {
+        return { status: 'completed' };
       }
 
-      // กรณี email มีแล้ว (400)
-      setError(
-        axiosError.response?.data?.message ??
-          'ไม่สามารถใช้เลขบัตรนี้ได้เนื่องจากมีบัญชีทีใชเงานอยู่แล้ว'
-      );
+      return {
+        status: 'incomplete',
+        data: user,
+      };
+    } catch (err: unknown) {
+      if (axios.isAxiosError<ErrorResponse>(err)) {
+        if (err.response?.status === 404) {
+          return { status: 'not_found' };
+        }
 
-      return { exists: true, blocked: true };
+        const message =
+          err.response?.data?.message ??
+          'ไม่สามารถใช้เลขบัตรนี้ได้';
+
+        setError(message);
+
+        return { status: 'completed' };
+      }
+
+      setError('เกิดข้อผิดพลาดบางอย่าง');
+      return { status: 'completed' };
     } finally {
       setLoading(false);
     }

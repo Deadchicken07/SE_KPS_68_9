@@ -51,6 +51,18 @@ export class AuthService {
       const hashedPassword = await bcrypt.hash(body.password, 10);
 
       const result = await this.prisma.$transaction(async (prisma) => {
+        const existingUser = body.nationId
+          ? await prisma.users.findUnique({
+              where: { nation_id: body.nationId },
+            })
+          : null;
+
+        // 🔒 ถ้ามี nation แล้ว และสมัครครบแล้ว
+        if (existingUser && existingUser.email) {
+          throw new BadRequestException('บัญชีนี้สมัครแล้ว');
+        }
+
+        // สร้าง address ปัจจุบัน
         const address = await prisma.addresses.create({
           data: {
             province_id: body.address.provinceId,
@@ -75,7 +87,28 @@ export class AuthService {
           addressNationId = addressNation.id;
         }
 
-        const user = await prisma.users.create({
+        // ✅ ถ้ามี nation_id อยู่แล้ว → update
+        if (existingUser) {
+          const updated = await prisma.users.update({
+            where: { user_id: existingUser.user_id },
+            data: {
+              email: body.email,
+              name: body.name,
+              sur_name: body.surName,
+              phone: body.phone ?? null,
+              medical_condition: body.medicalCondition ?? null,
+              allergy_drug: body.allergyDrug ?? null,
+              address_id: address.id,
+              address_id_nation: addressNationId,
+              password_hash: hashedPassword,
+            },
+          });
+
+          return updated;
+        }
+
+        // ❌ ไม่มี nation → create ใหม่
+        const created = await prisma.users.create({
           data: {
             email: body.email,
             name: body.name,
@@ -91,21 +124,16 @@ export class AuthService {
           },
         });
 
-        return user;
+        return created;
       });
 
       return {
         message: 'Register success',
         userId: result.user_id,
       };
-    } catch (error: unknown) {
-      if (
-        typeof error === 'object' &&
-        error !== null &&
-        'code' in error &&
-        (error as any).code === 'P2002'
-      ) {
-        throw new BadRequestException('Email or Nation ID already exists');
+    } catch (error: any) {
+      if (error.code === 'P2002') {
+        throw new BadRequestException('Email นี้ถูกใช้งานแล้ว');
       }
       throw error;
     }
