@@ -63,37 +63,37 @@ const App = () => {
 
                 .staff-header {
                     text-align: center;
-                    margin-bottom: 56px;
+                    margin-bottom: 40px;
                 }
 
                 .staff-header-badge {
                     display: inline-block;
                     background: #0f766e;
                     color: #ffffffff;
-                    font-size: 35px;
-                    font-weight: 600;
+                    font-size: 25px;
+                    font-weight: 700;
                     letter-spacing: 2px;
                     text-transform: uppercase;
-                    padding: 6px 20px;
+                    padding: 5px 18px;
                     border-radius: 999px;
                     margin-bottom: 18px;
                 }
 
                 .staff-header h1 {
-                    font-size: clamp(32px, 5vw, 52px);
+                    font-size: clamp(28px, 4vw, 44px);
                     font-weight: 800;
                     background: linear-gradient(135deg, #3730a3 0%, #6d28d9 50%, #2563eb 100%);
                     -webkit-background-clip: text;
                     -webkit-text-fill-color: transparent;
                     background-clip: text;
-                    margin: 0 0 14px;
-                    line-height: 1.2;
+                    margin: 0 0 12px;
+                    line-height: 1.7;
                 }
 
                 .staff-header p {
                     color: #3a3131ff;
                     font-size: 16px;
-                    max-width: 480px;
+                    max-width: 500px;
                     margin: 0 auto;
                     line-height: 1.7;
                     font-weight: 600;
@@ -193,7 +193,8 @@ const App = () => {
                 {/* Header Section */}
                 <div className="staff-header">
                     <div className="staff-header-badge">Therapists</div>
-                    <p>ทีมแพทย์ และนักจิตวิทยาผู้เชี่ยวชาญของเรา <br />พร้อมดูแลคุณด้วยความใส่ใจ</p>
+                    <h1>ทีมแพทย์ และนักจิตวิทยาผู้เชี่ยวชาญของเรา</h1>
+                    <p>พร้อมดูแลคุณด้วยความใส่ใจ</p>
                 </div>
 
                 {/* Staff Grid */}

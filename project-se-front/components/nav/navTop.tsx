@@ -13,7 +13,7 @@ const links = [
   { name: "เเบบทดสอบ", href: "/exams" },
   { name: "บริการของเรา", href: "/appointments" },
   { name: "เกี่ยวกับเรา", href: "/user/staff/all" },
-  { name: "ติดต่อเรา", href: "/contact" },
+  { name: "นัดหมายการปรึกษา", href: "/user/appointments" },
 ]
 
 export default function ClinicLayout() {
