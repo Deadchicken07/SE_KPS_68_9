@@ -68,7 +68,7 @@ const App = () => {
 
                 .staff-header-badge {
                     display: inline-block;
-                    background: #3fb8f0ff;
+                    background: #0f766e;
                     color: #ffffffff;
                     font-size: 35px;
                     font-weight: 600;
@@ -124,7 +124,7 @@ const App = () => {
                     position: absolute;
                     top: 0; left: 0; right: 0;
                     height: 4px;
-                    background: #3fb8f0ff;
+                    background: #0f766e;
                     border-radius: 24px 24px 0 0;
                 }
 
@@ -144,7 +144,7 @@ const App = () => {
                     height: 140px;
                     border-radius: 50%;
                     padding: 4px;
-                    background: #3fb8f0ff;
+                    background: #0f766e;
                     display: inline-block;
                 }
 
