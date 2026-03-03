@@ -1,0 +1,384 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Prompt:wght@400;500;600;700;800&display=swap");
+
+.appt-shell {
+  --bg-1: #f4fcf9;
+  --bg-2: #e6f3ef;
+  --ink: #0f4643;
+  --muted: #3f6f6c;
+  --brand: #137d7b;
+  --brand-deep: #0a6260;
+  --line: rgba(15, 81, 78, 0.18);
+  --card: linear-gradient(170deg, rgba(250, 255, 253, 0.95) 0%, rgba(227, 245, 239, 0.88) 100%);
+  position: relative;
+  width: min(1320px, calc(100% - 44px));
+  margin: clamp(16px, 2.4vw, 32px) auto;
+  min-height: calc(100vh - 150px);
+  padding: clamp(22px, 2.8vw, 34px);
+  background:
+    radial-gradient(circle at 12% 12%, rgba(172, 229, 215, 0.62) 0%, rgba(172, 229, 215, 0) 34%),
+    radial-gradient(circle at 90% 5%, rgba(160, 216, 208, 0.42) 0%, rgba(160, 216, 208, 0) 38%),
+    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
+  color: var(--ink);
+  font-family: "Prompt", "Segoe UI", Tahoma, sans-serif;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  box-shadow:
+    0 8px 24px rgba(13, 82, 78, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34);
+}
+
+.appt-shell * {
+  box-sizing: border-box;
+}
+
+.appt-shell__glow {
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  filter: blur(66px);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.appt-shell__glow--left {
+  left: -130px;
+  top: -120px;
+  background: rgba(172, 229, 215, 0.35);
+}
+
+.appt-shell__glow--right {
+  right: -140px;
+  bottom: -120px;
+  background: rgba(160, 216, 208, 0.28);
+}
+
+.appt-header,
+.appt-list {
+  position: relative;
+  z-index: 1;
+}
+
+.appt-header {
+  margin-bottom: 26px;
+}
+
+.appt-title {
+  margin: 0;
+  font-size: clamp(1.9rem, 2.7vw, 2.2rem);
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  font-family: "Manrope", "Prompt", sans-serif;
+  font-weight: 800;
+}
+
+.appt-divider {
+  margin-top: 10px;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(19, 125, 123, 0.25) 0%, rgba(19, 125, 123, 0.06) 100%);
+}
+
+.appt-tabs {
+  margin-top: 18px;
+  display: flex;
+  gap: 18px;
+}
+
+.appt-tab {
+  border: 0;
+  padding: 0 0 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: clamp(1rem, 1.15vw, 1.15rem);
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.appt-tab:hover {
+  color: var(--ink);
+}
+
+.appt-tab.is-active {
+  color: var(--brand-deep);
+  box-shadow: inset 0 -3px 0 var(--brand);
+}
+
+.appt-list {
+  display: grid;
+  gap: clamp(18px, 2vw, 26px);
+  margin-top: 22px;
+}
+
+.appt-banner {
+  position: relative;
+  z-index: 1;
+  margin-top: 8px;
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border: 1px solid rgba(179, 47, 47, 0.26);
+  background: rgba(255, 236, 236, 0.85);
+  color: #8e2222;
+  font-size: 0.95rem;
+  border-radius: 14px;
+}
+
+.appt-state-card {
+  position: relative;
+  z-index: 1;
+  margin-top: 22px;
+  padding: 22px 18px;
+  border: 1px dashed rgba(19, 125, 123, 0.3);
+  background: rgba(247, 255, 253, 0.82);
+  color: var(--muted);
+  text-align: center;
+  border-radius: 18px;
+  font-size: 0.98rem;
+}
+
+.appt-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(18px, 2vw, 26px);
+  padding: clamp(24px, 2.6vw, 36px);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  box-shadow:
+    0 14px 28px rgba(8, 64, 60, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34);
+  backdrop-filter: blur(2px);
+  animation: card-rise 0.55s ease both;
+  animation-delay: var(--delay, 0ms);
+}
+
+.appt-card__left {
+  display: flex;
+  align-items: center;
+  gap: clamp(16px, 2vw, 28px);
+}
+
+.appt-avatar {
+  width: 68px;
+  height: 68px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: "Manrope", "Prompt", sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--brand-deep);
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  background:
+    radial-gradient(circle at 18% 16%, rgba(255, 255, 255, 0.95) 0%, rgba(251, 255, 255, 0.78) 54%, rgba(190, 224, 217, 0.5) 100%);
+  box-shadow: 0 12px 20px rgba(13, 95, 91, 0.15);
+}
+
+.appt-meta__name {
+  margin: 0;
+  font-family: "Manrope", "Prompt", sans-serif;
+  font-size: clamp(1.3rem, 1.8vw, 1.6rem);
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.appt-meta__line {
+  margin: 10px 0 0;
+  font-size: clamp(0.98rem, 1.15vw, 1.08rem);
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+.appt-meta__line span {
+  color: #315f5d;
+}
+
+.appt-card__right {
+  min-width: 280px;
+  justify-self: end;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+}
+
+.appt-status {
+  margin: 0;
+  font-size: clamp(1rem, 1.3vw, 1.2rem);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.appt-status__pill {
+  display: inline-block;
+  margin-left: 8px;
+}
+
+.appt-status__pill.is-pending {
+  color: #2f6f6c;
+}
+
+.appt-status__pill.is-confirmed {
+  color: #0d4a47;
+}
+
+.appt-status__pill.is-completed {
+  color: #3d6966;
+}
+
+.appt-actions {
+  margin-top: 14px;
+  display: flex;
+  gap: 12px;
+}
+
+.appt-btn {
+  min-width: 118px;
+  height: 42px;
+  border-radius: 999px;
+  font-family: "Prompt", "Segoe UI", Tahoma, sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.appt-btn:hover {
+  transform: translateY(-2px);
+}
+
+.appt-btn:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+  transform: none;
+  filter: none;
+  box-shadow: none;
+}
+
+.appt-btn--ghost {
+  border: 2px solid var(--brand);
+  color: var(--brand-deep);
+  background: rgba(247, 255, 253, 0.86);
+}
+
+.appt-btn--ghost:hover {
+  box-shadow: 0 10px 18px rgba(19, 125, 123, 0.2);
+}
+
+.appt-btn--solid {
+  border: 0;
+  color: #effffc;
+  background: linear-gradient(140deg, var(--brand) 0%, var(--brand-deep) 100%);
+  box-shadow: 0 14px 22px rgba(10, 98, 96, 0.24);
+}
+
+.appt-btn--solid:hover {
+  filter: brightness(1.05);
+}
+
+.appt-card__note {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+@keyframes card-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.99);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 1200px) {
+  .appt-tab {
+    font-size: 1rem;
+  }
+
+  .appt-meta__line {
+    font-size: 0.95rem;
+  }
+
+  .appt-status {
+    font-size: 1.02rem;
+  }
+
+  .appt-btn {
+    font-size: 0.94rem;
+    min-width: 98px;
+    height: 40px;
+  }
+}
+
+@media (max-width: 900px) {
+  .appt-card {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .appt-card__right {
+    min-width: 0;
+    justify-self: start;
+    gap: 2px;
+  }
+
+  .appt-actions {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 640px) {
+  .appt-shell {
+    width: calc(100% - 14px);
+    margin: 8px auto;
+    padding: 14px;
+  }
+
+  .appt-title {
+    font-size: 1.55rem;
+  }
+
+  .appt-tab {
+    font-size: 0.95rem;
+  }
+
+  .appt-card {
+    border-radius: 16px;
+    padding: 16px;
+  }
+
+  .appt-avatar {
+    width: 56px;
+    height: 56px;
+    font-size: 0.9rem;
+  }
+
+  .appt-meta__name {
+    font-size: 1.08rem;
+  }
+
+  .appt-meta__line {
+    font-size: 0.88rem;
+  }
+
+  .appt-status {
+    font-size: 0.95rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .appt-card,
+  .appt-btn,
+  .appt-tab {
+    animation: none;
+    transition: none;
+  }
+}
