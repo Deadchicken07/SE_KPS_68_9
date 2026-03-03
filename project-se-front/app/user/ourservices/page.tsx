@@ -1,28 +1,38 @@
+﻿"use client";
+
+import "./service-ui.css";
 
 export default function OurService() {
   return (
-    <section className="service-page">
-      <header className="service-page__header">
-        <p className="service-page__eyebrow">jitdee Care</p>
-        <h2 className="service-page__title">บริการของเรา</h2>
-        <p className="service-page__subtitle">
-          เลือกช่องทางที่สบายใจที่สุด แล้วเริ่มพูดคุยกับผู้เชี่ยวชาญได้ทันที
-        </p>
-      </header>
+    <div className="service-shell">
+      <div className="service-frame">
+        <main className="service-main">
+          <section className="service-page">
+            <header className="service-page__header">
+              <p className="service-page__eyebrow">jitdee Care</p>
+              <h2 className="service-page__title">บริการของเรา</h2>
+              <p className="service-page__subtitle">
+                เลือกช่องทางที่สบายใจที่สุด แล้วเริ่มพูดคุยกับผู้เชี่ยวชาญได้ทันที
+              </p>
+            </header>
 
-      <div className="service-grid">
-        {services.map((service, index) => (
-          <ServiceCard
-            key={service.title}
-            title={service.title}
-            description={service.description}
-            imageUrl={service.imageUrl}
-            delay={index * 0.12}
-            accentClass={index === 0 ? "is-video" : "is-onsite"}
-          />
-        ))}
+            <div className="service-grid">
+              {services.map((service, index) => (
+                <ServiceCard
+                  key={service.title}
+                  title={service.title}
+                  description={service.description}
+                  imageUrl={service.imageUrl}
+                  delay={index * 0.12}
+                  accentClass={index === 0 ? "is-video" : "is-onsite"}
+                />
+              ))}
+            </div>
+          </section>
+        </main>
       </div>
-    </section>
+      <div className="service-bottom-strip" />
+    </div>
   );
 }
 
@@ -49,7 +59,6 @@ function ServiceCard({ title, description, imageUrl, delay, accentClass }: Servi
   );
 }
 
-//content data for service cards, can be fetched from API in real app, hardcoded here for demo purpose
 const services = [
   {
     title: "Video Call",
