@@ -12,7 +12,6 @@
     { name: "หน้าเเรก", href: "/user" },
     { name: "เเบบทดสอบ", href: "/exams" },
     { name: "บริการของเรา", href: "/user/ourservices" },
-    { name: "ตารางนัดหมาย", href: "/user/appointment_schedule" },
     { name: "เกี่ยวกับเรา", href: "/user/staff/all" },
     { name: "ติดต่อเรา", href: "/contact" },
   ]
