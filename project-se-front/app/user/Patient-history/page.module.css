@@ -1,0 +1,193 @@
+:global(body) {
+  background: linear-gradient(180deg, #f3fbf9 0%, #eef6ff 45%, #f8fbff 100%);
+}
+
+.page {
+  min-height: calc(100vh - 48px);
+  color: #14213d;
+  padding: 6px 0 30px;
+}
+
+.hero {
+  width: min(960px, 100%);
+  margin: 0 auto 18px;
+  padding: 28px 24px;
+  border-radius: 26px;
+  border: 1px solid #c9dcf8;
+  background:
+    linear-gradient(120deg, rgba(26, 139, 128, 0.12), rgba(47, 106, 197, 0.08)),
+    #ffffff;
+  box-shadow: 0 12px 30px rgba(15, 32, 66, 0.1);
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 2.7rem);
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.hero p {
+  margin: 18px 0 0;
+  color: #40608e;
+}
+
+.controlsPanel {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.controlGroup {
+  display: grid;
+  gap: 6px;
+}
+
+.controlGroup label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #2a4d7d;
+}
+
+.controlGroup select {
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid #c8daf3;
+  background: #fafdff;
+  color: #16325a;
+  padding: 0 12px;
+  font-size: 0.92rem;
+}
+
+.controlGroup select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.contentSection {
+  width: min(960px, 100%);
+  margin: 0 auto;
+  display: grid;
+  gap: 16px;
+}
+
+.infoCard,
+.stateCard {
+  border-radius: 22px;
+  padding: 22px;
+  border: 1px solid #d2e0f5;
+  background: linear-gradient(180deg, #ffffff, #f7fbff);
+  box-shadow: 0 10px 25px rgba(14, 39, 78, 0.08);
+}
+
+.infoCard h2,
+.stateCard h3 {
+  margin: 0 0 14px;
+  font-size: 1.08rem;
+  font-weight: 700;
+}
+
+.stateCard p {
+  margin: 0;
+  color: #496892;
+}
+
+.errorCard {
+  border-color: #f0c8ce;
+  background: linear-gradient(180deg, #fff8f8, #fff1f1);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.field {
+  border-radius: 14px;
+  border: 1px solid #dbe7f8;
+  background: #fcfdff;
+  padding: 12px 13px;
+}
+
+.field span {
+  display: block;
+  font-size: 0.73rem;
+  letter-spacing: 0.01em;
+  color: #4e6d95;
+  margin-bottom: 6px;
+}
+
+.field strong {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.full {
+  grid-column: 1 / -1;
+}
+
+.emptyText {
+  margin: 0;
+  color: #496892;
+}
+
+.scrollTopButton {
+  position: fixed;
+  right: 34px;
+  bottom: 36px;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #1cb785, #129969);
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(15, 111, 79, 0.35);
+  z-index: 1000;
+}
+
+.arrowIcon {
+  width: 27px;
+  height: 27px;
+  stroke: #ffffff;
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.scrollTopButton:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+@media (max-width: 820px) {
+  .controlsPanel {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .infoCard,
+  .stateCard {
+    border-radius: 18px;
+    padding: 14px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .scrollTopButton {
+    right: 24px;
+    bottom: 26px;
+    width: 48px;
+    height: 48px;
+  }
+}
