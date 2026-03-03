@@ -12,7 +12,7 @@ const psychiatrists = [
         id: 2,
         name: 'พญ.สมหยิง สนิมจัย',
         role: 'จิตแพทย์',
-        specialty: 'จิตเวชวัยรุ่น ผู้ใหญ่ ผู้สูงอายุ',
+        specialty: 'ครอบครัว ความสัมพันธ์ ความรัก',
         image: '/docterProfile/docter2.png'
     },
     {
@@ -68,7 +68,7 @@ const App = () => {
 
                 .staff-header-badge {
                     display: inline-block;
-                    background: #3fb8f0ff;
+                    background: #0f766e;
                     color: #ffffffff;
                     font-size: 35px;
                     font-weight: 600;
@@ -88,14 +88,6 @@ const App = () => {
                     background-clip: text;
                     margin: 0 0 14px;
                     line-height: 1.2;
-                }
-
-                .staff-header-description {
-                    color: #000000ff;
-                    font-size: 20px;
-                    max-width: 600px;
-                    margin: 0 auto;
-                    line-height: 1.7;
                 }
 
                 .staff-header p {
@@ -132,7 +124,7 @@ const App = () => {
                     position: absolute;
                     top: 0; left: 0; right: 0;
                     height: 4px;
-                    background: #3fb8f0ff;
+                    background: #0f766e;
                     border-radius: 24px 24px 0 0;
                 }
 
@@ -152,7 +144,7 @@ const App = () => {
                     height: 140px;
                     border-radius: 50%;
                     padding: 4px;
-                    background: #3fb8f0ff;
+                    background: #0f766e;
                     display: inline-block;
                 }
 
@@ -163,18 +155,6 @@ const App = () => {
                     object-fit: cover;
                     background: #e0e7ff;
                     display: block;
-                    border: 3px solid #ffffff;
-                }
-
-                .staff-avatar-fallback {
-                    width: 132px;
-                    height: 132px;
-                    border-radius: 50%;
-                    background: linear-gradient(135deg, #c7d2fe, #ddd6fe);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 48px;
                     border: 3px solid #ffffff;
                 }
 
@@ -234,7 +214,7 @@ const App = () => {
                                                 const fallback = target.nextElementSibling as HTMLElement;
                                                 if (fallback) fallback.style.display = 'flex';
                                             }}
-                                        />                            
+                                        />
                                     </div>
                                 </div>
 
