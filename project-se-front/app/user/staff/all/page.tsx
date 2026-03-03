@@ -12,7 +12,7 @@ const psychiatrists = [
         id: 2,
         name: 'พญ.สมหยิง สนิมจัย',
         role: 'จิตแพทย์',
-        specialty: 'จิตเวชวัยรุ่น ผู้ใหญ่ ผู้สูงอายุ',
+        specialty: 'ครอบครัว ความสัมพันธ์ ความรัก',
         image: '/docterProfile/docter2.png'
     },
     {
@@ -90,14 +90,6 @@ const App = () => {
                     line-height: 1.2;
                 }
 
-                .staff-header-description {
-                    color: #000000ff;
-                    font-size: 20px;
-                    max-width: 600px;
-                    margin: 0 auto;
-                    line-height: 1.7;
-                }
-
                 .staff-header p {
                     color: #3a3131ff;
                     font-size: 16px;
@@ -166,18 +158,6 @@ const App = () => {
                     border: 3px solid #ffffff;
                 }
 
-                .staff-avatar-fallback {
-                    width: 132px;
-                    height: 132px;
-                    border-radius: 50%;
-                    background: linear-gradient(135deg, #c7d2fe, #ddd6fe);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 48px;
-                    border: 3px solid #ffffff;
-                }
-
                 .staff-name {
                     font-size: 22px;
                     font-weight: 800;
@@ -234,7 +214,7 @@ const App = () => {
                                                 const fallback = target.nextElementSibling as HTMLElement;
                                                 if (fallback) fallback.style.display = 'flex';
                                             }}
-                                        />                            
+                                        />
                                     </div>
                                 </div>
 
