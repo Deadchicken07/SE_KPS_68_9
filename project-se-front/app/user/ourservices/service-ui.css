@@ -25,8 +25,8 @@
 }
 
 .service-frame {
-  width: min(1240px, calc(100% - (var(--frame-gap) * 2)));
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
   padding: 24px 0 40px;
 }
 
@@ -120,8 +120,8 @@
 }
 
 .service-page {
-  max-width: 1120px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
   animation: page-fade-up 0.65s ease both;
 }
 
@@ -345,7 +345,7 @@
 
 @media (max-width: 760px) {
   .service-frame {
-    width: calc(100% - 16px);
+    width: 100%;
     padding-top: 12px;
   }
 
@@ -402,4 +402,14 @@
   .service-card__button {
     transition: none;
   }
+}
+
+.service-main,
+
+.service-card__image-wrap,
+.service-page__eyebrow,
+.service-card__button,
+.service-topbar__link,
+.service-topbar__signup {
+  border-radius: 0;
 }

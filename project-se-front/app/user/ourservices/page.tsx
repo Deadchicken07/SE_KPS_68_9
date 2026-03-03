@@ -9,7 +9,6 @@ export default function OurService() {
         <main className="service-main">
           <section className="service-page">
             <header className="service-page__header">
-              <p className="service-page__eyebrow">jitdee Care</p>
               <h2 className="service-page__title">บริการของเรา</h2>
               <p className="service-page__subtitle">
                 เลือกช่องทางที่สบายใจที่สุด แล้วเริ่มพูดคุยกับผู้เชี่ยวชาญได้ทันที

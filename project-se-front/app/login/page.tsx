@@ -1,0 +1,147 @@
+"use client";
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useLogin } from '@/hooks/useLogin';
+
+export default function LoginPage() {
+  const router = useRouter();
+  const { login, loading, error } = useLogin();
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      await login(email, password);
+      router.push('/dashboard'); // เปลี่ยน path ตามที่คุณใช้
+    } catch {
+      // error ถูกจัดการใน hook แล้ว
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex bg-[#E8EAD9] overflow-hidden">
+
+      {/* ================= LEFT SECTION ================= */}
+      <div className="hidden md:flex w-[65%] relative overflow-hidden bg-gradient-to-br from-[#2f6e5d] via-[#3F7F6D] to-[#4A8F7A] text-white">
+
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(255,255,255,0.15),transparent_40%)]"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_70%,rgba(255,255,255,0.1),transparent_40%)]"></div>
+        <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-white/10 rounded-full blur-3xl"></div>
+
+        <div className="relative z-10 flex flex-col justify-center px-24 max-w-2xl">
+
+          <div className="text-sm tracking-widest uppercase opacity-80 mb-8">
+            MentalCare Platform
+          </div>
+
+          <h1 className="text-6xl font-bold leading-tight mb-6">
+            ดูแลสุขภาพใจ<br />
+            อย่างมืออาชีพ
+          </h1>
+
+          <p className="text-xl opacity-90 leading-relaxed mb-10">
+            ระบบให้คำปรึกษาออนไลน์ที่ออกแบบเพื่อความปลอดภัย
+            และความเป็นส่วนตัวระดับมาตรฐานทางการแพทย์
+          </p>
+
+          <div className="w-96 opacity-90">
+            <svg viewBox="0 0 500 300" fill="none">
+              <circle cx="120" cy="150" r="60" fill="rgba(255,255,255,0.2)" />
+              <rect x="200" y="80" width="180" height="120" rx="20" fill="rgba(255,255,255,0.15)" />
+              <circle cx="260" cy="140" r="20" fill="white" />
+              <circle cx="320" cy="140" r="20" fill="white" />
+              <rect x="250" y="170" width="80" height="10" rx="5" fill="white" />
+            </svg>
+          </div>
+
+        </div>
+      </div>
+
+      {/* ================= RIGHT SECTION ================= */}
+      <div className="flex w-full md:w-[35%] items-center justify-center px-8">
+
+        <div className="w-full max-w-md">
+
+          <div className="bg-white rounded-3xl p-12 shadow-[0_30px_80px_rgba(0,0,0,0.15)] border border-gray-100">
+
+            <h2 className="text-3xl font-semibold text-[#3F7F6D] mb-10">
+              เข้าสู่ระบบ
+            </h2>
+
+            <form onSubmit={handleSubmit} className="space-y-7">
+
+              {/* EMAIL */}
+              <div>
+                <label className="text-sm text-gray-500 tracking-wide">
+                  อีเมล
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="example@email.com"
+                  className="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200 focus:border-[#4A8F7A] focus:ring-2 focus:ring-[#4A8F7A]/30 outline-none transition"
+                />
+              </div>
+
+              {/* PASSWORD */}
+              <div>
+                <label className="text-sm text-gray-500 tracking-wide">
+                  รหัสผ่าน
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  className="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200 focus:border-[#4A8F7A] focus:ring-2 focus:ring-[#4A8F7A]/30 outline-none transition"
+                />
+              </div>
+
+              {/* BUTTON */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full mt-4 bg-[#3F7F6D] hover:bg-[#356e5f] text-white py-3 rounded-xl text-lg font-medium shadow-lg transition duration-300 disabled:opacity-60"
+              >
+                {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
+              </button>
+
+              {/* ERROR MESSAGE */}
+              {error && (
+                <p className="text-red-500 text-sm mt-4 text-center">
+                  {error}
+                </p>
+              )}
+
+            </form>
+
+            <div className="text-center mt-8 text-sm text-gray-500 hover:underline cursor-pointer">
+              ลืมรหัสผ่าน?
+            </div>
+
+            <div className="text-center mt-2 text-sm text-gray-600">
+              ยังไม่มีบัญชี?{" "}
+              <span
+                onClick={() => router.push('/login/regis')}
+                className="text-[#3F7F6D] font-medium cursor-pointer hover:underline"
+              >
+                สมัครสมาชิก
+              </span>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  );
+}
