@@ -35,8 +35,9 @@
 .controlsPanel {
   margin-top: 20px;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 12px;
+  max-width: 520px;
 }
 
 .controlGroup {
@@ -72,8 +73,7 @@
   gap: 16px;
 }
 
-.infoCard,
-.stateCard {
+.infoCard {
   border-radius: 22px;
   padding: 22px;
   border: 1px solid #d2e0f5;
@@ -81,21 +81,10 @@
   box-shadow: 0 10px 25px rgba(14, 39, 78, 0.08);
 }
 
-.infoCard h2,
-.stateCard h3 {
+.infoCard h2 {
   margin: 0 0 14px;
   font-size: 1.08rem;
   font-weight: 700;
-}
-
-.stateCard p {
-  margin: 0;
-  color: #496892;
-}
-
-.errorCard {
-  border-color: #f0c8ce;
-  background: linear-gradient(180deg, #fff8f8, #fff1f1);
 }
 
 .grid {
@@ -174,8 +163,7 @@
     gap: 10px;
   }
 
-  .infoCard,
-  .stateCard {
+  .infoCard {
     border-radius: 18px;
     padding: 14px;
   }
