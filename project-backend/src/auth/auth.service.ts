@@ -70,6 +70,9 @@ export class AuthService {
             district_id: body.address.districtId,
             sub_district_id: body.address.subDistrictId,
             detail: body.address.detail,
+            zip_code_id: body.address.zipCodeId
+              ? Number(body.address.zipCodeId)
+              : null,
           },
         });
 
@@ -82,6 +85,9 @@ export class AuthService {
               district_id: body.addressNation.districtId,
               sub_district_id: body.addressNation.subDistrictId,
               detail: body.addressNation.detail,
+              zip_code_id: body.addressNation.zipCodeId
+                ? Number(body.addressNation.zipCodeId)
+                : null,
             },
           });
 

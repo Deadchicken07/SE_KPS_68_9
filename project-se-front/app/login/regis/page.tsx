@@ -20,9 +20,13 @@ type FormErrors = {
   currentProvince?: string;
   currentDistrict?: string;
   currentSubDistrict?: string;
+  currentZipCode?: string;
   nationProvince?: string;
   nationDistrict?: string;
   nationSubDistrict?: string;
+  nationZipCode?: string;
+  detailNation?: string;
+  detail?: string;
 };
 type SelectOption = {
   value: number;
@@ -139,6 +143,8 @@ export default function RegisterPage() {
     if (form.password !== form.confirmPassword) {
       newErrors.confirmPassword = "รหัสผ่านไม่ตรงกัน";
     }
+    if (!form.detailNation) newErrors.detailNation = "กรุณากรอกรายละเอียด";
+    if (!form.detail) newErrors.detail = "กรุณากรอกรายละเอียด";
 
     if (current.selectedProvince === null)
       newErrors.currentProvince = "กรุณาเลือกจังหวัด";
@@ -146,6 +152,8 @@ export default function RegisterPage() {
       newErrors.currentDistrict = "กรุณาเลือกอำเภอ";
     if (current.selectedSubDistrict === null)
       newErrors.currentSubDistrict = "กรุณาเลือกตำบล";
+    if (current.selectedZipCode === null)
+      newErrors.currentZipCode = "กรุณาเลือกรหัสไปรษณีย์";
 
     if (nation.selectedProvince === null)
       newErrors.nationProvince = "กรุณาเลือกจังหวัด";
@@ -153,7 +161,8 @@ export default function RegisterPage() {
       newErrors.nationDistrict = "กรุณาเลือกอำเภอ";
     if (nation.selectedSubDistrict === null)
       newErrors.nationSubDistrict = "กรุณาเลือกตำบล";
-
+    if (nation.selectedZipCode === null)
+      newErrors.nationZipCode = "กรุณาเลือกรหัสไปรษณีย์";
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -173,12 +182,14 @@ export default function RegisterPage() {
         districtId: current.selectedDistrict!,
         subDistrictId: current.selectedSubDistrict!,
         detail: form.detail,
+        zipCodeId: current.selectedZipCode!,
       },
       addressNation: {
         provinceId: nation.selectedProvince!,
         districtId: nation.selectedDistrict!,
         subDistrictId: nation.selectedSubDistrict!,
         detail: form.detailNation,
+        zipCodeId: nation.selectedZipCode!,
       },
     });
   };
@@ -269,58 +280,80 @@ export default function RegisterPage() {
               {errors.email && (
                 <p className="text-red-500 text-sm">{errors.email}</p>
               )}
-              <Label text="รหัสผ่าน" />
-              <input
-                type="password"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className={`input ${errors.password ? "border-red-500" : ""}`}
-              />
-              {errors.password && (
-                <p className="text-red-500 text-sm">{errors.password}</p>
-              )}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label text="รหัสผ่าน" />
+                  <input
+                    type="password"
+                    value={form.password}
+                    onChange={(e) =>
+                      setForm({ ...form, password: e.target.value })
+                    }
+                    className={`input ${errors.password ? "border-red-500" : ""}`}
+                  />
+                  {errors.password && (
+                    <p className="text-red-500 text-sm">{errors.password}</p>
+                  )}
+                </div>
 
-              <Label text="ยืนยันรหัสผ่าน" />
-              <input
-                type="password"
-                value={form.confirmPassword}
-                onChange={(e) =>
-                  setForm({ ...form, confirmPassword: e.target.value })
-                }
-                className={`input ${
-                  errors.confirmPassword ? "border-red-500" : ""
-                }`}
-              />
-              {errors.confirmPassword && (
-                <p className="text-red-500 text-sm">{errors.confirmPassword}</p>
-              )}
+                <div>
+                  <Label text="ยืนยันรหัสผ่าน" />
+                  <input
+                    type="password"
+                    value={form.confirmPassword}
+                    onChange={(e) =>
+                      setForm({ ...form, confirmPassword: e.target.value })
+                    }
+                    className={`input ${
+                      errors.confirmPassword ? "border-red-500" : ""
+                    }`}
+                  />
+                  {errors.confirmPassword && (
+                    <p className="text-red-500 text-sm">
+                      {errors.confirmPassword}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label text="เบอร์โทร" />
+                  <input
+                    value={form.phone}
+                    onChange={(e) =>
+                      setForm({ ...form, phone: e.target.value })
+                    }
+                    className="input"
+                  />
+                  {errors.phone && (
+                    <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+                  )}
+                </div>
 
-              <Label text="เบอร์โทร" />
-              <input
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                className="input"
-              />
+                <div>
+                  <Label text="โรคประจำตัว" />
+                  <input
+                    placeholder="ถ้าไม่มีให้ใส่ -"
+                    value={form.medicalCondition}
+                    onChange={(e) =>
+                      setForm({ ...form, medicalCondition: e.target.value })
+                    }
+                    className="input"
+                  />
+                </div>
 
-              <Label text="โรคประจำตัว" />
-              <input
-                placeholder="ถ้าไม่มีให้ใส่ -"
-                value={form.medicalCondition}
-                onChange={(e) =>
-                  setForm({ ...form, medicalCondition: e.target.value })
-                }
-                className="input"
-              />
-
-              <Label text="แพ้ยา" />
-              <input
-                placeholder="ถ้าไม่มีให้ใส่ -"
-                value={form.allergyDrug}
-                onChange={(e) =>
-                  setForm({ ...form, allergyDrug: e.target.value })
-                }
-                className="input"
-              />
+                <div>
+                  <Label text="แพ้ยา" />
+                  <input
+                    placeholder="ถ้าไม่มีให้ใส่ -"
+                    value={form.allergyDrug}
+                    onChange={(e) =>
+                      setForm({ ...form, allergyDrug: e.target.value })
+                    }
+                    className="input"
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="space-y-4">
@@ -328,90 +361,94 @@ export default function RegisterPage() {
                 ที่อยู่ปัจจุบัน *
               </h4>
 
-              <Select
-                styles={selectStyle}
-                options={current.provinces.map((p) => ({
-                  value: p.id,
-                  label: p.name,
-                }))}
-                onChange={(o) =>
-                  current.setSelectedProvince(o ? o.value : null)
-                }
-                placeholder="เลือกจังหวัด"
-              />
-
-              <Select
-                styles={selectStyle}
-                options={current.districts.map((d) => ({
-                  value: d.id,
-                  label: d.name,
-                }))}
-                onChange={(o) =>
-                  current.setSelectedDistrict(o ? o.value : null)
-                }
-                placeholder="เลือกอำเภอ"
-                isDisabled={!current.selectedProvince}
-              />
-
-              <Select
-                styles={selectStyle}
-                options={current.subDistricts.map((s) => ({
-                  value: s.id,
-                  label: s.name,
-                }))}
-                onChange={(o) =>
-                  current.setSelectedSubDistrict(o ? o.value : null)
-                }
-                placeholder="เลือกตำบล"
-                isDisabled={!current.selectedDistrict}
-              />
-
               <input
                 placeholder="รายละเอียดที่อยู่"
                 value={form.detail}
                 onChange={(e) => setForm({ ...form, detail: e.target.value })}
                 className="input"
               />
+
+              <div className="grid grid-cols-2 gap-4">
+                <Select
+                  styles={selectStyle}
+                  options={current.provinces.map((p) => ({
+                    value: p.id,
+                    label: p.name,
+                  }))}
+                  value={
+                    current.provinces
+                      .map((p) => ({ value: p.id, label: p.name }))
+                      .find((o) => o.value === current.selectedProvince) || null
+                  }
+                  onChange={(o) =>
+                    current.setSelectedProvince(o ? o.value : null)
+                  }
+                  placeholder="เลือกจังหวัด"
+                />
+
+                <Select
+                  styles={selectStyle}
+                  options={current.districts.map((d) => ({
+                    value: d.id,
+                    label: d.name,
+                  }))}
+                  value={
+                    current.districts
+                      .map((d) => ({ value: d.id, label: d.name }))
+                      .find((o) => o.value === current.selectedDistrict) || null
+                  }
+                  onChange={(o) =>
+                    current.setSelectedDistrict(o ? o.value : null)
+                  }
+                  placeholder="เลือกอำเภอ"
+                  isDisabled={!current.selectedProvince}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Select
+                  styles={selectStyle}
+                  options={current.subDistricts.map((s) => ({
+                    value: s.id,
+                    label: s.name,
+                  }))}
+                  value={
+                    current.subDistricts
+                      .map((s) => ({ value: s.id, label: s.name }))
+                      .find((o) => o.value === current.selectedSubDistrict) ||
+                    null
+                  }
+                  onChange={(o) =>
+                    current.setSelectedSubDistrict(o ? o.value : null)
+                  }
+                  placeholder="เลือกตำบล"
+                  isDisabled={!current.selectedDistrict}
+                />
+
+                <Select
+                  styles={selectStyle}
+                  options={current.zipCodes.map((z) => ({
+                    value: z.id,
+                    label: z.name,
+                  }))}
+                  value={
+                    current.zipCodes
+                      .map((z) => ({ value: z.id, label: z.name }))
+                      .find((o) => o.value === current.selectedZipCode) || null
+                  }
+                  onChange={(o) =>
+                    current.setSelectedZipCode(o ? o.value : null)
+                  }
+                  placeholder="เลือกรหัสไปรษณีย์"
+                  isDisabled={!current.selectedSubDistrict}
+                />
+              </div>
             </div>
 
             <div className="space-y-4">
               <h4 className="text-lg font-semibold text-[#2F6E5D]">
                 ที่อยู่ตามบัตรประชาชน *
               </h4>
-
-              <Select
-                styles={selectStyle}
-                options={nation.provinces.map((p) => ({
-                  value: p.id,
-                  label: p.name,
-                }))}
-                onChange={(o) => nation.setSelectedProvince(o ? o.value : null)}
-                placeholder="เลือกจังหวัด"
-              />
-
-              <Select
-                styles={selectStyle}
-                options={nation.districts.map((d) => ({
-                  value: d.id,
-                  label: d.name,
-                }))}
-                onChange={(o) => nation.setSelectedDistrict(o ? o.value : null)}
-                placeholder="เลือกอำเภอ"
-                isDisabled={!nation.selectedProvince}
-              />
-
-              <Select
-                styles={selectStyle}
-                options={nation.subDistricts.map((s) => ({
-                  value: s.id,
-                  label: s.name,
-                }))}
-                onChange={(o) =>
-                  nation.setSelectedSubDistrict(o ? o.value : null)
-                }
-                placeholder="เลือกตำบล"
-                isDisabled={!nation.selectedDistrict}
-              />
 
               <input
                 placeholder="รายละเอียดที่อยู่"
@@ -421,6 +458,82 @@ export default function RegisterPage() {
                 }
                 className="input"
               />
+
+              <div className="grid grid-cols-2 gap-4">
+                <Select
+                  styles={selectStyle}
+                  options={nation.provinces.map((p) => ({
+                    value: p.id,
+                    label: p.name,
+                  }))}
+                  value={
+                    nation.provinces
+                      .map((p) => ({ value: p.id, label: p.name }))
+                      .find((o) => o.value === nation.selectedProvince) || null
+                  }
+                  onChange={(o) =>
+                    nation.setSelectedProvince(o ? o.value : null)
+                  }
+                  placeholder="เลือกจังหวัด"
+                />
+
+                <Select
+                  styles={selectStyle}
+                  options={nation.districts.map((d) => ({
+                    value: d.id,
+                    label: d.name,
+                  }))}
+                  value={
+                    nation.districts
+                      .map((d) => ({ value: d.id, label: d.name }))
+                      .find((o) => o.value === nation.selectedDistrict) || null
+                  }
+                  onChange={(o) =>
+                    nation.setSelectedDistrict(o ? o.value : null)
+                  }
+                  placeholder="เลือกอำเภอ"
+                  isDisabled={!nation.selectedProvince}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Select
+                  styles={selectStyle}
+                  options={nation.subDistricts.map((s) => ({
+                    value: s.id,
+                    label: s.name,
+                  }))}
+                  value={
+                    nation.subDistricts
+                      .map((s) => ({ value: s.id, label: s.name }))
+                      .find((o) => o.value === nation.selectedSubDistrict) ||
+                    null
+                  }
+                  onChange={(o) =>
+                    nation.setSelectedSubDistrict(o ? o.value : null)
+                  }
+                  placeholder="เลือกตำบล"
+                  isDisabled={!nation.selectedDistrict}
+                />
+
+                <Select
+                  styles={selectStyle}
+                  options={nation.zipCodes.map((z) => ({
+                    value: z.id,
+                    label: z.name,
+                  }))}
+                  value={
+                    nation.zipCodes
+                      .map((z) => ({ value: z.id, label: z.name }))
+                      .find((o) => o.value === nation.selectedZipCode) || null
+                  }
+                  onChange={(o) =>
+                    nation.setSelectedZipCode(o ? o.value : null)
+                  }
+                  placeholder="เลือกรหัสไปรษณีย์"
+                  isDisabled={!nation.selectedSubDistrict}
+                />
+              </div>
             </div>
 
             <button

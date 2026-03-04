@@ -3,6 +3,7 @@ export interface AddressPayload {
   districtId: number;
   subDistrictId: number;
   detail: string;
+  zipCodeId: number;
 }
 
 export interface RegisterPayload {

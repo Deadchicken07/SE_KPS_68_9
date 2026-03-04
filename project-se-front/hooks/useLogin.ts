@@ -21,7 +21,8 @@ export const useLogin = () => {
 
       const res = await axios.post<LoginResponse>(
         `${API}/auth/login`,
-        { email, password }
+        { email, password },
+        { withCredentials: true }
       );
 
       const token = res.data.access_token;

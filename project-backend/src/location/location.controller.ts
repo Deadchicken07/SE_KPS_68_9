@@ -28,4 +28,8 @@ export class LocationController {
   ) {
     return this.locationService.searchSubDistricts(districtId, q);
   }
+  @Get('zip-codes')
+  searchZipCodes(@Query('subDistrictId', ParseIntPipe) subDistrictId: number) {
+    return this.locationService.searchZipCodes(subDistrictId);
+  }
 }
