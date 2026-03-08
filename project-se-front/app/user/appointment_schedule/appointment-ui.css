@@ -169,16 +169,17 @@
 
 .appt-support-grid {
   display: grid;
-  gap: 16px;
+  gap: 6px;
   grid-template-columns: 1fr;
-  margin: 8px 0 22px;
+  margin: 4px 0 10px;
 }
 
 .appt-support-card {
-  padding: 16px 18px;
-  border-radius: 16px;
-  border: 1px solid rgba(14, 79, 76, 0.2);
-  background: rgba(255, 255, 255, 0.66);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .appt-support-card.is-highlight {
@@ -187,8 +188,9 @@
 
 .appt-support-card__title {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
+  color: rgba(15, 70, 67, 0.72);
 }
 
 .appt-support-card__text {
@@ -199,11 +201,19 @@
 }
 
 .appt-checklist {
-  margin: 10px 0 0;
-  padding-left: 18px;
-  color: #2f6663;
-  font-size: 0.9rem;
-  line-height: 1.75;
+  margin: 4px 0 0;
+  padding-left: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  color: rgba(47, 102, 99, 0.7);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.appt-checklist li::before {
+  content: "• ";
 }
 
 .appt-list {
@@ -215,9 +225,9 @@
 .appt-card {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
+  align-items: stretch;
   gap: clamp(18px, 2vw, 26px);
-  padding: clamp(24px, 2.6vw, 36px);
+  padding: clamp(20px, 2.2vw, 30px);
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 22px;
@@ -231,7 +241,7 @@
 
 .appt-card__left {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: clamp(16px, 2vw, 28px);
 }
 
@@ -260,16 +270,16 @@
 .appt-meta__name {
   margin: 0;
   font-family: "Manrope", "Prompt", sans-serif;
-  font-size: clamp(1.3rem, 1.8vw, 1.6rem);
+  font-size: clamp(1.08rem, 1.2vw, 1.2rem);
   line-height: 1.25;
   font-weight: 700;
   letter-spacing: -0.01em;
 }
 
 .appt-meta__line {
-  margin: 10px 0 0;
-  font-size: clamp(0.98rem, 1.15vw, 1.08rem);
-  line-height: 1.65;
+  margin: 6px 0 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
   color: var(--muted);
 }
 
@@ -278,19 +288,22 @@
 }
 
 .appt-card__right {
-  min-width: 320px;
+  min-width: 330px;
   justify-self: end;
   display: grid;
-  align-content: center;
-  gap: 8px;
+  grid-template-rows: auto auto auto 1fr;
+  align-content: stretch;
+  gap: 6px;
+  height: 100%;
 }
 
 .appt-status,
 .appt-payment {
   margin: 0;
-  font-size: clamp(1rem, 1.3vw, 1.2rem);
+  font-size: 0.88rem;
   font-weight: 600;
   color: var(--ink);
+  line-height: 1.35;
 }
 
 .appt-status__pill,
@@ -316,24 +329,31 @@
 }
 
 .appt-payment__pill.is-unpaid {
-  color: #a23a2f;
+  color: #0f6f6d;
 }
 
 .appt-actions {
-  margin-top: 8px;
+  margin-top: 10px;
   display: grid;
   gap: 10px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+.appt-actions--single {
+  grid-template-columns: 1fr;
+  max-width: 220px;
 }
 
 .appt-btn {
   min-width: 0;
   width: 100%;
-  height: 42px;
+  height: 38px;
   border-radius: 999px;
   font-family: "Prompt", "Segoe UI", Tahoma, sans-serif;
-  font-size: 1rem;
+  font-size: 0.82rem;
   font-weight: 600;
+  letter-spacing: 0.01em;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
   display: inline-flex;
@@ -354,9 +374,9 @@
 }
 
 .appt-btn--ghost {
-  border: 2px solid var(--brand);
+  border: 1px solid var(--brand);
   color: var(--brand-deep);
-  background: rgba(247, 255, 253, 0.86);
+  background: rgba(239, 252, 248, 0.9);
 }
 
 .appt-btn--ghost:hover {
@@ -366,8 +386,8 @@
 .appt-btn--primary {
   border: 0;
   color: #ffffff;
-  background: linear-gradient(140deg, #b0672d 0%, #9b4d1f 100%);
-  box-shadow: 0 10px 18px rgba(162, 92, 42, 0.26);
+  background: linear-gradient(140deg, #1b8f8d 0%, #0f6f6d 100%);
+  box-shadow: 0 10px 18px rgba(19, 125, 123, 0.26);
 }
 
 .appt-btn--join {
@@ -378,18 +398,168 @@
 }
 
 .appt-btn--disabled {
-  border: 1px solid rgba(14, 79, 76, 0.2);
-  color: #6a8e8b;
-  background: rgba(247, 255, 253, 0.72);
+  border: 1px solid rgba(14, 79, 76, 0.16);
+  color: #5f7f7d;
+  background: rgba(235, 244, 242, 0.92);
   box-shadow: none;
 }
 
 .appt-note {
-  margin: 2px 0 0;
+  margin: 8px 0 0;
   color: #315f5d;
-  font-size: 0.9rem;
-  line-height: 1.6;
-  min-height: 44px;
+  font-size: 0.74rem;
+  line-height: 1.4;
+  min-height: 32px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  align-self: end;
+}
+
+.appt-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(6, 31, 30, 0.38);
+  display: grid;
+  place-items: center;
+  padding: 18px;
+}
+
+.appt-modal {
+  width: min(460px, 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(8, 74, 71, 0.24);
+  background: #f7fffd;
+  box-shadow: 0 24px 46px rgba(7, 62, 59, 0.28);
+  padding: 18px;
+}
+
+.appt-pay-modal {
+  width: min(520px, 100%);
+}
+
+.appt-modal__title {
+  margin: 0;
+  font-family: "Manrope", "Prompt", sans-serif;
+  font-size: 1.06rem;
+  color: #0b4f4d;
+}
+
+.appt-modal__subtitle {
+  margin: 4px 0 14px;
+  font-size: 0.82rem;
+  color: #3b6663;
+}
+
+.appt-pay-box {
+  margin: 8px 0 14px;
+  border: 1px solid rgba(12, 88, 84, 0.2);
+  border-radius: 12px;
+  background: rgba(241, 254, 250, 0.8);
+  padding: 12px;
+  text-align: center;
+}
+
+.appt-qr-image {
+  width: 180px;
+  height: 180px;
+  margin: 0 auto;
+  border-radius: 10px;
+  border: 6px solid #ffffff;
+  box-shadow: 0 8px 22px rgba(7, 62, 59, 0.16);
+  object-fit: cover;
+  background: #ffffff;
+}
+
+.appt-pay-box__label {
+  margin: 10px 0 0;
+  color: #0f5b58;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.appt-pay-box__meta {
+  margin: 4px 0 0;
+  color: #3b6663;
+  font-size: 0.72rem;
+}
+
+.appt-modal__label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #0e5d5a;
+}
+
+.appt-modal__input {
+  width: 100%;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid rgba(14, 79, 76, 0.24);
+  background: #ffffff;
+  color: #0f4643;
+  padding: 0 10px;
+  font-size: 0.84rem;
+  margin-bottom: 12px;
+}
+
+.appt-modal__file-name {
+  margin: -4px 0 8px;
+  font-size: 0.72rem;
+  color: #2f6360;
+}
+
+.appt-slip-preview {
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  border: 1px solid rgba(14, 79, 76, 0.2);
+  border-radius: 10px;
+  background: #ffffff;
+  margin-bottom: 8px;
+}
+
+.appt-modal__error {
+  margin: 0 0 8px;
+  font-size: 0.74rem;
+  color: #aa3e2a;
+}
+
+.appt-modal__time-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.appt-modal__actions {
+  margin-top: 6px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.appt-modal__btn {
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.appt-modal__btn.is-ghost {
+  border-color: rgba(11, 86, 84, 0.36);
+  background: #f2fcf9;
+  color: #0b5654;
+}
+
+.appt-modal__btn.is-primary {
+  border: 0;
+  background: linear-gradient(140deg, #137d7b 0%, #0b6866 100%);
+  color: #ffffff;
 }
 
 @keyframes card-rise {
@@ -409,18 +579,9 @@
     font-size: 1rem;
   }
 
-  .appt-meta__line {
-    font-size: 0.95rem;
-  }
-
-  .appt-status,
-  .appt-payment {
-    font-size: 1.02rem;
-  }
-
   .appt-btn {
-    font-size: 0.94rem;
-    height: 40px;
+    font-size: 0.8rem;
+    height: 36px;
   }
 }
 
@@ -433,7 +594,8 @@
   .appt-card__right {
     min-width: 0;
     justify-self: start;
-    gap: 4px;
+    gap: 6px;
+    grid-template-rows: auto auto auto auto;
   }
 
   .appt-actions {
@@ -481,12 +643,12 @@
   }
 
   .appt-meta__line {
-    font-size: 0.88rem;
+    font-size: 0.82rem;
   }
 
   .appt-status,
   .appt-payment {
-    font-size: 0.95rem;
+    font-size: 0.82rem;
   }
 }
 

@@ -60,20 +60,35 @@ type EnrichedAppointment = AppointmentItem & {
   sortValue: number;
 };
 
+type RescheduleFormState = {
+  appointmentId: number;
+  consultantName: string;
+  appointmentDate: string;
+  startTime: string;
+  endTime: string;
+};
+
+type PaymentFormState = {
+  appointmentId: number;
+  consultantName: string;
+  slipFile: File | null;
+  slipPreviewUrl: string | null;
+};
+
 const API_BASE_URL = "http://localhost:4000";
 const DEFAULT_MEET_LINK =
   process.env.NEXT_PUBLIC_CLINIC_MEET_URL ?? "https://meet.google.com/new";
 const JOIN_LEAD_MS = 30 * 60 * 1000;
 
 const statusText: Record<AppointmentStatus, string> = {
-  pending: "Pending",
-  confirmed: "Confirmed",
-  completed: "Completed",
+  pending: "รอชำระเงิน",
+  confirmed: "ยืนยันแล้ว",
+  completed: "สำเร็จแล้ว",
 };
 
 const appointmentTypeText: Record<NonNullable<AppointmentItem["appointmentType"]>, string> = {
-  online: "Online",
-  onsite: "Onsite",
+  online: "ออนไลน์",
+  onsite: "ที่คลินิก",
 };
 
 const defaultSchedule: AppointmentScheduleResponse = {
@@ -157,10 +172,10 @@ function formatCountdown(ms: number): string {
   const seconds = totalSeconds % 60;
 
   if (hours > 0) {
-    return `${hours}h ${minutes}m ${seconds}s`;
+    return `${hours} ชม. ${minutes} นาที ${seconds} วินาที`;
   }
 
-  return `${minutes}m ${seconds}s`;
+  return `${minutes} นาที ${seconds} วินาที`;
 }
 
 function isPastByClock(item: AppointmentItem, now: Date): boolean {
@@ -202,21 +217,21 @@ function getJoinAccessInfo(item: AppointmentItem, now: Date): JoinAccessInfo {
   if (item.appointmentType !== "online") {
     return {
       state: "not-online",
-      message: "This is an onsite appointment. Please arrive at clinic 10 minutes early.",
+      message: "นัดหมายที่คลินิก กรุณามาถึงก่อนเวลาประมาณ 10 นาที",
     };
   }
 
   if (item.paymentStatus !== "Paid") {
     return {
       state: "payment-required",
-      message: "Please complete payment first to unlock Google Meet.",
+      message: "กรุณาชำระเงินก่อน จึงจะเปิดลิงก์ Google Meet ได้",
     };
   }
 
   if (!item.appointmentDate) {
     return {
       state: "invalid",
-      message: "Appointment date is missing. Please contact support.",
+      message: "ไม่พบวันที่นัดหมาย กรุณาติดต่อเจ้าหน้าที่",
     };
   }
 
@@ -225,7 +240,7 @@ function getJoinAccessInfo(item: AppointmentItem, now: Date): JoinAccessInfo {
   if (!parsedRange) {
     return {
       state: "invalid",
-      message: "Appointment time is invalid. Please contact support.",
+      message: "เวลานัดหมายไม่ถูกต้อง กรุณาติดต่อเจ้าหน้าที่",
     };
   }
 
@@ -235,7 +250,7 @@ function getJoinAccessInfo(item: AppointmentItem, now: Date): JoinAccessInfo {
   if (!startAt || !endAt) {
     return {
       state: "invalid",
-      message: "Appointment time is invalid. Please contact support.",
+      message: "เวลานัดหมายไม่ถูกต้อง กรุณาติดต่อเจ้าหน้าที่",
     };
   }
 
@@ -244,25 +259,25 @@ function getJoinAccessInfo(item: AppointmentItem, now: Date): JoinAccessInfo {
   if (now < openAt) {
     return {
       state: "waiting",
-      message: `Google Meet opens in ${formatCountdown(openAt.getTime() - now.getTime())}.`,
+      message: `จะเริ่มในอีก ${formatCountdown(openAt.getTime() - now.getTime())}`,
     };
   }
 
   if (now >= openAt && now < endAt) {
     return {
       state: "open",
-      message: "Meeting room is open now. You can join until session end time.",
+      message: "ห้องประชุมเปิดแล้ว สามารถเข้าร่วมได้ทันที",
     };
   }
 
   return {
     state: "closed",
-    message: "Session window ended. Meeting link is no longer available.",
+    message: "หมดเวลานัดหมายแล้ว ลิงก์เข้าห้องถูกปิด",
   };
 }
 
 async function parseErrorMessage(response: Response): Promise<string> {
-  const fallback = "Unable to complete the request";
+  const fallback = "ไม่สามารถดำเนินการรายการนี้ได้";
 
   try {
     const payload = (await response.json()) as ApiErrorPayload;
@@ -290,6 +305,27 @@ function normalizeApiItems(
   }));
 }
 
+function buildInitialRescheduleForm(item: AppointmentItem): RescheduleFormState {
+  const parsedRange = parseTimeRange(item.timeSelect);
+
+  return {
+    appointmentId: item.id,
+    consultantName: item.consultantName,
+    appointmentDate: item.appointmentDate ?? toLocalDateKey(new Date()),
+    startTime: parsedRange?.startText ?? "09:00",
+    endTime: parsedRange?.endText ?? "10:00",
+  };
+}
+
+function buildInitialPaymentForm(item: AppointmentItem): PaymentFormState {
+  return {
+    appointmentId: item.id,
+    consultantName: item.consultantName,
+    slipFile: null,
+    slipPreviewUrl: null,
+  };
+}
+
 export default function AppointmentSchedulePage() {
   const [activeTab, setActiveTab] = useState<TabKey>("upcoming");
   const [schedule, setSchedule] = useState<AppointmentScheduleResponse>(defaultSchedule);
@@ -300,6 +336,11 @@ export default function AppointmentSchedulePage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [processingRescheduleId, setProcessingRescheduleId] = useState<number | null>(null);
   const [processingPayId, setProcessingPayId] = useState<number | null>(null);
+  const [rescheduleForm, setRescheduleForm] = useState<RescheduleFormState | null>(null);
+  const [isRescheduleDialogOpen, setIsRescheduleDialogOpen] = useState(false);
+  const [paymentForm, setPaymentForm] = useState<PaymentFormState | null>(null);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [paymentFormError, setPaymentFormError] = useState<string | null>(null);
 
   const normalizedSchedule = useMemo<AppointmentScheduleResponse>(() => {
     const byId = new Map<number, AppointmentItem>();
@@ -348,7 +389,7 @@ export default function AppointmentSchedulePage() {
 
     if (!token) {
       setIsAuthRequired(true);
-      setError("Please login to view your appointment schedule.");
+      setError("กรุณาเข้าสู่ระบบเพื่อดูตารางนัดหมาย");
       setLoading(false);
       return;
     }
@@ -372,7 +413,7 @@ export default function AppointmentSchedulePage() {
         if (response.status === 401) {
           setIsAuthRequired(true);
           setSchedule(defaultSchedule);
-          setError("Your session has expired. Please login again.");
+          setError("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง");
           return;
         }
 
@@ -386,12 +427,99 @@ export default function AppointmentSchedulePage() {
         past: normalizeApiItems(payload.past),
       });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Unable to load appointments";
+      const message = err instanceof Error ? err.message : "ไม่สามารถโหลดข้อมูลนัดหมายได้";
       setError(message);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  const openRescheduleDialog = useCallback((item: AppointmentItem) => {
+    setRescheduleForm(buildInitialRescheduleForm(item));
+    setIsRescheduleDialogOpen(true);
+  }, []);
+
+  const closeRescheduleDialog = useCallback(() => {
+    setIsRescheduleDialogOpen(false);
+    setRescheduleForm(null);
+  }, []);
+
+  const openPaymentDialog = useCallback((item: AppointmentItem) => {
+    setPaymentFormError(null);
+    setPaymentForm(buildInitialPaymentForm(item));
+    setIsPaymentDialogOpen(true);
+  }, []);
+
+  const closePaymentDialog = useCallback(() => {
+    setIsPaymentDialogOpen(false);
+    setPaymentForm((prev) => {
+      if (prev?.slipPreviewUrl) {
+        URL.revokeObjectURL(prev.slipPreviewUrl);
+      }
+      return null;
+    });
+    setPaymentFormError(null);
+  }, []);
+
+  const handleRescheduleSubmit = useCallback(async () => {
+    if (!rescheduleForm) {
+      return;
+    }
+
+    const item = rescheduleForm;
+    const token = getTokenFromStorage();
+
+    if (!token) {
+      setIsAuthRequired(true);
+      setError("กรุณาเข้าสู่ระบบก่อนทำรายการ");
+      return;
+    }
+
+    const normalizedDate = item.appointmentDate.trim();
+    const normalizedStart = item.startTime.trim();
+    const normalizedEnd = item.endTime.trim();
+    const normalizedTime = `${normalizedStart} - ${normalizedEnd}`;
+    const isDateValid = /^\d{4}-\d{2}-\d{2}$/.test(normalizedDate);
+    const isTimeValid = /^([01]\d|2[0-3]):([0-5]\d)$/.test(normalizedStart)
+      && /^([01]\d|2[0-3]):([0-5]\d)$/.test(normalizedEnd)
+      && normalizedEnd > normalizedStart;
+
+    if (!isDateValid || !isTimeValid) {
+      setError("กรุณาเลือกวันและเวลาให้ถูกต้อง โดยเวลาเสร็จต้องมากกว่าเวลาเริ่ม");
+      return;
+    }
+
+    setProcessingRescheduleId(item.appointmentId);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/appointments/${item.appointmentId}/reschedule`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          appointmentDate: normalizedDate,
+          timeSelect: normalizedTime,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(await parseErrorMessage(response));
+      }
+
+      setSuccessMessage("เลื่อนนัดหมายสำเร็จ");
+      closeRescheduleDialog();
+      await fetchAppointments(false);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "ไม่สามารถเลื่อนนัดหมายได้";
+      setError(message);
+    } finally {
+      setProcessingRescheduleId(null);
+    }
+  }, [rescheduleForm, closeRescheduleDialog, fetchAppointments]);
 
   const handleReschedule = useCallback(
     async (item: AppointmentItem) => {
@@ -399,65 +527,13 @@ export default function AppointmentSchedulePage() {
 
       if (!token) {
         setIsAuthRequired(true);
-        setError("Please login to continue.");
+        setError("กรุณาเข้าสู่ระบบก่อนทำรายการ");
         return;
       }
 
-      const nextDate = window.prompt("New date (YYYY-MM-DD)", item.appointmentDate ?? "");
-
-      if (!nextDate) {
-        return;
-      }
-
-      const nextTime = window.prompt("New time (HH:mm - HH:mm)", item.timeSelect ?? "");
-
-      if (!nextTime) {
-        return;
-      }
-
-      const normalizedDate = nextDate.trim();
-      const normalizedTime = nextTime.trim().replace(/\s*-\s*/, " - ");
-      const isDateValid = /^\d{4}-\d{2}-\d{2}$/.test(normalizedDate);
-      const isTimeValid = /^([01]\d|2[0-3]):([0-5]\d)\s-\s([01]\d|2[0-3]):([0-5]\d)$/.test(
-        normalizedTime,
-      );
-
-      if (!isDateValid || !isTimeValid) {
-        setError("Please use YYYY-MM-DD and HH:mm - HH:mm format.");
-        return;
-      }
-
-      setProcessingRescheduleId(item.id);
-      setError(null);
-      setSuccessMessage(null);
-
-      try {
-        const response = await fetch(`${API_BASE_URL}/appointments/${item.id}/reschedule`, {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            appointmentDate: normalizedDate,
-            timeSelect: normalizedTime,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error(await parseErrorMessage(response));
-        }
-
-        setSuccessMessage("Appointment rescheduled successfully.");
-        await fetchAppointments(false);
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Unable to reschedule appointment";
-        setError(message);
-      } finally {
-        setProcessingRescheduleId(null);
-      }
+      openRescheduleDialog(item);
     },
-    [fetchAppointments],
+    [openRescheduleDialog],
   );
 
   const handlePayAppointment = useCallback(
@@ -466,39 +542,63 @@ export default function AppointmentSchedulePage() {
 
       if (!token) {
         setIsAuthRequired(true);
-        setError("Please login to continue.");
+        setError("กรุณาเข้าสู่ระบบก่อนทำรายการ");
         return;
       }
 
-      setProcessingPayId(item.id);
-      setError(null);
-      setSuccessMessage(null);
-
-      try {
-        const response = await fetch(`${API_BASE_URL}/appointments/${item.id}/pay`, {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(await parseErrorMessage(response));
-        }
-
-        setSuccessMessage(
-          "Payment completed. Google Meet link will open 30 minutes before your appointment.",
-        );
-        await fetchAppointments(false);
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Unable to process payment";
-        setError(message);
-      } finally {
-        setProcessingPayId(null);
-      }
+      openPaymentDialog(item);
     },
-    [fetchAppointments],
+    [openPaymentDialog],
   );
+
+  const handleConfirmMockPayment = useCallback(async () => {
+    if (!paymentForm) {
+      return;
+    }
+
+    const token = getTokenFromStorage();
+
+    if (!token) {
+      setIsAuthRequired(true);
+      setError("กรุณาเข้าสู่ระบบก่อนทำรายการ");
+      return;
+    }
+
+    if (!paymentForm.slipFile) {
+      setPaymentFormError("กรุณาแนบสลิปก่อนยืนยันการชำระเงิน");
+      return;
+    }
+
+    setProcessingPayId(paymentForm.appointmentId);
+    setError(null);
+    setSuccessMessage(null);
+    setPaymentFormError(null);
+
+    const slipFileName = paymentForm.slipFile.name;
+    try {
+      const response = await fetch(`${API_BASE_URL}/appointments/${paymentForm.appointmentId}/pay`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(await parseErrorMessage(response));
+      }
+
+      setSuccessMessage(
+        `ยืนยันการชำระเงินสำเร็จ แนบสลิป "${slipFileName}" แล้ว ลิงก์ Google Meet จะเปิดก่อนเวลานัด 30 นาที`,
+      );
+      closePaymentDialog();
+      await fetchAppointments(false);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "ไม่สามารถยืนยันการชำระเงินได้";
+      setError(message);
+    } finally {
+      setProcessingPayId(null);
+    }
+  }, [paymentForm, closePaymentDialog, fetchAppointments]);
 
   useEffect(() => {
     void fetchAppointments(true);
@@ -522,13 +622,6 @@ export default function AppointmentSchedulePage() {
       <header className="appt-header">
         <div className="appt-header__top">
           <h1 className="appt-title">ตารางนัดหมาย</h1>
-          <button
-            className="appt-refresh-btn"
-            onClick={() => void fetchAppointments(true)}
-            type="button"
-          >
-            Refresh
-          </button>
         </div>
         <div className="appt-divider" />
         <div className="appt-tabs" role="tablist" aria-label="Appointment tabs">
@@ -558,7 +651,7 @@ export default function AppointmentSchedulePage() {
           {error}
           {isAuthRequired ? (
             <Link className="appt-inline-link" href="/login">
-              Login
+              เข้าสู่ระบบ
             </Link>
           ) : null}
         </div>
@@ -570,22 +663,23 @@ export default function AppointmentSchedulePage() {
         </div>
       )}
 
-      <section className="appt-support-grid" aria-label="Mental health support">
-        <article className="appt-support-card">
-          <h2 className="appt-support-card__title">Before your online session</h2>
-          <ul className="appt-checklist">
-            <li>Choose a quiet and private space</li>
-            <li>Test internet, camera, and microphone</li>
-            <li>Prepare water and a short note of topics you want to discuss</li>
-          </ul>
-        </article>
-      </section>
+      {activeTab === "upcoming" ? (
+        <section className="appt-support-grid" aria-label="ข้อมูลเตรียมตัวก่อนพบผู้เชี่ยวชาญ">
+          <article className="appt-support-card">
+            <h2 className="appt-support-card__title">ก่อนเริ่มนัดหมายออนไลน์</h2>
+            <ul className="appt-checklist">
+              <li>เลือกสถานที่เงียบและเป็นส่วนตัว</li>
+              <li>ทดสอบอินเทอร์เน็ต กล้อง และไมโครโฟน</li>
+            </ul>
+          </article>
+        </section>
+      ) : null}
 
       {loading ? (
-        <div className="appt-feedback">Loading appointments...</div>
+        <div className="appt-feedback">กำลังโหลดข้อมูลนัดหมาย...</div>
       ) : appointments.length === 0 ? (
         <div className="appt-feedback">
-          {activeTab === "upcoming" ? "No upcoming appointments." : "No past appointments."}
+          {activeTab === "upcoming" ? "ยังไม่มีนัดหมายที่กำลังจะมาถึง" : "ยังไม่มีประวัติการนัดหมาย"}
         </div>
       ) : (
         <div className="appt-list">
@@ -598,16 +692,16 @@ export default function AppointmentSchedulePage() {
             const isBusy = isRescheduling || isPaying;
             const joinLink = item.meetLink ?? DEFAULT_MEET_LINK;
             const secondaryActionLabel = !isPaid
-              ? "Pay now"
+              ? "ชำระเงิน"
               : canJoin
-                ? "Join Google Meet"
+                ? "เข้าร่วม Google Meet"
                 : joinInfo.state === "not-online"
-                  ? "Onsite only"
+                  ? "นัดที่คลินิกเท่านั้น"
                   : joinInfo.state === "waiting"
-                    ? "Join locked"
+                    ? "ยังไม่ถึงเวลาเข้า"
                     : joinInfo.state === "closed"
-                      ? "Session ended"
-                      : "Unavailable";
+                      ? "หมดเวลาแล้ว"
+                      : "ไม่พร้อมใช้งาน";
 
             return (
               <article
@@ -630,31 +724,31 @@ export default function AppointmentSchedulePage() {
                   <div className="appt-meta">
                     <h2 className="appt-meta__name">{item.consultantName}</h2>
                     <p className="appt-meta__line">
-                      Date: <span>{formatDate(item.appointmentDate)}</span>
+                      วันที่: <span>{formatDate(item.appointmentDate)}</span>
                     </p>
                     <p className="appt-meta__line">
-                      Time: <span>{item.timeSelect ?? "-"}</span>
+                      เวลา: <span>{item.timeSelect ?? "-"}</span>
                     </p>
                     <p className="appt-meta__line">
-                      Type:{" "}
+                      รูปแบบ:{" "}
                       <span>{item.appointmentType ? appointmentTypeText[item.appointmentType] : "-"}</span>
                     </p>
                     <p className="appt-meta__line">
-                      Contact: <span>{item.contact}</span>
+                      ติดต่อ: <span>{item.contact}</span>
                     </p>
                   </div>
                 </div>
 
                 <div className="appt-card__right">
                   <p className="appt-status">
-                    Status:{" "}
+                    สถานะ:{" "}
                     <span className={`appt-status__pill is-${item.status}`}>{statusText[item.status]}</span>
                   </p>
 
                   <p className="appt-payment">
-                    Payment:{" "}
+                    การชำระเงิน:{" "}
                     <span className={`appt-payment__pill ${isPaid ? "is-paid" : "is-unpaid"}`}>
-                      {isPaid ? "Paid" : "Unpaid"}
+                      {isPaid ? "ชำระแล้ว" : "ยังไม่ชำระ"}
                     </span>
                   </p>
 
@@ -667,17 +761,15 @@ export default function AppointmentSchedulePage() {
                           onClick={() => void handleReschedule(item)}
                           type="button"
                         >
-                          {isRescheduling ? "Processing..." : "Reschedule"}
+                          {isRescheduling ? "กำลังดำเนินการ..." : "เลื่อนนัด"}
                         </button>
                         {!isPaid ? (
-                          <button
+                          <Link
                             className="appt-btn appt-btn--primary"
-                            disabled={isBusy}
-                            onClick={() => void handlePayAppointment(item)}
-                            type="button"
+                            href={`/user/payment?appointmentId=${item.id}`}
                           >
-                            {isPaying ? "Processing..." : secondaryActionLabel}
-                          </button>
+                            ไปหน้าชำระเงิน
+                          </Link>
                         ) : canJoin ? (
                           <a
                             className="appt-btn appt-btn--join"
@@ -696,9 +788,19 @@ export default function AppointmentSchedulePage() {
                       <p className="appt-note">{joinInfo.message}</p>
                     </>
                   ) : (
-                    <p className="appt-note">
-                      Session window ended. This appointment is now marked as completed.
-                    </p>
+                    <>
+                      <div className="appt-actions appt-actions--single">
+                        <Link
+                          className="appt-btn appt-btn--ghost"
+                          href={`/user/medical-records?appointmentId=${item.id}`}
+                        >
+                          ดูบันทึกการรักษา
+                        </Link>
+                      </div>
+                      <p className="appt-note">
+                        ดูรายละเอียดการรักษา การจ่ายยา และบันทึกทางการแพทย์ของนัดหมายครั้งนี้
+                      </p>
+                    </>
                   )}
                 </div>
               </article>
@@ -706,6 +808,188 @@ export default function AppointmentSchedulePage() {
           })}
         </div>
       )}
+
+      {isRescheduleDialogOpen && rescheduleForm ? (
+        <div
+          aria-modal="true"
+          className="appt-modal-backdrop"
+          onClick={closeRescheduleDialog}
+          role="dialog"
+        >
+          <div className="appt-modal" onClick={(event) => event.stopPropagation()}>
+            <h3 className="appt-modal__title">เลื่อนนัดหมาย</h3>
+            <p className="appt-modal__subtitle">{rescheduleForm.consultantName}</p>
+
+            <label className="appt-modal__label" htmlFor="appt-date">
+              วันที่
+            </label>
+            <input
+              className="appt-modal__input"
+              id="appt-date"
+              min={toLocalDateKey(new Date())}
+              onChange={(event) =>
+                setRescheduleForm((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        appointmentDate: event.target.value,
+                      }
+                    : prev,
+                )
+              }
+              type="date"
+              value={rescheduleForm.appointmentDate}
+            />
+
+            <div className="appt-modal__time-grid">
+              <div>
+                <label className="appt-modal__label" htmlFor="appt-start-time">
+                  เริ่ม
+                </label>
+                <input
+                  className="appt-modal__input"
+                  id="appt-start-time"
+                  onChange={(event) =>
+                    setRescheduleForm((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            startTime: event.target.value,
+                          }
+                        : prev,
+                    )
+                  }
+                  step={300}
+                  type="time"
+                  value={rescheduleForm.startTime}
+                />
+              </div>
+
+              <div>
+                <label className="appt-modal__label" htmlFor="appt-end-time">
+                  สิ้นสุด
+                </label>
+                <input
+                  className="appt-modal__input"
+                  id="appt-end-time"
+                  onChange={(event) =>
+                    setRescheduleForm((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            endTime: event.target.value,
+                          }
+                        : prev,
+                    )
+                  }
+                  step={300}
+                  type="time"
+                  value={rescheduleForm.endTime}
+                />
+              </div>
+            </div>
+
+            <div className="appt-modal__actions">
+              <button className="appt-modal__btn is-ghost" onClick={closeRescheduleDialog} type="button">
+                ยกเลิก
+              </button>
+              <button
+                className="appt-modal__btn is-primary"
+                disabled={processingRescheduleId === rescheduleForm.appointmentId}
+                onClick={() => void handleRescheduleSubmit()}
+                type="button"
+              >
+                {processingRescheduleId === rescheduleForm.appointmentId ? "กำลังบันทึก..." : "บันทึก"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {isPaymentDialogOpen && paymentForm ? (
+        <div
+          aria-modal="true"
+          className="appt-modal-backdrop"
+          onClick={closePaymentDialog}
+          role="dialog"
+        >
+          <div className="appt-modal appt-pay-modal" onClick={(event) => event.stopPropagation()}>
+            <h3 className="appt-modal__title">คิวอาร์โค้ดชำระเงิน</h3>
+            <p className="appt-modal__subtitle">{paymentForm.consultantName}</p>
+
+            <div className="appt-pay-box">
+              <img
+                alt="คิวอาร์โค้ดชำระเงิน"
+                className="appt-qr-image"
+                src="/images/payment/mock-qr.png"
+              />
+              <p className="appt-pay-box__label">สแกนคิวอาร์เพื่อจำลองการชำระเงิน</p>
+              <p className="appt-pay-box__meta">ยอดชำระ (จำลอง): 500.00 บาท</p>
+            </div>
+
+            <label className="appt-modal__label" htmlFor="appt-slip-file">
+              แนบสลิป
+            </label>
+            <input
+              accept="image/*,.pdf"
+              className="appt-modal__input"
+              id="appt-slip-file"
+              onChange={(event) => {
+                const file = event.target.files?.[0] ?? null;
+                setPaymentForm((prev) => {
+                  if (!prev) {
+                    return prev;
+                  }
+
+                  if (prev.slipPreviewUrl) {
+                    URL.revokeObjectURL(prev.slipPreviewUrl);
+                  }
+
+                  const previewUrl = file && file.type.startsWith("image/")
+                    ? URL.createObjectURL(file)
+                    : null;
+
+                  return {
+                    ...prev,
+                    slipFile: file,
+                    slipPreviewUrl: previewUrl,
+                  };
+                });
+                setPaymentFormError(null);
+              }}
+              type="file"
+            />
+
+            {paymentForm.slipFile ? (
+              <p className="appt-modal__file-name">ไฟล์ที่เลือก: {paymentForm.slipFile.name}</p>
+            ) : null}
+
+            {paymentForm.slipPreviewUrl ? (
+              <img
+                alt="ตัวอย่างสลิป"
+                className="appt-slip-preview"
+                src={paymentForm.slipPreviewUrl}
+              />
+            ) : null}
+
+            {paymentFormError ? <p className="appt-modal__error">{paymentFormError}</p> : null}
+
+            <div className="appt-modal__actions">
+              <button className="appt-modal__btn is-ghost" onClick={closePaymentDialog} type="button">
+                ยกเลิก
+              </button>
+              <button
+                className="appt-modal__btn is-primary"
+                disabled={processingPayId === paymentForm.appointmentId}
+                onClick={() => void handleConfirmMockPayment()}
+                type="button"
+              >
+                {processingPayId === paymentForm.appointmentId ? "กำลังยืนยัน..." : "ยืนยันการชำระเงิน"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
