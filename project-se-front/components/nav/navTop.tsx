@@ -10,7 +10,7 @@
 
   const links = [
     { name: "หน้าเเรก", href: "/user" },
-    { name: "เเบบทดสอบ", href: "/exams" },
+    { name: "เเบบทดสอบ", href: "/user/exams" },
     { name: "บริการของเรา", href: "/appointments" },
     { name: "เกี่ยวกับเรา", href: "/user/staff/all" },
     { name: "ติดต่อเรา", href: "/contact" },

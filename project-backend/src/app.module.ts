@@ -7,9 +7,11 @@ import { AuthModule } from './auth/auth.module';
 import { LocationModule } from './location/location.module';
 import { QuestionnairesModule } from './questionnaires/questionnaires.module';
 import { QuestionsModule } from './questions/questions.module';
+import { ChoicesModule } from './choices/choices.module';
+import { AnswersModule } from './answers/answers.module';
 
 @Module({
-  imports: [UserModule, PrismaModule, AuthModule, LocationModule, QuestionnairesModule, QuestionsModule],
+  imports: [UserModule, PrismaModule, AuthModule, LocationModule, QuestionnairesModule, QuestionsModule, ChoicesModule, AnswersModule],
   controllers: [AppController],
   providers: [AppService],
 })

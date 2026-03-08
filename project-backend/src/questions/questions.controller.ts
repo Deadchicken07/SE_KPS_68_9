@@ -1,34 +1,42 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, Query } from '@nestjs/common';
 import { QuestionsService } from './questions.service';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
+import { PaginationQueryDto } from './dto/pagination-question.dto';
 
-@Controller('questions')
+@Controller('questionnaires/:questionnaireId/questions')
 export class QuestionsController {
   constructor(private readonly questionsService: QuestionsService) {}
-
-  @Post()
-  create(@Body() createQuestionDto: CreateQuestionDto) {
-    return this.questionsService.create(createQuestionDto);
-  }
-
+  
   @Get()
-  findAll() {
-    return this.questionsService.findAll();
+  findAll(
+    @Param('questionnaireId',ParseIntPipe) questionnaireId : number,
+    @Query() dto: PaginationQueryDto
+  ){
+    return this.questionsService.findAll(questionnaireId,dto);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.questionsService.findOne(+id);
+  findOne(
+    @Param('questionnaireId',ParseIntPipe) questionnaireId : number,
+    @Param('id',ParseIntPipe) id : number
+  ){
+    return this.questionsService.findOne(questionnaireId,id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateQuestionDto: UpdateQuestionDto) {
-    return this.questionsService.update(+id, updateQuestionDto);
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateQuestionDto
+  ) {
+    return this.questionsService.update(id, dto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.questionsService.remove(+id);
+  @Post()
+  create(
+    @Param('questionnaireId',ParseIntPipe) questionnaireId : number,
+    @Body() dto:CreateQuestionDto
+  ){
+    return this.questionsService.create(questionnaireId,dto);
   }
 }

@@ -19,7 +19,6 @@ export const useRegister = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // ✅ ใส่ port จริงของ backend
   const API = 'http://localhost:3000/auth/register';
 
   const register = async (data: RegisterPayload) => {
