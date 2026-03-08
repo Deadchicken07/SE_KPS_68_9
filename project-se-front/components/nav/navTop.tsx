@@ -10,7 +10,7 @@ const { Header, Content } = Layout
 
 const links = [
   { name: "หน้าเเรก", href: "/user" },
-  { name: "เเบบทดสอบ", href: "/exams" },
+  { name: "เเบบทดสอบ", href: "/user/exams" },
   { name: "บริการของเรา", href: "/user/ourservices" },
   { name: "เกี่ยวกับเรา", href: "/user/staff/all" },
   { name: "นัดหมายการปรึกษา", href: "/user/appointments" },
@@ -27,7 +27,7 @@ export default function ClinicLayout() {
   }
 
   const menuItems = [
-    { key: "profile", label: <Link href="/profile">Profile</Link> },
+    { key: "profile", label: <Link href="/user/profile">Profile</Link> },
     { key: "logout", label: <span onClick={handleLogout}>Logout</span> },
   ]
 
