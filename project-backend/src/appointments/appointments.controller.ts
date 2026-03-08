@@ -38,6 +38,12 @@ export class AppointmentsController {
     );
   }
 
+  @Patch(':id/pay')
+  payAppointment(@Req() req, @Param('id', ParseIntPipe) appointmentId: number) {
+    const userId = this.getUserIdFromRequest(req);
+    return this.appointmentsService.markAppointmentPaid(userId, appointmentId);
+  }
+
   private getUserIdFromRequest(req): number {
     const userId = Number(req?.user?.sub);
 

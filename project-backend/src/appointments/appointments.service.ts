@@ -21,6 +21,7 @@ type AppointmentScheduleItem = {
   avatarUrl: string | null;
   appointmentType: 'online' | 'onsite' | null;
   paymentStatus: string | null;
+  meetLink: string | null;
 };
 
 type AppointmentScheduleResponse = {
@@ -38,6 +39,8 @@ export class AppointmentsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getMySchedule(userId: number): Promise<AppointmentScheduleResponse> {
+    const clinicMeetUrl = process.env.CLINIC_MEET_URL ?? null;
+
     const records = await this.prisma.appointments.findMany({
       where: { user_id: userId },
       include: {
@@ -77,6 +80,7 @@ export class AppointmentsService {
         avatarUrl: record.users_appointments_staff_idTousers?.file_name ?? null,
         appointmentType: record.appointment_type ?? null,
         paymentStatus: record.status ?? null,
+        meetLink: record.appointment_type === 'online' ? clinicMeetUrl : null,
       };
 
       return {
@@ -159,6 +163,42 @@ export class AppointmentsService {
     };
   }
 
+  async markAppointmentPaid(userId: number, appointmentId: number) {
+    const appointment = await this.getOwnedAppointment(appointmentId, userId);
+
+    if (appointment.status === pay_type_enum.Paid) {
+      return {
+        message: 'Appointment is already marked as paid',
+        appointmentId,
+        status: pay_type_enum.Paid,
+      };
+    }
+
+    const appointmentDate = appointment.appointment_date
+      ? this.dateToIsoDate(appointment.appointment_date)
+      : null;
+    const parsedRange = this.tryParseTimeRange(appointment.time_select);
+
+    if (this.isPastAppointment(appointmentDate, parsedRange)) {
+      throw new BadRequestException(
+        'Cannot update payment for an appointment that has already ended',
+      );
+    }
+
+    await this.prisma.appointments.update({
+      where: { id: appointmentId },
+      data: {
+        status: pay_type_enum.Paid,
+      },
+    });
+
+    return {
+      message: 'Payment completed successfully',
+      appointmentId,
+      status: pay_type_enum.Paid,
+    };
+  }
+
   private async getOwnedAppointment(appointmentId: number, userId: number) {
     const appointment = await this.prisma.appointments.findUnique({
       where: { id: appointmentId },
@@ -166,6 +206,7 @@ export class AppointmentsService {
         id: true,
         user_id: true,
         staff_id: true,
+        status: true,
         appointment_date: true,
         time_select: true,
       },

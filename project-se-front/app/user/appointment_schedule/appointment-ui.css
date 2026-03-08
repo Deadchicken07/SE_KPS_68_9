@@ -55,13 +55,21 @@
 }
 
 .appt-header,
+.appt-support-grid,
 .appt-list {
   position: relative;
   z-index: 1;
 }
 
 .appt-header {
-  margin-bottom: 26px;
+  margin-bottom: 20px;
+}
+
+.appt-header__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
 }
 
 .appt-title {
@@ -71,6 +79,23 @@
   letter-spacing: -0.03em;
   font-family: "Manrope", "Prompt", sans-serif;
   font-weight: 800;
+}
+
+.appt-refresh-btn {
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(19, 125, 123, 0.28);
+  background: rgba(247, 255, 253, 0.86);
+  color: #0b5654;
+  padding: 0 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.appt-refresh-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(19, 125, 123, 0.18);
 }
 
 .appt-divider {
@@ -140,6 +165,45 @@
   color: inherit;
   font-weight: 700;
   text-decoration: underline;
+}
+
+.appt-support-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+  margin: 8px 0 22px;
+}
+
+.appt-support-card {
+  padding: 16px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(14, 79, 76, 0.2);
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.appt-support-card.is-highlight {
+  background: linear-gradient(160deg, rgba(236, 255, 248, 0.88), rgba(234, 250, 245, 0.75));
+}
+
+.appt-support-card__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.appt-support-card__text {
+  margin: 8px 0 0;
+  font-size: 0.92rem;
+  color: #2f6663;
+  line-height: 1.6;
+}
+
+.appt-checklist {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  color: #2f6663;
+  font-size: 0.9rem;
+  line-height: 1.75;
 }
 
 .appt-list {
@@ -214,21 +278,23 @@
 }
 
 .appt-card__right {
-  min-width: 280px;
+  min-width: 320px;
   justify-self: end;
   display: grid;
   align-content: center;
-  gap: 4px;
+  gap: 8px;
 }
 
-.appt-status {
+.appt-status,
+.appt-payment {
   margin: 0;
   font-size: clamp(1rem, 1.3vw, 1.2rem);
   font-weight: 600;
   color: var(--ink);
 }
 
-.appt-status__pill {
+.appt-status__pill,
+.appt-payment__pill {
   display: inline-block;
   margin-left: 8px;
 }
@@ -245,14 +311,24 @@
   color: #3d6966;
 }
 
+.appt-payment__pill.is-paid {
+  color: #0a6260;
+}
+
+.appt-payment__pill.is-unpaid {
+  color: #a23a2f;
+}
+
 .appt-actions {
-  margin-top: 14px;
-  display: flex;
-  gap: 12px;
+  margin-top: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .appt-btn {
-  min-width: 118px;
+  min-width: 0;
+  width: 100%;
   height: 42px;
   border-radius: 999px;
   font-family: "Prompt", "Segoe UI", Tahoma, sans-serif;
@@ -260,6 +336,10 @@
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
 }
 
 .appt-btn:hover {
@@ -283,6 +363,35 @@
   box-shadow: 0 10px 18px rgba(19, 125, 123, 0.2);
 }
 
+.appt-btn--primary {
+  border: 0;
+  color: #ffffff;
+  background: linear-gradient(140deg, #b0672d 0%, #9b4d1f 100%);
+  box-shadow: 0 10px 18px rgba(162, 92, 42, 0.26);
+}
+
+.appt-btn--join {
+  border: 0;
+  color: #ffffff;
+  background: linear-gradient(140deg, #137d7b 0%, #0a6260 100%);
+  box-shadow: 0 10px 18px rgba(19, 125, 123, 0.26);
+}
+
+.appt-btn--disabled {
+  border: 1px solid rgba(14, 79, 76, 0.2);
+  color: #6a8e8b;
+  background: rgba(247, 255, 253, 0.72);
+  box-shadow: none;
+}
+
+.appt-note {
+  margin: 2px 0 0;
+  color: #315f5d;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  min-height: 44px;
+}
+
 @keyframes card-rise {
   from {
     opacity: 0;
@@ -304,13 +413,13 @@
     font-size: 0.95rem;
   }
 
-  .appt-status {
+  .appt-status,
+  .appt-payment {
     font-size: 1.02rem;
   }
 
   .appt-btn {
     font-size: 0.94rem;
-    min-width: 98px;
     height: 40px;
   }
 }
@@ -324,11 +433,11 @@
   .appt-card__right {
     min-width: 0;
     justify-self: start;
-    gap: 2px;
+    gap: 4px;
   }
 
   .appt-actions {
-    flex-wrap: wrap;
+    grid-template-columns: 1fr;
   }
 }
 
@@ -337,6 +446,15 @@
     width: calc(100% - 14px);
     margin: 8px auto;
     padding: 14px;
+  }
+
+  .appt-header__top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .appt-refresh-btn {
+    width: 100%;
   }
 
   .appt-title {
@@ -366,7 +484,8 @@
     font-size: 0.88rem;
   }
 
-  .appt-status {
+  .appt-status,
+  .appt-payment {
     font-size: 0.95rem;
   }
 }
@@ -374,7 +493,8 @@
 @media (prefers-reduced-motion: reduce) {
   .appt-card,
   .appt-btn,
-  .appt-tab {
+  .appt-tab,
+  .appt-refresh-btn {
     animation: none;
     transition: none;
   }
