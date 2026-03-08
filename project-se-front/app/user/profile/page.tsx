@@ -15,7 +15,8 @@ type PatientProfile = {
   chronicDisease: string;
   allergies: string;
   emergencyContact: string;
-  address: string;
+  currentAddress: string;
+  shippingAddress: string;
 };
 
 const defaultProfile: PatientProfile = {
@@ -30,7 +31,8 @@ const defaultProfile: PatientProfile = {
   chronicDisease: "ภูมิแพ้อากาศ",
   allergies: "ไม่พบประวัติแพ้ยา",
   emergencyContact: "สมชาย ใจดี 0815551212",
-  address: "99/12 ถนนสุขุมวิท แขวงคลองตัน เขตวัฒนา กรุงเทพมหานคร 10110",
+  currentAddress: "99/12 ถนนสุขุมวิท แขวงคลองตัน เขตวัฒนา กรุงเทพมหานคร 10110",
+  shippingAddress: "99/12 ถนนสุขุมวิท แขวงคลองตัน เขตวัฒนา กรุงเทพมหานคร 10110",
 };
 
 export default function UserProfilePage() {
@@ -86,7 +88,6 @@ export default function UserProfilePage() {
       <section className={styles.card}>
         <div className={styles.header}>
           <div>
-            <p className={styles.badge}>Patient Profile</p>
             <h1>ข้อมูลส่วนตัวผู้ป่วย</h1>
             <div className={styles.metaRow}>
               <p className={styles.subtitle}>ชื่อ: {fullName} | รหัสผู้ป่วย: {savedProfile.patientCode}</p>
@@ -217,10 +218,21 @@ export default function UserProfilePage() {
           </label>
 
           <label className={styles.fullWidth}>
-            ที่อยู่
+            ที่อยู่ปัจจุบัน
             <textarea
-              name="address"
-              value={formData.address}
+              name="currentAddress"
+              value={formData.currentAddress}
+              onChange={onInputChange}
+              rows={3}
+              disabled={!isEditing}
+            />
+          </label>
+
+          <label className={styles.fullWidth}>
+            ที่อยู่การจัดส่งยา
+            <textarea
+              name="shippingAddress"
+              value={formData.shippingAddress}
               onChange={onInputChange}
               rows={3}
               disabled={!isEditing}

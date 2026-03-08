@@ -11,45 +11,53 @@
 }
 
 .card {
+  position: relative;
+  overflow: hidden;
   background: #ffffff;
-  border: 1px solid #d9e6dd;
+  border: 1px solid #b9c0ca;
   border-radius: 18px;
   padding: 20px;
-  box-shadow: 0 8px 24px rgba(31, 67, 44, 0.1);
+  box-shadow: 0 8px 24px rgba(31, 67, 44, 0.08);
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 80px;
+  background: #0f766e;
+  border-radius: 0;
+  z-index: 0;
 }
 
 .header {
+  position: relative;
+  z-index: 1;
   display: flex;
   justify-content: space-between;
   gap: 14px;
   align-items: flex-start;
   flex-wrap: wrap;
-}
-
-.badge {
-  display: inline-block;
-  margin: 0;
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 0.76rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: #15623b;
-  background: #dff4e5;
+  min-height: 84px;
+  padding: 6px 12px 0;
 }
 
 .header h1 {
-  margin: 8px 0 6px;
-  font-size: clamp(1.5rem, 3vw, 2rem);
+  margin: -7px 0 0;
+  font-size: clamp(1.65rem, 3.2vw, 2.2rem);
+  color: #ffffff;
+  line-height: 1.15;
 }
 
 .subtitle {
-  margin: 0;
+  margin: 16px 0 0;
   color: #4b5563;
 }
 
 .metaRow {
-  margin-top: 2px;
+  margin-top: 10px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -60,6 +68,7 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  margin-top: -7px;
 }
 
 .actions button {
@@ -72,8 +81,8 @@
 }
 
 .editButton {
-  background: #15803d;
-  color: #ffffff;
+  background: #dff4e5;
+  color: #15623b;
 }
 
 .saveButton {
@@ -155,6 +164,10 @@
 }
 
 @media (max-width: 760px) {
+  .header {
+    padding: 8px 8px 0;
+  }
+
   .noticeSlot {
     min-width: 100%;
   }
