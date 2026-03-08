@@ -2,7 +2,7 @@
 
 import { CSSProperties, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import "./appointment-ui.css";
+import "./schedule-ui.css";
 
 type TabKey = "upcoming" | "past";
 type AppointmentStatus = "pending" | "confirmed" | "completed";
@@ -831,9 +831,9 @@ export default function AppointmentSchedulePage() {
                 setRescheduleForm((prev) =>
                   prev
                     ? {
-                        ...prev,
-                        appointmentDate: event.target.value,
-                      }
+                      ...prev,
+                      appointmentDate: event.target.value,
+                    }
                     : prev,
                 )
               }
@@ -853,9 +853,9 @@ export default function AppointmentSchedulePage() {
                     setRescheduleForm((prev) =>
                       prev
                         ? {
-                            ...prev,
-                            startTime: event.target.value,
-                          }
+                          ...prev,
+                          startTime: event.target.value,
+                        }
                         : prev,
                     )
                   }
@@ -876,9 +876,9 @@ export default function AppointmentSchedulePage() {
                     setRescheduleForm((prev) =>
                       prev
                         ? {
-                            ...prev,
-                            endTime: event.target.value,
-                          }
+                          ...prev,
+                          endTime: event.target.value,
+                        }
                         : prev,
                     )
                   }

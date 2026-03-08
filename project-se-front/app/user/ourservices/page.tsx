@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import Link from "next/link";
 import "./service-ui.css";
 
 export default function OurService() {
@@ -9,6 +10,7 @@ export default function OurService() {
         <main className="service-main">
           <section className="service-page">
             <header className="service-page__header">
+              <div className="service-header-badge">Our Services</div>
               <h2 className="service-page__title">บริการของเรา</h2>
               <p className="service-page__subtitle">
                 เลือกช่องทางที่สบายใจที่สุด แล้วเริ่มพูดคุยกับผู้เชี่ยวชาญได้ทันที
@@ -45,15 +47,17 @@ type ServiceCardProps = {
 
 function ServiceCard({ title, description, imageUrl, delay, accentClass }: ServiceCardProps) {
   return (
-    <article className={`service-card ${accentClass}`} style={{ animationDelay: `${delay}s` }}>
+    <article className={`service-card ${accentClass}`}>
       <div className="service-card__image-wrap">
         <img alt={title} className="service-card__image" loading="lazy" src={imageUrl} />
       </div>
-      <h3 className="service-card__title">{title}</h3>
-      <p className="service-card__description">{description}</p>
-      <button className="service-card__button" type="button">
-        เริ่มต้นเลย
-      </button>
+      <div className="service-card__content">
+        <h3 className="service-card__title">{title}</h3>
+        <p className="service-card__description">{description}</p>
+        <Link href="/user/appointments" className="service-card__button" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none' }}>
+          นัดหมายเลย
+        </Link>
+      </div>
     </article>
   );
 }
@@ -62,11 +66,11 @@ const services = [
   {
     title: "Video Call",
     description: "พูดคุยเห็นหน้าแบบเรียลไทม์ เข้าใจอารมณ์ได้ลึกขึ้น",
-    imageUrl: "/images/service/photo-1521737604893-d14cc237f11d.avif",
+    imageUrl: "/images/service/online.png",
   },
   {
     title: "Onsite Booking",
     description: "จองคิวพบผู้เชี่ยวชาญที่คลินิก ใกล้คุณในเวลาที่สะดวก",
-    imageUrl: "/images/service/photo-1573497019940-1c28c88b4f3e.avif",
+    imageUrl: "/images/service/onsite.png",
   },
 ] as const;

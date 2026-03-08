@@ -1,4 +1,4 @@
-﻿  "use client"
+﻿"use client"
 
 import { Layout, Avatar, Dropdown } from "antd"
 import Link from "next/link"
@@ -6,25 +6,25 @@ import { usePathname, useRouter } from "next/navigation"
 import { UserOutlined } from "@ant-design/icons"
 import { PhoneOutlined, HeartFilled } from "@ant-design/icons"
 
-  const { Header, Content } = Layout
+const { Header, Content } = Layout
 
 const links = [
   { name: "หน้าเเรก", href: "/user" },
   { name: "เเบบทดสอบ", href: "/exams" },
-  { name: "บริการของเรา", href: "/appointments" },
+  { name: "บริการของเรา", href: "/user/ourservices" },
   { name: "เกี่ยวกับเรา", href: "/user/staff/all" },
   { name: "นัดหมายการปรึกษา", href: "/user/appointments" },
 ]
 
-  export default function ClinicLayout() {
-    const pathname = usePathname()
-    const router = useRouter()
+export default function ClinicLayout() {
+  const pathname = usePathname()
+  const router = useRouter()
 
   const user = { name: "username" }
 
-    const handleLogout = () => {
-      router.push("/signin")
-    }
+  const handleLogout = () => {
+    router.push("/signin")
+  }
 
   const menuItems = [
     { key: "profile", label: <Link href="/profile">Profile</Link> },

@@ -147,7 +147,7 @@ export default function AppointmentsPage() {
     const [selectedDuration, setSelectedDuration] = useState<number>(30);
 
     const calculatePrice = (role: string, duration: number) => {
-        const basePrice30 = role === 'จิตแพทย์' ? 1000 : 750;
+        const basePrice30 = role === 'จิตแพทย์' ? 1000 : 500;
         return duration === 60 ? basePrice30 * 2 : basePrice30;
     };
 
@@ -577,6 +577,29 @@ export default function AppointmentsPage() {
                     <div className="appt-header-badge">Appointments</div>
                     <h1>จองนัดหมายเพื่อรับคำปรึกษา</h1>
                     <p>เลือกบุคลากรที่คุณต้องการ หรือเลือกวันเวลาที่สะดวก<br />แล้วทำการจองนัดหมาย</p>
+
+                    <div style={{ marginTop: 20 }}>
+                        <button
+                            onClick={() => router.push('/user/schedule')}
+                            style={{
+                                background: '#fff',
+                                color: '#0f766e',
+                                border: '2px solid #0f766e',
+                                padding: '10px 24px',
+                                borderRadius: 999,
+                                fontWeight: 700,
+                                fontSize: 16,
+                                cursor: 'pointer',
+                                fontFamily: "'Sarabun', Arial, sans-serif",
+                                boxShadow: '0 2px 8px rgba(15,118,110,0.1)',
+                                transition: 'all 0.2s',
+                            }}
+                            onMouseOver={(e) => { e.currentTarget.style.background = '#f0fdf4'; }}
+                            onMouseOut={(e) => { e.currentTarget.style.background = '#fff'; }}
+                        >
+                            ดูการนัดหมายของฉัน
+                        </button>
+                    </div>
                 </div>
 
                 {/* Mode toggle */}
