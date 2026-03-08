@@ -11,6 +11,7 @@ export interface RegisterPayload {
   name: string;
   surName: string;
   password: string;
+ title: string | null
   phone?: string;
   nationId?: string;
   medicalCondition?: string;

@@ -7,6 +7,7 @@ export class AddressDto {
 }
 
 export class RegisterDto {
+  title?: string;
   email: string;
   name: string;
   surName: string;

@@ -18,6 +18,11 @@ interface NationUserResponse {
   email?: string | null;
   phone?: string;
   nationId: string;
+  title: string;
+
+  medicalCondition?: string | null;
+  allergyDrug?: string | null;
+
   currentAddress?: Address | null;
   nationAddress?: Address | null;
 }
@@ -48,6 +53,12 @@ export const useNationCheck = () => {
 
       return res.data;
     } catch (err) {
+      if (axios.isAxiosError(err)) {
+        if (err.response?.status === 404) {
+          return { status: "new" };
+        }
+      }
+
       setError("เกิดข้อผิดพลาดบางอย่าง");
       return { status: "completed" };
     } finally {

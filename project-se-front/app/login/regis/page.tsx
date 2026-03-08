@@ -8,12 +8,15 @@ import { useRouter } from "next/navigation";
 import Select, { StylesConfig } from "react-select";
 import { formatPhoneNumber } from "@/utils/formatPhoneNumber";
 import { useOtpVerification } from "@/hooks/useOtpVerification";
+import OtpInput from "@/components/OtpInput";
+import axios from "axios";
 
 type FormErrors = {
   nationId?: string;
   email?: string;
   name?: string;
   surName?: string;
+  title?: string;
   password?: string;
   confirmPassword?: string;
   phone?: string;
@@ -34,7 +37,7 @@ type SelectOption = {
   value: number;
   label: string;
 };
-
+const titles = ["เด็กชาย", "เด็กหญิง", "นาย", "นาง", "นางสาว"];
 export default function RegisterPage() {
   const router = useRouter();
   const { checkNation, loading: nationLoading } = useNationCheck();
@@ -45,9 +48,12 @@ export default function RegisterPage() {
   const {
     sendOtp,
     verifyOtp,
-    loading: otpLoading,
+    sendOtpLoading,
+    verifyOtpLoading,
+    cooldown,
     error: otpError,
   } = useOtpVerification();
+  const [registering, setRegistering] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [errors, setErrors] = useState<FormErrors>({});
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -58,6 +64,7 @@ export default function RegisterPage() {
     name: "",
     surName: "",
     password: "",
+    title: null as string | null,
     confirmPassword: "",
     phone: "",
     medicalCondition: "",
@@ -65,7 +72,13 @@ export default function RegisterPage() {
     detail: "",
     detailNation: "",
   });
-
+  // useEffect(() => {
+  //   if (otp.length === 6) {
+  //     verifyOtp(form.email, otp).then((ok) => {
+  //       if (ok) registerUser();
+  //     });
+  //   }
+  // }, [otp]);
   useEffect(() => {
     if (error) {
       const newErrors: FormErrors = {};
@@ -86,7 +99,7 @@ export default function RegisterPage() {
     if (success) {
       setSuccessMessage("สมัครสมาชิกสำเร็จ 🎉");
       setTimeout(() => {
-        router.push("/login");
+        router.push("/login?registered=success");
       }, 1500);
     }
   }, [success, router]);
@@ -147,8 +160,11 @@ export default function RegisterPage() {
         ...prev,
         name: data.name || "",
         surName: data.surName || "",
+        title: data.title || "",
         phone: data.phone || "",
         email: "",
+        medicalCondition: data.medicalCondition || "",
+        allergyDrug: data.allergyDrug || "",
       }));
 
       // current address
@@ -208,12 +224,19 @@ export default function RegisterPage() {
   };
   const handleSubmit = async () => {
     const newErrors: FormErrors = {};
+    const res = await axios.post("http://localhost:4000/users/check-email", {
+      email: form.email,
+    });
 
+    if (res.data.exists) {
+      setErrors({ email: "Email นี้ถูกใช้งานแล้ว" });
+      return;
+    }
     if (!form.email) newErrors.email = "กรุณากรอก Email";
     if (!form.name) newErrors.name = "กรุณากรอกชื่อ";
     if (!form.surName) newErrors.surName = "กรุณากรอกนามสกุล";
     if (!form.password) newErrors.password = "กรุณากรอกรหัสผ่าน";
-
+    if (!form.title) newErrors.title = "กรุณาเลือกคำนำหน้า";
     if (form.password !== form.confirmPassword) {
       newErrors.confirmPassword = "รหัสผ่านไม่ตรงกัน";
     }
@@ -221,7 +244,8 @@ export default function RegisterPage() {
     if (!form.detail) newErrors.detail = "กรุณากรอกรายละเอียด";
     if (!form.phone) newErrors.phone = "กรุณากรอกรหัสโทรศัพท์";
     if (!form.allergyDrug) newErrors.allergyDrug = "กรุณากรอกยาที่แพ้";
-    if (!form.medicalCondition) newErrors.medicalCondition = "กรุณากรอกรายละเอียดโรคประจำตัว";
+    if (!form.medicalCondition)
+      newErrors.medicalCondition = "กรุณากรอกรายละเอียดโรคประจำตัว";
     if (current.selectedProvince === null)
       newErrors.currentProvince = "กรุณาเลือกจังหวัด";
     if (current.selectedDistrict === null)
@@ -256,18 +280,36 @@ export default function RegisterPage() {
       "&:hover": { borderColor: "#2F6E5D" },
     }),
   };
-
+  const getSelectStyle = (
+    hasError: boolean,
+  ): StylesConfig<SelectOption, false> => ({
+    control: (base) => ({
+      ...base,
+      borderRadius: "12px",
+      borderColor: hasError ? "#ef4444" : "#3F7F6D",
+      boxShadow: "none",
+      "&:hover": {
+        borderColor: hasError ? "#ef4444" : "#2F6E5D",
+      },
+    }),
+  });
   const Label = ({ text }: { text: string }) => (
     <label className="text-sm font-medium text-gray-600">
       {text} <span className="text-red-500">*</span>
     </label>
   );
+
   const registerUser = async () => {
+    if (registering) return;
+
+    setRegistering(true);
+
     await register({
       email: form.email,
       name: form.name,
       surName: form.surName,
       password: form.password,
+      title: form.title,
       phone: form.phone || undefined,
       nationId: form.nationId || undefined,
       medicalCondition: form.medicalCondition || undefined,
@@ -288,7 +330,6 @@ export default function RegisterPage() {
       },
     });
   };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#E8EAD9] to-[#DDE3CF] flex items-center justify-center px-6 py-20">
       <div className="w-full max-w-3xl bg-white rounded-[28px] p-16 shadow-xl space-y-12">
@@ -302,7 +343,12 @@ export default function RegisterPage() {
             <input
               value={form.nationId}
               pattern="[0-9]*"
-              onChange={(e) => setForm({ ...form, nationId: e.target.value.replace(/\D/g, "").slice(0, 13) })}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  nationId: e.target.value.replace(/\D/g, "").slice(0, 13),
+                })
+              }
               className={`input ${errors.nationId ? "border-red-500" : ""}`}
             />
             {errors.nationId && (
@@ -358,9 +404,39 @@ export default function RegisterPage() {
         {step === 2 && (
           <div className="space-y-10">
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-[1fr_2fr_2fr] gap-6">
+                {/* TITLE */}
+                <div>
+                  <Label text="คำนำหน้า" />
+
+                  <select
+                    value={form.title ?? ""}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        title: e.target.value || null,
+                      })
+                    }
+                    className={`input ${errors.title ? "border-red-500" : ""}`}
+                  >
+                    <option value=""></option>
+
+                    {titles.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+
+                  {errors.title && (
+                    <p className="text-red-500 text-sm mt-1">{errors.title}</p>
+                  )}
+                </div>
+
+                {/* NAME */}
                 <div>
                   <Label text="ชื่อ" />
+
                   <input
                     placeholder="ชื่อ"
                     value={form.name}
@@ -372,13 +448,16 @@ export default function RegisterPage() {
                     }
                     className={`input ${errors.name ? "border-red-500" : ""}`}
                   />
+
                   {errors.name && (
-                    <p className="text-red-500 text-sm">{errors.name}</p>
+                    <p className="text-red-500 text-sm mt-1">{errors.name}</p>
                   )}
                 </div>
 
+                {/* SURNAME */}
                 <div>
                   <Label text="นามสกุล" />
+
                   <input
                     placeholder="นามสกุล"
                     value={form.surName}
@@ -390,8 +469,11 @@ export default function RegisterPage() {
                     }
                     className={`input ${errors.surName ? "border-red-500" : ""}`}
                   />
+
                   {errors.surName && (
-                    <p className="text-red-500 text-sm">{errors.surName}</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.surName}
+                    </p>
                   )}
                 </div>
               </div>
@@ -508,7 +590,7 @@ export default function RegisterPage() {
               )}
               <div className="grid grid-cols-2 gap-4">
                 <Select
-                  styles={selectStyle}
+                  styles={getSelectStyle(!!errors.currentProvince)}
                   options={current.provinces.map((p) => ({
                     value: p.id,
                     label: p.name,
@@ -525,7 +607,7 @@ export default function RegisterPage() {
                 />
 
                 <Select
-                  styles={selectStyle}
+                  styles={getSelectStyle(!!errors.currentDistrict)}
                   options={current.districts.map((d) => ({
                     value: d.id,
                     label: d.name,
@@ -545,7 +627,7 @@ export default function RegisterPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <Select
-                  styles={selectStyle}
+                  styles={getSelectStyle(!!errors.currentSubDistrict)}
                   options={current.subDistricts.map((s) => ({
                     value: s.id,
                     label: s.name,
@@ -564,7 +646,7 @@ export default function RegisterPage() {
                 />
 
                 <Select
-                  styles={selectStyle}
+                  styles={getSelectStyle(!!errors.currentZipCode)}
                   options={current.zipCodes.map((z) => ({
                     value: z.id,
                     label: z.name,
@@ -603,7 +685,7 @@ export default function RegisterPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <Select
-                  styles={selectStyle}
+                  styles={getSelectStyle(!!errors.nationProvince)}
                   options={nation.provinces.map((p) => ({
                     value: p.id,
                     label: p.name,
@@ -620,7 +702,7 @@ export default function RegisterPage() {
                 />
 
                 <Select
-                  styles={selectStyle}
+                  styles={getSelectStyle(!!errors.nationDistrict)}
                   options={nation.districts.map((d) => ({
                     value: d.id,
                     label: d.name,
@@ -640,7 +722,7 @@ export default function RegisterPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <Select
-                  styles={selectStyle}
+                  styles={getSelectStyle(!!errors.nationSubDistrict)}
                   options={nation.subDistricts.map((s) => ({
                     value: s.id,
                     label: s.name,
@@ -659,7 +741,7 @@ export default function RegisterPage() {
                 />
 
                 <Select
-                  styles={selectStyle}
+                  styles={getSelectStyle(!!errors.nationZipCode)}
                   options={nation.zipCodes.map((z) => ({
                     value: z.id,
                     label: z.name,
@@ -683,7 +765,7 @@ export default function RegisterPage() {
               disabled={registerLoading}
               className="btn-primary"
             >
-              {registerLoading ? "กำลังสมัคร..." : "สมัครสมาชิก"}
+              {sendOtpLoading ? "กำลังส่ง OTP..." : "สมัครสมาชิก"}
             </button>
 
             {successMessage && (
@@ -694,30 +776,50 @@ export default function RegisterPage() {
           </div>
         )}
         {step === 3 && (
-          <div className="space-y-4">
-            <Label text="กรอกรหัส OTP ที่ส่งไปยัง Email" />
-
-            <input
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              className="input"
-              placeholder="6 หลัก"
-            />
-
+          <div className="space-y-6 text-center">
+            <h3 className="text-xl font-semibold text-[#2F6E5D]">ยืนยัน OTP</h3>
+            <p className="text-gray-500 text-sm">
+              กรุณากรอกรหัส OTP ที่ส่งไปยัง
+              <br />
+              <span className="font-medium text-gray-700">{form.email}</span>
+            </p>
+            {/* OTP INPUT */}
+            <OtpInput value={otp} onChange={setOtp} />
+            {/* ERROR */}
+            {otpError && <p className="text-red-500 text-sm">{otpError}</p>}
             <button
+              disabled={verifyOtpLoading || registering || otp.length !== 6}
               onClick={async () => {
                 const ok = await verifyOtp(form.email, otp);
 
                 if (ok) {
-                  await registerUser(); // เรียก API register
+                  await registerUser();
                 }
               }}
-              className="btn-primary"
+              className="btn-primary "
             >
-              ยืนยัน OTP
+              {verifyOtpLoading ? "กำลังตรวจสอบ..." : "ยืนยัน OTP"}
             </button>
-
-            {error && <p className="text-red-500 text-sm">{error}</p>}
+            {/* RESEND OTP */}
+            <p
+              onClick={() => {
+                if (cooldown === 0 && !sendOtpLoading) {
+                  sendOtp(form.email);
+                  setOtp("");
+                }
+              }}
+              className={`text-sm ${
+                cooldown > 0
+                  ? "text-gray-400"
+                  : "text-blue-600 btn-primary-pointer hover:underline"
+              }`}
+            >
+              {cooldown > 0
+                ? `ขอ OTP ใหม่ใน ${cooldown}s`
+                : sendOtpLoading
+                  ? "กำลังส่ง OTP..."
+                  : "ขอ OTP ใหม่"}
+            </p>
           </div>
         )}
       </div>

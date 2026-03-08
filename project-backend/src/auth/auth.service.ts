@@ -102,6 +102,7 @@ export class AuthService {
               email: body.email,
               name: body.name,
               sur_name: body.surName,
+              title: body.title ?? null,
               phone: body.phone ?? null,
               medical_condition: body.medicalCondition ?? null,
               allergy_drug: body.allergyDrug ?? null,
@@ -120,7 +121,9 @@ export class AuthService {
             email: body.email,
             name: body.name,
             sur_name: body.surName,
+            title: body.title ?? null,
             phone: body.phone ?? null,
+
             nation_id: body.nationId ?? null,
             medical_condition: body.medicalCondition ?? null,
             allergy_drug: body.allergyDrug ?? null,

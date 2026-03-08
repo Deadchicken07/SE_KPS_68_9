@@ -121,6 +121,7 @@ export class UserService {
         id: user.user_id,
         name: user.name,
         surName: user.sur_name,
+        title: user.title,
         email: user.email,
         phone: user.phone,
         nationId: user.nation_id,
@@ -152,6 +153,22 @@ export class UserService {
             }
           : null,
       },
+    };
+  }
+  async checkEmail(email: string) {
+    const user = await this.prisma.users.findUnique({
+      where: { email },
+    });
+
+    if (user) {
+      return {
+        exists: true,
+        message: 'Email already exists',
+      };
+    }
+
+    return {
+      exists: false,
     };
   }
 }

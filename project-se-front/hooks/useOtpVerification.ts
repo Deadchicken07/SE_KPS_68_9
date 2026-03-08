@@ -1,76 +1,80 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 
 const API = "http://localhost:4000";
 
 export const useOtpVerification = () => {
-
-  const [loading, setLoading] = useState(false);
+  const [sendOtpLoading, setSendOtpLoading] = useState(false);
+  const [verifyOtpLoading, setVerifyOtpLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+
+  const [cooldown, setCooldown] = useState(0); // เวลานับถอยหลัง resend
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+
+    const timer = setInterval(() => {
+      setCooldown((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   const sendOtp = async (email: string) => {
-
     try {
-
-      setLoading(true);
+      setSendOtpLoading(true);
       setError(null);
 
-      await axios.post(`${API}/mail/send-otp`, {
-        email,
-      });
+      await axios.post(`${API}/mail/send-otp`, { email });
+
+      // เริ่ม cooldown 60 วินาที (ตาม backend OTP)
+      setCooldown(30);
 
       return true;
-
-    } catch (err) {
-
-      setError("ไม่สามารถส่ง OTP ได้");
+    } catch (err: unknown) {
+      setError(
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || "ไม่สามารถส่ง OTP ได้",
+      );
       return false;
-
     } finally {
-      setLoading(false);
+      setSendOtpLoading(false);
     }
   };
 
   const verifyOtp = async (email: string, code: string) => {
-
     try {
-
-      setLoading(true);
+      setVerifyOtpLoading(true);
       setError(null);
 
       const res = await axios.post(`${API}/mail/verify-otp`, {
         email,
         code,
       });
-
+      await new Promise((r) => setTimeout(r, 600));
       if (res.data.message === "OTP verified") {
-
-        setSuccess(true);
         return true;
-
       }
 
       setError(res.data.message);
       return false;
-
-    } catch (err) {
-
-      setError("OTP ไม่ถูกต้อง");
+    } catch (err: unknown) {
+      setError(
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || "OTP ไม่ถูกต้อง",
+      );
       return false;
-
     } finally {
-
-      setLoading(false);
-
+      setVerifyOtpLoading(false);
     }
   };
 
   return {
     sendOtp,
     verifyOtp,
-    loading,
+    sendOtpLoading,
+    verifyOtpLoading,
+    cooldown,
     error,
-    success,
   };
 };
