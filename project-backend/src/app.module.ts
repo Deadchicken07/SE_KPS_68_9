@@ -6,9 +6,13 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { LocationModule } from './location/location.module';
 
+import { MailController } from './mail/mail.controller';
+import { MailModule } from './mail/mail.module';
+import { MailService } from './mail/mail.service';
+
 @Module({
-  imports: [UserModule, PrismaModule, AuthModule, LocationModule],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [UserModule, PrismaModule, AuthModule, LocationModule, MailModule],
+  controllers: [AppController, MailController],
+  providers: [AppService, MailService],
 })
 export class AppModule {}

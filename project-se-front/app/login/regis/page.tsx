@@ -6,6 +6,8 @@ import { useLocationDropdown } from "@/hooks/useLocationDropdown";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Select, { StylesConfig } from "react-select";
+import { formatPhoneNumber } from "@/utils/formatPhoneNumber";
+import { useOtpVerification } from "@/hooks/useOtpVerification";
 
 type FormErrors = {
   nationId?: string;
@@ -40,11 +42,16 @@ export default function RegisterPage() {
 
   const current = useLocationDropdown();
   const nation = useLocationDropdown();
-
-  const [step, setStep] = useState<1 | 2>(1);
+  const {
+    sendOtp,
+    verifyOtp,
+    loading: otpLoading,
+    error: otpError,
+  } = useOtpVerification();
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [errors, setErrors] = useState<FormErrors>({});
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
+  const [otp, setOtp] = useState("");
   const [form, setForm] = useState({
     nationId: "",
     email: "",
@@ -85,21 +92,51 @@ export default function RegisterPage() {
   }, [success, router]);
 
   const handleNationCheck = async () => {
+    const newErrors: FormErrors = {};
+
     if (!/^\d{13}$/.test(form.nationId)) {
-      setErrors({ nationId: "เลขบัตรประชาชนต้องเป็นตัวเลข 13 หลัก" });
+      newErrors.nationId = "เลขบัตรประชาชนต้องเป็นตัวเลข 13 หลัก";
+    }
+
+    if (!form.name.trim()) {
+      newErrors.name = "กรุณากรอกชื่อ";
+    }
+
+    if (!form.surName.trim()) {
+      newErrors.surName = "กรุณากรอกนามสกุล";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
-    const result = await checkNation(form.nationId);
+    const result = await checkNation(form.nationId, form.name, form.surName);
 
-    if (result.status === "not_found") {
+    if (result.status === "new") {
+      setForm((prev) => ({
+        ...prev,
+        name: form.name,
+        surName: form.surName,
+        nationId: form.nationId,
+      }));
+
       setErrors({});
       setStep(2);
       return;
     }
 
+    if (result.status === "mismatch") {
+      setErrors({
+        nationId: "เลขบัตรประชาชน ชื่อ หรือ นามสกุล ไม่ถูกต้อง",
+      });
+      return;
+    }
+
     if (result.status === "completed") {
-      setErrors({ nationId: "บัญชีนี้สมัครแล้ว กรุณาเข้าสู่ระบบ" });
+      setErrors({
+        nationId: "บัญชีนี้สมัครแล้ว กรุณาเข้าสู่ระบบ",
+      });
       return;
     }
 
@@ -114,20 +151,57 @@ export default function RegisterPage() {
         email: "",
       }));
 
+      // current address
       if (data.currentAddress) {
-        current.setSelectedProvince(data.currentAddress.provinceId ?? null);
-        current.setSelectedDistrict(data.currentAddress.districtId ?? null);
-        current.setSelectedSubDistrict(
-          data.currentAddress.subDistrictId ?? null,
+        const addr = data.currentAddress;
+
+        setTimeout(
+          () => current.setSelectedProvince(addr.provinceId ?? null),
+          100,
         );
+        setTimeout(
+          () => current.setSelectedDistrict(addr.districtId ?? null),
+          200,
+        );
+        setTimeout(
+          () => current.setSelectedSubDistrict(addr.subDistrictId ?? null),
+          300,
+        );
+        setTimeout(
+          () => current.setSelectedZipCode(addr.zipCodeId ?? null),
+          400,
+        );
+
+        setForm((prev) => ({
+          ...prev,
+          detail: addr.detail || "",
+        }));
       }
 
+      // nation address
       if (data.nationAddress) {
-        nation.setSelectedProvince(data.nationAddress.provinceId ?? null);
-        nation.setSelectedDistrict(data.nationAddress.districtId ?? null);
-        nation.setSelectedSubDistrict(data.nationAddress.subDistrictId ?? null);
+        const addr = data.nationAddress;
+        setTimeout(
+          () => nation.setSelectedProvince(addr.provinceId ?? null),
+          100,
+        );
+        setTimeout(
+          () => nation.setSelectedDistrict(addr.districtId ?? null),
+          200,
+        );
+        setTimeout(
+          () => nation.setSelectedSubDistrict(addr.subDistrictId ?? null),
+          300,
+        );
+        setTimeout(
+          () => nation.setSelectedZipCode(addr.zipCodeId ?? null),
+          400,
+        );
+        setForm((prev) => ({
+          ...prev,
+          detailNation: addr.detail || "",
+        }));
       }
-
       setErrors({});
       setStep(2);
     }
@@ -145,7 +219,9 @@ export default function RegisterPage() {
     }
     if (!form.detailNation) newErrors.detailNation = "กรุณากรอกรายละเอียด";
     if (!form.detail) newErrors.detail = "กรุณากรอกรายละเอียด";
-
+    if (!form.phone) newErrors.phone = "กรุณากรอกรหัสโทรศัพท์";
+    if (!form.allergyDrug) newErrors.allergyDrug = "กรุณากรอกยาที่แพ้";
+    if (!form.medicalCondition) newErrors.medicalCondition = "กรุณากรอกรายละเอียดโรคประจำตัว";
     if (current.selectedProvince === null)
       newErrors.currentProvince = "กรุณาเลือกจังหวัด";
     if (current.selectedDistrict === null)
@@ -167,7 +243,26 @@ export default function RegisterPage() {
       setErrors(newErrors);
       return;
     }
+    await sendOtp(form.email);
+    setStep(3);
+  };
 
+  const selectStyle: StylesConfig<SelectOption, false> = {
+    control: (base) => ({
+      ...base,
+      borderRadius: "12px",
+      borderColor: "#3F7F6D",
+      boxShadow: "none",
+      "&:hover": { borderColor: "#2F6E5D" },
+    }),
+  };
+
+  const Label = ({ text }: { text: string }) => (
+    <label className="text-sm font-medium text-gray-600">
+      {text} <span className="text-red-500">*</span>
+    </label>
+  );
+  const registerUser = async () => {
     await register({
       email: form.email,
       name: form.name,
@@ -194,22 +289,6 @@ export default function RegisterPage() {
     });
   };
 
-  const selectStyle: StylesConfig<SelectOption, false> = {
-    control: (base) => ({
-      ...base,
-      borderRadius: "12px",
-      borderColor: "#3F7F6D",
-      boxShadow: "none",
-      "&:hover": { borderColor: "#2F6E5D" },
-    }),
-  };
-
-  const Label = ({ text }: { text: string }) => (
-    <label className="text-sm font-medium text-gray-600">
-      {text} <span className="text-red-500">*</span>
-    </label>
-  );
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#E8EAD9] to-[#DDE3CF] flex items-center justify-center px-6 py-20">
       <div className="w-full max-w-3xl bg-white rounded-[28px] p-16 shadow-xl space-y-12">
@@ -222,12 +301,49 @@ export default function RegisterPage() {
             <Label text="เลขบัตรประชาชน" />
             <input
               value={form.nationId}
-              onChange={(e) => setForm({ ...form, nationId: e.target.value })}
+              pattern="[0-9]*"
+              onChange={(e) => setForm({ ...form, nationId: e.target.value.replace(/\D/g, "").slice(0, 13) })}
               className={`input ${errors.nationId ? "border-red-500" : ""}`}
             />
             {errors.nationId && (
               <p className="text-red-500 text-sm">{errors.nationId}</p>
             )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label text="ชื่อ" />
+                <input
+                  value={form.name}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      name: e.target.value.replace(/[^a-zA-Zก-๙\s]/g, ""),
+                    })
+                  }
+                  className={`input ${errors.name ? "border-red-500" : ""}`}
+                />
+                {errors.name && (
+                  <p className="text-red-500 text-sm">{errors.name}</p>
+                )}
+              </div>
+
+              <div>
+                <Label text="นามสกุล" />
+                <input
+                  value={form.surName}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      surName: e.target.value.replace(/[^a-zA-Zก-๙\s]/g, ""),
+                    })
+                  }
+                  className={`input ${errors.surName ? "border-red-500" : ""}`}
+                />
+                {errors.surName && (
+                  <p className="text-red-500 text-sm">{errors.surName}</p>
+                )}
+              </div>
+            </div>
 
             <button
               onClick={handleNationCheck}
@@ -248,7 +364,12 @@ export default function RegisterPage() {
                   <input
                     placeholder="ชื่อ"
                     value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        name: e.target.value.replace(/[^a-zA-Zก-๙\s]/g, ""),
+                      })
+                    }
                     className={`input ${errors.name ? "border-red-500" : ""}`}
                   />
                   {errors.name && (
@@ -262,7 +383,10 @@ export default function RegisterPage() {
                     placeholder="นามสกุล"
                     value={form.surName}
                     onChange={(e) =>
-                      setForm({ ...form, surName: e.target.value })
+                      setForm({
+                        ...form,
+                        surName: e.target.value.replace(/[^a-zA-Zก-๙\s]/g, ""),
+                      })
                     }
                     className={`input ${errors.surName ? "border-red-500" : ""}`}
                   />
@@ -320,8 +444,12 @@ export default function RegisterPage() {
                   <Label text="เบอร์โทร" />
                   <input
                     value={form.phone}
+                    pattern="[0-9]*"
                     onChange={(e) =>
-                      setForm({ ...form, phone: e.target.value })
+                      setForm({
+                        ...form,
+                        phone: formatPhoneNumber(e.target.value),
+                      })
                     }
                     className="input"
                   />
@@ -340,6 +468,11 @@ export default function RegisterPage() {
                     }
                     className="input"
                   />
+                  {errors.medicalCondition && (
+                    <p className="text-red-500 text-sm">
+                      {errors.medicalCondition}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -352,6 +485,9 @@ export default function RegisterPage() {
                     }
                     className="input"
                   />
+                  {errors.allergyDrug && (
+                    <p className="text-red-500 text-sm">{errors.allergyDrug}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -367,7 +503,9 @@ export default function RegisterPage() {
                 onChange={(e) => setForm({ ...form, detail: e.target.value })}
                 className="input"
               />
-
+              {errors.detail && (
+                <p className="text-red-500 text-sm">{errors.detail}</p>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <Select
                   styles={selectStyle}
@@ -459,6 +597,10 @@ export default function RegisterPage() {
                 className="input"
               />
 
+              {errors.detailNation && (
+                <p className="text-red-500 text-sm">{errors.detailNation}</p>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <Select
                   styles={selectStyle}
@@ -549,6 +691,33 @@ export default function RegisterPage() {
                 {successMessage}
               </p>
             )}
+          </div>
+        )}
+        {step === 3 && (
+          <div className="space-y-4">
+            <Label text="กรอกรหัส OTP ที่ส่งไปยัง Email" />
+
+            <input
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              className="input"
+              placeholder="6 หลัก"
+            />
+
+            <button
+              onClick={async () => {
+                const ok = await verifyOtp(form.email, otp);
+
+                if (ok) {
+                  await registerUser(); // เรียก API register
+                }
+              }}
+              className="btn-primary"
+            >
+              ยืนยัน OTP
+            </button>
+
+            {error && <p className="text-red-500 text-sm">{error}</p>}
           </div>
         )}
       </div>

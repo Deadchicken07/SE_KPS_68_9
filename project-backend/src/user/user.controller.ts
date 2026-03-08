@@ -16,7 +16,11 @@ export class UserController {
     return this.userService.findOne(+id);
   }
   @Get('by-nation/:nationId')
-  findByNation(@Param('nationId') nationId: string) {
-    return this.userService.findByNationId(nationId);
+  findByNation(
+    @Param('nationId') nationId: string,
+    @Query('name') name: string,
+    @Query('surName') surName: string,
+  ) {
+    return this.userService.findByNationId(nationId, name, surName);
   }
 }
