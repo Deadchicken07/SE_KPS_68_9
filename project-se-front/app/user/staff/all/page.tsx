@@ -3,10 +3,10 @@
 const psychiatrists = [
     {
         id: 1,
-        name: 'รศ.พญ.สมชาย ใจดี',
+        name: 'รศ.นพ.สมชาย ใจดี',
         role: 'จิตแพทย์',
         specialty: 'จิตเวชเด็กและวัยรุ่น',
-        image: '/docterProfile/docter1.png'
+        image: '/docterProfile/docter1.jpeg'
     },
     {
         id: 2,

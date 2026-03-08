@@ -1,11 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Modal, Button, Input, DatePicker, ConfigProvider } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import 'dayjs/locale/th';
+import buddhistEra from 'dayjs/plugin/buddhistEra';
 import locale from 'antd/locale/th_TH';
 
+dayjs.extend(buddhistEra);
 dayjs.locale('th');
 
 // ─── Data ────────────────────────────────────────────────────────────────────
@@ -13,10 +16,10 @@ dayjs.locale('th');
 const allStaff = [
     {
         id: 1,
-        name: 'รศ.พญ.สมชาย ใจดี',
+        name: 'รศ.นพ.สมชาย ใจดี',
         role: 'จิตแพทย์',
         specialty: 'จิตเวชเด็กและวัยรุ่น',
-        image: '/docterProfile/docter1.png',
+        image: '/docterProfile/docter1.jpeg',
         slots: ['09:00', '10:00', '11:00', '13:00', '14:00'],
     },
     {
@@ -25,7 +28,7 @@ const allStaff = [
         role: 'จิตแพทย์',
         specialty: 'ครอบครัว ความสัมพันธ์ ความรัก',
         image: '/docterProfile/docter2.png',
-        slots: ['09:00', '10:30', '13:30', '15:00'],
+        slots: ['09:00', '10:00', '13:00', '15:00', '16:00'],
     },
     {
         id: 3,
@@ -33,15 +36,15 @@ const allStaff = [
         role: 'จิตแพทย์',
         specialty: 'จิตเวชวัยรุ่น ผู้ใหญ่ ผู้สูงอายุ',
         image: '/docterProfile/docter3.png',
-        slots: ['08:30', '10:00', '11:30', '14:00', '15:30'],
+        slots: ['10:00', '11:00', '14:00', '15:00', '17:00'],
     },
     {
         id: 4,
         name: 'ดร.สรรสร้าง ส่งสี',
         role: 'นักจิตวิทยา',
-        specialty: 'บำบัดความคิดและพฤติกรรม (CBT)',
+        specialty: 'บำบัดความคิดและพฤติกรรม',
         image: '/docterProfile/psy1',
-        slots: ['09:00', '11:00', '13:00', '15:00'],
+        slots: ['09:00', '11:00', '13:00', '15:00', '16:00'],
     },
     {
         id: 5,
@@ -49,7 +52,7 @@ const allStaff = [
         role: 'นักจิตวิทยา',
         specialty: 'ปัญหาความสัมพันธ์',
         image: '/docterProfile/psy2.jfif',
-        slots: ['10:00', '11:30', '14:00', '16:00'],
+        slots: ['10:00', '11:00', '14:00', '16:00', '17:00'],
     },
 ];
 
@@ -66,6 +69,8 @@ interface Booking {
     staff: Staff;
     date: string;
     time: string;
+    duration: number;
+    price: number;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -136,7 +141,15 @@ function TimeSlotGrid({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function AppointmentsPage() {
+    const router = useRouter();
     const [mode, setMode] = useState<'staff' | 'time'>('staff');
+
+    const [selectedDuration, setSelectedDuration] = useState<number>(30);
+
+    const calculatePrice = (role: string, duration: number) => {
+        const basePrice30 = role === 'จิตแพทย์' ? 1000 : 750;
+        return duration === 60 ? basePrice30 * 2 : basePrice30;
+    };
 
     // By-staff flow
     const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
@@ -150,26 +163,30 @@ export default function AppointmentsPage() {
 
     // Confirmation modal
     const [booking, setBooking] = useState<Booking | null>(null);
-    const [patientName, setPatientName] = useState('');
     const [note, setNote] = useState('');
-    const [success, setSuccess] = useState(false);
 
     const openModal = (b: Booking) => {
         setBooking(b);
-        setPatientName('');
         setNote('');
-        setSuccess(false);
     };
 
     const closeModal = () => {
         setBooking(null);
-        setSuccess(false);
     };
 
     const handleConfirm = () => {
-        if (!patientName.trim()) return alert('กรุณากรอกชื่อผู้รับบริการ');
-        console.log('Booking confirmed:', { ...booking, patientName, note });
-        setSuccess(true);
+        if (!booking) return;
+        const params = new URLSearchParams({
+            staffId: booking.staff.id.toString(),
+            staffName: booking.staff.name,
+            role: booking.staff.role,
+            date: booking.date,
+            time: booking.time,
+            duration: booking.duration.toString(),
+            price: booking.price.toString(),
+            note: note,
+        });
+        router.push(`/user/payment?${params.toString()}`);
     };
 
     // reset by-staff flow when staff changes
@@ -177,6 +194,7 @@ export default function AppointmentsPage() {
         setSelectedStaff(s);
         setSelectedDate(null);
         setSelectedTime(null);
+        setSelectedDuration(30);
     };
 
     // reset by-time flow when date changes
@@ -184,6 +202,12 @@ export default function AppointmentsPage() {
         setTimeDate(d);
         setTimeStaff(null);
         setTimeSlot(null);
+        setSelectedDuration(30);
+    };
+
+    const handleTimeSlot = (t: string) => {
+        setTimeSlot(t);
+        setTimeStaff(null); // Reset staff when time changes
     };
 
     const disabledDate = (d: Dayjs) =>
@@ -604,7 +628,7 @@ export default function AppointmentsPage() {
 
                                     {selectedDate && (
                                         <>
-                                            <h2 style={{ marginTop: 8 }}>เลือกเวลา</h2>
+                                            <h2 style={{ marginTop: 8 }}>เวลา</h2>
                                             <TimeSlotGrid
                                                 slots={selectedStaff.slots}
                                                 selected={selectedTime}
@@ -615,6 +639,23 @@ export default function AppointmentsPage() {
 
                                     {selectedDate && selectedTime && (
                                         <div style={{ marginTop: 28 }}>
+                                            <div style={{ marginBottom: 20 }}>
+                                                <h2>ระยะเวลาเข้ารับคำปรึกษา</h2>
+                                                <div style={{ display: 'flex', gap: 12 }}>
+                                                    <button
+                                                        className={`appt-slot-btn${selectedDuration === 30 ? ' appt-slot-btn--active' : ''}`}
+                                                        onClick={() => setSelectedDuration(30)}
+                                                    >
+                                                        30 นาที
+                                                    </button>
+                                                    <button
+                                                        className={`appt-slot-btn${selectedDuration === 60 ? ' appt-slot-btn--active' : ''}`}
+                                                        onClick={() => setSelectedDuration(60)}
+                                                    >
+                                                        60 นาที
+                                                    </button>
+                                                </div>
+                                            </div>
                                             <div className="appt-summary-bar">
                                                 <div className="appt-summary-item">
                                                     <span className="appt-summary-label">บุคลากร</span>
@@ -628,6 +669,10 @@ export default function AppointmentsPage() {
                                                     <span className="appt-summary-label">เวลา</span>
                                                     <span className="appt-summary-value">{selectedTime} น.</span>
                                                 </div>
+                                                <div className="appt-summary-item">
+                                                    <span className="appt-summary-label">ราคา</span>
+                                                    <span className="appt-summary-value" style={{ color: '#0f766e' }}>{calculatePrice(selectedStaff.role, selectedDuration)} บาท</span>
+                                                </div>
                                             </div>
                                             <button
                                                 className="appt-book-btn"
@@ -636,10 +681,12 @@ export default function AppointmentsPage() {
                                                         staff: selectedStaff,
                                                         date: selectedDate.format('D MMMM BBBB'),
                                                         time: selectedTime,
+                                                        duration: selectedDuration,
+                                                        price: calculatePrice(selectedStaff.role, selectedDuration),
                                                     })
                                                 }
                                             >
-                                                จองนัดหมาย →
+                                                จองนัดหมาย
                                             </button>
                                         </div>
                                     )}
@@ -665,43 +712,65 @@ export default function AppointmentsPage() {
 
                             {timeDate ? (
                                 <div className="appt-panel">
-                                    <h2>เวลาที่ว่าง — {timeDate.format('dddd, D MMMM BBBB')}</h2>
-                                    {/* Build a flat list: all slots from all staff */}
+                                    <h2>เลือกเวลา — {timeDate.format('dddd, D MMMM BBBB')}</h2>
                                     {(() => {
-                                        type SlotEntry = { time: string; staff: Staff };
-                                        const entries: SlotEntry[] = [];
-                                        allStaff.forEach((s) => {
-                                            s.slots.forEach((t) => {
-                                                entries.push({ time: t, staff: s });
-                                            });
-                                        });
-                                        entries.sort((a, b) => a.time.localeCompare(b.time));
+                                        // Collect all unique available times
+                                        const uniqueTimes = Array.from(new Set(allStaff.flatMap(s => s.slots))).sort((a, b) => a.localeCompare(b));
 
-                                        return entries.map((e, i) => {
-                                            const isActive = timeStaff?.id === e.staff.id && timeSlot === e.time;
-                                            return (
-                                                <div
-                                                    key={i}
-                                                    className={`appt-time-slot-row${isActive ? ' appt-time-slot-row--active' : ''}`}
-                                                    onClick={() => { setTimeStaff(e.staff); setTimeSlot(e.time); }}
-                                                >
-                                                    <div className="appt-time-dot" />
-                                                    <span className="appt-time-label">{e.time}</span>
-                                                    <div>
-                                                        <div className="appt-time-staff">{e.staff.name}</div>
-                                                        <div className="appt-time-role">{e.staff.role} · {e.staff.specialty}</div>
-                                                    </div>
-                                                    {isActive && (
-                                                        <span style={{ marginLeft: 'auto', color: '#0f766e', fontWeight: 700, fontSize: 18 }}>✓</span>
-                                                    )}
-                                                </div>
-                                            );
-                                        });
+                                        return (
+                                            <TimeSlotGrid
+                                                slots={uniqueTimes}
+                                                selected={timeSlot}
+                                                onSelect={handleTimeSlot}
+                                            />
+                                        );
                                     })()}
 
+                                    {timeSlot && (
+                                        <div style={{ marginTop: 36 }}>
+                                            <h2 style={{ fontSize: 20, fontWeight: 700, color: '#1e1b4b', marginBottom: 20 }}>บุคลากรที่ว่างเวลา {timeSlot} น.</h2>
+                                            {(() => {
+                                                const availableStaff = allStaff.filter(s => s.slots.includes(timeSlot));
+                                                return (
+                                                    <div className="appt-staff-grid">
+                                                        {availableStaff.map((s) => (
+                                                            <StaffCard
+                                                                key={s.id}
+                                                                person={s}
+                                                                selected={timeStaff?.id === s.id}
+                                                                onClick={() => setTimeStaff(s)}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
+                                    )}
+
                                     {timeStaff && timeSlot && (
-                                        <div style={{ marginTop: 24 }}>
+                                        <div style={{ marginTop: 28 }}>
+                                            <div style={{ marginBottom: 20 }}>
+                                                <h2>ระยะเวลาเข้ารับคำปรึกษา</h2>
+                                                <div style={{ display: 'flex', gap: 12 }}>
+                                                    <button
+                                                        className={`appt-slot-btn${selectedDuration === 30 ? ' appt-slot-btn--active' : ''}`}
+                                                        onClick={() => setSelectedDuration(30)}
+                                                    >
+                                                        30 นาที
+                                                    </button>
+                                                    <button
+                                                        className={`appt-slot-btn${selectedDuration === 60 ? ' appt-slot-btn--active' : ''}`}
+                                                        onClick={() => setSelectedDuration(60)}
+                                                    >
+                                                        60 นาที
+                                                    </button>
+                                                </div>
+                                            </div>
                                             <div className="appt-summary-bar">
+                                                <div className="appt-summary-item">
+                                                    <span className="appt-summary-label">บุคลากร</span>
+                                                    <span className="appt-summary-value">{timeStaff.name}</span>
+                                                </div>
                                                 <div className="appt-summary-item">
                                                     <span className="appt-summary-label">วันที่</span>
                                                     <span className="appt-summary-value">{timeDate.format('D MMMM BBBB')}</span>
@@ -711,8 +780,8 @@ export default function AppointmentsPage() {
                                                     <span className="appt-summary-value">{timeSlot} น.</span>
                                                 </div>
                                                 <div className="appt-summary-item">
-                                                    <span className="appt-summary-label">บุคลากร</span>
-                                                    <span className="appt-summary-value">{timeStaff.name}</span>
+                                                    <span className="appt-summary-label">ราคา</span>
+                                                    <span className="appt-summary-value" style={{ color: '#0f766e' }}>{calculatePrice(timeStaff.role, selectedDuration)} บาท</span>
                                                 </div>
                                             </div>
                                             <button
@@ -722,17 +791,19 @@ export default function AppointmentsPage() {
                                                         staff: timeStaff,
                                                         date: timeDate.format('D MMMM BBBB'),
                                                         time: timeSlot,
+                                                        duration: selectedDuration,
+                                                        price: calculatePrice(timeStaff.role, selectedDuration),
                                                     })
                                                 }
                                             >
-                                                จองนัดหมาย →
+                                                จองนัดหมาย
                                             </button>
                                         </div>
                                     )}
                                 </div>
                             ) : (
                                 <div className="appt-panel">
-                                    <p className="appt-hint">⬆️ กรุณาเลือกวันที่ เพื่อดูช่วงเวลาที่ว่าง</p>
+                                    <p className="appt-hint">กรุณาเลือกวันที่ เพื่อดูช่วงเวลาที่ว่าง</p>
                                 </div>
                             )}
                         </>
@@ -750,28 +821,11 @@ export default function AppointmentsPage() {
                 styles={{ body: { fontFamily: "'Sarabun', Arial, sans-serif" } }}
                 title={
                     <span style={{ fontFamily: "'Sarabun', Arial, sans-serif", fontWeight: 700, fontSize: 18 }}>
-                        📋 ยืนยันการจองนัดหมาย
+                        ยืนยันการจองนัดหมาย
                     </span>
                 }
             >
-                {success ? (
-                    <div className="appt-success">
-                        <div className="appt-success-icon">✅</div>
-                        <h3>จองนัดหมายสำเร็จ!</h3>
-                        <p>
-                            {booking?.date} เวลา {booking?.time} น.<br />
-                            กับ {booking?.staff.name}
-                        </p>
-                        <Button
-                            type="primary"
-                            size="large"
-                            style={{ marginTop: 20, background: '#0f766e', borderColor: '#0f766e', fontFamily: "'Sarabun', Arial, sans-serif" }}
-                            onClick={closeModal}
-                        >
-                            ปิด
-                        </Button>
-                    </div>
-                ) : booking ? (
+                {booking ? (
                     <>
                         <div className="appt-summary-bar" style={{ marginBottom: 20 }}>
                             <div className="appt-summary-item">
@@ -784,25 +838,18 @@ export default function AppointmentsPage() {
                             </div>
                             <div className="appt-summary-item">
                                 <span className="appt-summary-label">เวลา</span>
-                                <span className="appt-summary-value" style={{ fontSize: 15 }}>{booking.time} น.</span>
+                                <span className="appt-summary-value" style={{ fontSize: 15 }}>{booking.time} น. ({booking.duration} นาที)</span>
                             </div>
-                        </div>
-
-                        <div style={{ marginBottom: 16 }}>
-                            <label className="appt-form-label">ชื่อผู้รับบริการ <span style={{ color: '#ef4444' }}>*</span></label>
-                            <Input
-                                placeholder="กรอกชื่อ-นามสกุล"
-                                value={patientName}
-                                onChange={(e) => setPatientName(e.target.value)}
-                                size="large"
-                                style={{ fontFamily: "'Sarabun', Arial, sans-serif" }}
-                            />
+                            <div className="appt-summary-item">
+                                <span className="appt-summary-label">ราคา</span>
+                                <span className="appt-summary-value" style={{ fontSize: 15, color: '#0f766e' }}>{booking.price} บาท</span>
+                            </div>
                         </div>
 
                         <div style={{ marginBottom: 24 }}>
                             <label className="appt-form-label">หมายเหตุ / อาการเบื้องต้น</label>
                             <Input.TextArea
-                                placeholder="เช่น ความเครียด นอนไม่หลับ ฯลฯ (ไม่จำเป็นต้องกรอก)"
+                                placeholder="เช่น ความเครียด นอนไม่หลับ ความสัมพันธ์ ฯลฯ"
                                 value={note}
                                 onChange={(e) => setNote(e.target.value)}
                                 rows={3}
@@ -825,7 +872,7 @@ export default function AppointmentsPage() {
                             }}
                             onClick={handleConfirm}
                         >
-                            ยืนยันการจอง
+                            ยืนยัน และดำเนินการชำระเงิน
                         </Button>
                     </>
                 ) : null}

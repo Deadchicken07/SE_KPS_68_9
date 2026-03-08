@@ -20,7 +20,7 @@ export default function ClinicLayout() {
   const pathname = usePathname()
   const router = useRouter()
 
-  const user = { name: "Mung kai wa" }
+  const user = { name: "username" }
 
   const handleLogout = () => {
     router.push("/signin")
@@ -86,7 +86,7 @@ export default function ClinicLayout() {
               }}
             >
               <PhoneOutlined />
-              02-745-4184
+              099-6767-6767
             </div>
             <Dropdown menu={{ items: menuItems }}>
               <div style={{ cursor: "pointer", gap: 10, display: "flex", alignItems: "center", }}>
