@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -129,7 +129,7 @@ export default function LoginPage() {
             <div className="text-center mt-2 text-sm text-gray-600">
               ยังไม่มีบัญชี?{" "}
               <span
-                onClick={() => router.push('/register')}
+                onClick={() => router.push('/login/regis')}
                 className="text-[#3F7F6D] font-medium cursor-pointer hover:underline"
               >
                 สมัครสมาชิก
