@@ -1,10 +1,5 @@
 ﻿@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&display=swap');
 
-:global(body) {
-  background: #edf8ef;
-  /* Note: If you want to use the global background, this can be removed or kept */
-}
-
 .page {
   width: min(980px, 100%);
   margin: 0 auto;
@@ -101,24 +96,33 @@
 }
 
 .saveButton {
-  background: linear-gradient(135deg, #0f766e 0%, #059669 100%);
-  color: #ffffff;
-  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.25);
+  background: #ffffff;
+  color: #0f766e;
+  border: 2px solid #0f766e;
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.1);
 }
 
 .saveButton:hover {
-  opacity: 0.9;
+  background: linear-gradient(135deg, #3730a3 0%, #6d28d9 50%, #2563eb 100%);
+  color: #ffffff;
+  border-color: transparent;
   transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(55, 48, 163, 0.2);
 }
 
 .cancelButton {
-  background: transparent;
-  border: 2px solid #d1d5db;
-  color: #4b5563;
+  background: #ffffff;
+  color: #0f766e;
+  border: 2px solid #0f766e;
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.1);
 }
 
 .cancelButton:hover {
-  background: #f3f4f6;
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
 }
 
 .notice {
