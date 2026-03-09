@@ -3,6 +3,7 @@
 import { CSSProperties, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import "./schedule-ui.css";
+import { createMockSchedule } from "./mockData";
 
 type TabKey = "upcoming" | "past";
 type AppointmentStatus = "pending" | "confirmed" | "completed";
@@ -388,8 +389,9 @@ export default function AppointmentSchedulePage() {
     const token = getTokenFromStorage();
 
     if (!token) {
-      setIsAuthRequired(true);
-      setError("กรุณาเข้าสู่ระบบเพื่อดูตารางนัดหมาย");
+      setIsAuthRequired(false);
+      setError(null);
+      setSchedule(createMockSchedule());
       setLoading(false);
       return;
     }
@@ -411,9 +413,9 @@ export default function AppointmentSchedulePage() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          setIsAuthRequired(true);
-          setSchedule(defaultSchedule);
-          setError("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง");
+          setIsAuthRequired(false);
+          setError(null);
+          setSchedule(createMockSchedule());
           return;
         }
 
@@ -993,3 +995,6 @@ export default function AppointmentSchedulePage() {
     </section>
   );
 }
+
+
+
