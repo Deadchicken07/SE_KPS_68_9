@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -181,6 +181,7 @@ export default function RegisterPage() {
       setErrors({ email: "Email นี้ถูกใช้งานแล้ว" });
       return;
     }
+
     if (!form.email) newErrors.email = "กรุณากรอก Email";
     if (!form.name) newErrors.name = "กรุณากรอกชื่อ";
     if (!form.surName) newErrors.surName = "กรุณากรอกนามสกุล";
@@ -249,9 +250,23 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#E8EAD9] to-[#DDE3CF] flex items-center justify-center px-6 py-20">
-      <div className="w-full max-w-3xl bg-white rounded-[28px] p-16 shadow-xl space-y-12">
-        <h2 className="text-4xl font-bold text-[#2F6E5D] text-center">สมัครสมาชิก</h2>
+    <main className="auth-shell flex items-center justify-center px-4 py-8 sm:px-8 sm:py-12">
+      <div className="auth-orb top-[-120px] left-[-120px] h-[260px] w-[260px] bg-[#2f6e5d]/30" />
+      <div className="auth-orb alt bottom-[-140px] right-[-120px] h-[320px] w-[320px] bg-[#4e987f]/30" />
+
+      <section className="auth-card w-full max-w-5xl p-6 sm:p-10">
+        <div className="mb-8 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#3f7f6d]/75">Create account</p>
+            <h2 className="mt-2 text-3xl font-semibold text-[#1d493d]">สมัครสมาชิก</h2>
+          </div>
+          <button
+            onClick={() => router.push("/login")}
+            className="rounded-xl border border-[#2f6e5d]/25 px-4 py-2 text-sm font-medium text-[#2f6e5d] hover:bg-[#2f6e5d]/5"
+          >
+            กลับหน้าเข้าสู่ระบบ
+          </button>
+        </div>
 
         {step === 1 && (
           <RegisterStep1Nation
@@ -293,7 +308,8 @@ export default function RegisterPage() {
             email={form.email}
           />
         )}
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }
+

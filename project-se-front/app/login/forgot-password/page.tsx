@@ -34,9 +34,7 @@ export default function ForgotPasswordPage() {
     }
 
     const ok = await sendOtp(email);
-    if (ok) {
-      setStep(2);
-    }
+    if (ok) setStep(2);
   };
 
   const handleVerifyOtp = async () => {
@@ -47,9 +45,7 @@ export default function ForgotPasswordPage() {
     }
 
     const ok = await verifyOtp(email, otp);
-    if (ok) {
-      setStep(3);
-    }
+    if (ok) setStep(3);
   };
 
   const handleResetPassword = async () => {
@@ -78,9 +74,7 @@ export default function ForgotPasswordPage() {
       });
 
       setSuccessMessage("เปลี่ยนรหัสผ่านสำเร็จ");
-      setTimeout(() => {
-        router.push("/login");
-      }, 1200);
+      setTimeout(() => router.push("/login"), 1200);
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data
@@ -92,13 +86,23 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#E8EAD9] to-[#DDE3CF] flex items-center justify-center px-6 py-20">
-      <div className="w-full max-w-xl bg-white rounded-[28px] p-12 shadow-xl space-y-8">
-        <h2 className="text-3xl font-bold text-[#2F6E5D] text-center">ลืมรหัสผ่าน</h2>
+    <main className="auth-shell flex items-center justify-center px-4 py-10 sm:px-8 sm:py-14">
+      <div className="auth-orb top-[-120px] left-[-120px] h-[260px] w-[260px] bg-[#2f6e5d]/30" />
+      <div className="auth-orb alt bottom-[-140px] right-[-120px] h-[320px] w-[320px] bg-[#4e987f]/30" />
+
+      <section className="auth-card w-full max-w-xl p-8 sm:p-10">
+        <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#3f7f6d]/75">Account recovery</p>
+        <h2 className="mt-2 text-3xl font-semibold text-[#1d493d]">ลืมรหัสผ่าน</h2>
+
+        <div className="mt-4 flex items-center gap-2 text-xs font-medium text-slate-500">
+          <span className={`rounded-full px-3 py-1 ${step >= 1 ? "bg-[#2f6e5d] text-white" : "bg-slate-200"}`}>1</span>
+          <span className={`rounded-full px-3 py-1 ${step >= 2 ? "bg-[#2f6e5d] text-white" : "bg-slate-200"}`}>2</span>
+          <span className={`rounded-full px-3 py-1 ${step >= 3 ? "bg-[#2f6e5d] text-white" : "bg-slate-200"}`}>3</span>
+        </div>
 
         {step === 1 && (
-          <div className="space-y-4">
-            <label className="text-sm font-medium text-gray-600">อีเมล</label>
+          <div className="mt-6 space-y-4">
+            <label className="text-sm font-medium text-slate-600">อีเมล</label>
             <input
               type="email"
               value={email}
@@ -106,22 +110,18 @@ export default function ForgotPasswordPage() {
               className="input"
               placeholder="example@email.com"
             />
-            <button
-              onClick={handleSendOtp}
-              disabled={sendOtpLoading}
-              className="btn-primary w-full"
-            >
+            <button onClick={handleSendOtp} disabled={sendOtpLoading} className="btn-primary">
               {sendOtpLoading ? "กำลังส่ง OTP..." : "ส่ง OTP"}
             </button>
           </div>
         )}
 
         {step === 2 && (
-          <div className="space-y-5 text-center">
-            <p className="text-sm text-gray-600">
+          <div className="mt-6 space-y-5 text-center">
+            <p className="text-sm text-slate-600">
               กรอกรหัส OTP ที่ส่งไปยัง
               <br />
-              <span className="font-medium text-gray-800">{email}</span>
+              <span className="font-medium text-slate-800">{email}</span>
             </p>
 
             <OtpInput value={otp} onChange={setOtp} />
@@ -129,7 +129,7 @@ export default function ForgotPasswordPage() {
             <button
               onClick={handleVerifyOtp}
               disabled={verifyOtpLoading || otp.length !== 6}
-              className="btn-primary w-full"
+              className="btn-primary"
             >
               {verifyOtpLoading ? "กำลังตรวจสอบ..." : "ยืนยัน OTP"}
             </button>
@@ -143,8 +143,8 @@ export default function ForgotPasswordPage() {
               }}
               className={`text-sm ${
                 cooldown > 0
-                  ? "text-gray-400"
-                  : "text-blue-600 cursor-pointer hover:underline"
+                  ? "cursor-not-allowed text-slate-400"
+                  : "cursor-pointer text-[#2f6e5d] hover:underline"
               }`}
             >
               {cooldown > 0
@@ -157,52 +157,46 @@ export default function ForgotPasswordPage() {
         )}
 
         {step === 3 && (
-          <div className="space-y-4">
+          <div className="mt-6 space-y-4">
             <div>
-              <label className="text-sm font-medium text-gray-600">รหัสผ่านใหม่</label>
+              <label className="text-sm font-medium text-slate-600">รหัสผ่านใหม่</label>
               <input
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="input"
+                className="input mt-2"
               />
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-600">ยืนยันรหัสผ่านใหม่</label>
+              <label className="text-sm font-medium text-slate-600">ยืนยันรหัสผ่านใหม่</label>
               <input
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="input"
+                className="input mt-2"
               />
             </div>
 
-            <button
-              onClick={handleResetPassword}
-              disabled={loading}
-              className="btn-primary w-full"
-            >
+            <button onClick={handleResetPassword} disabled={loading} className="btn-primary">
               {loading ? "กำลังบันทึก..." : "เปลี่ยนรหัสผ่าน"}
             </button>
           </div>
         )}
 
-        {(error || otpError) && (
-          <p className="text-sm text-red-500 text-center">{error || otpError}</p>
-        )}
+        {(error || otpError) && <p className="mt-5 text-center text-sm text-red-500">{error || otpError}</p>}
+        {successMessage && <p className="mt-5 text-center text-sm text-green-600">{successMessage}</p>}
 
-        {successMessage && <p className="text-sm text-green-600 text-center">{successMessage}</p>}
-
-        <div className="text-center text-sm">
+        <div className="mt-6 text-center text-sm">
           <span
             onClick={() => router.push("/login")}
-            className="text-[#2F6E5D] hover:underline cursor-pointer"
+            className="cursor-pointer font-medium text-[#2f6e5d] hover:underline"
           >
             กลับไปหน้าเข้าสู่ระบบ
           </span>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }
+

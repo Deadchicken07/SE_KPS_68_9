@@ -22,7 +22,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), "Noto Sans Thai", sans-serif;
 }
 .input {
   @apply w-full px-4 py-3.5 rounded-xl border border-gray-200
@@ -47,4 +47,127 @@ body {
   @apply w-full border border-[#3F7F6D]
   text-[#3F7F6D] py-3 rounded-xl font-medium
   hover:bg-[#3F7F6D]/10 transition;
+}
+
+@keyframes float-soft {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 rgba(63, 127, 109, 0.15));
+  }
+  50% {
+    filter: drop-shadow(0 10px 24px rgba(63, 127, 109, 0.28));
+  }
+}
+
+.anim-fade-up {
+  animation: fade-up 0.6s ease-out both;
+}
+
+.anim-fade-up-delay {
+  animation: fade-up 0.7s ease-out 0.12s both;
+}
+
+.anim-float-soft {
+  animation: float-soft 5s ease-in-out infinite;
+}
+
+.anim-glow-pulse {
+  animation: glow-pulse 4s ease-in-out infinite;
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -14px, 0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-120%) skewX(-12deg);
+  }
+  100% {
+    transform: translateX(220%) skewX(-12deg);
+  }
+}
+
+@keyframes gradient-pan {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.auth-shell {
+  @apply relative min-h-screen overflow-hidden;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(63, 127, 109, 0.16), transparent 46%),
+    radial-gradient(circle at 85% 78%, rgba(22, 101, 52, 0.16), transparent 46%),
+    linear-gradient(135deg, #f2f6ea 0%, #e3ebd8 42%, #d8e4cb 100%);
+}
+
+.auth-orb {
+  @apply absolute rounded-full blur-3xl pointer-events-none;
+}
+
+.auth-orb.alt {
+}
+
+.auth-card {
+  @apply relative rounded-[30px] bg-white/82 backdrop-blur-xl;
+  box-shadow: 0 35px 110px rgba(18, 46, 39, 0.22);
+}
+
+.auth-card::after {
+  content: none;
+}
+
+.auth-panel-premium {
+  background: linear-gradient(125deg, #173f35 0%, #266151 36%, #357666 70%, #67a08e 100%);
+  background-size: cover;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-fade-up,
+  .anim-fade-up-delay,
+  .anim-float-soft,
+  .anim-glow-pulse,
+  .auth-orb,
+  .auth-orb.alt,
+  .auth-panel-premium {
+    animation: none;
+  }
+
+  .auth-card::after {
+    animation: none;
+  }
 }
