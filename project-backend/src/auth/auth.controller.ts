@@ -11,6 +11,7 @@ import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { CreateDoctorDto, RegisterDto } from './dto/register.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { RolesGuard } from './roles.guard';
 import type { Response } from 'express';
 @Controller('auth')
@@ -42,6 +43,10 @@ export class AuthController {
   @Post('change-password')
   changePassword(@Req() req, @Body() body: ChangePasswordDto) {
     return this.authService.changePassword(body, req.user.sub);
+  }
+  @Post('reset-password')
+  resetPassword(@Body() body: ResetPasswordDto) {
+    return this.authService.resetPasswordByOtp(body.email, body.newPassword);
   }
   @Post('admin/create-doctor')
   @UseGuards(JwtAuthGuard, RolesGuard)

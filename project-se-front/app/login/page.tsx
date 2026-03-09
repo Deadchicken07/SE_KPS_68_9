@@ -147,8 +147,13 @@ export default function LoginPage() {
                 )}
               </form>
 
-              <div className="text-center mt-8 text-sm text-gray-500 hover:underline cursor-pointer">
-                ลืมรหัสผ่าน?
+              <div className="text-center mt-8 text-sm text-gray-500">
+                <span
+                  onClick={() => router.push("/login/forgot-password")}
+                  className="hover:underline cursor-pointer"
+                >
+                  ลืมรหัสผ่าน?
+                </span>
               </div>
 
               <div className="text-center mt-2 text-sm text-gray-600">

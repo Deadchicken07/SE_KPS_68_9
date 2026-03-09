@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import axios from "axios";
 
 const API = "http://localhost:4000";
@@ -7,7 +7,6 @@ export const useOtpVerification = () => {
   const [sendOtpLoading, setSendOtpLoading] = useState(false);
   const [verifyOtpLoading, setVerifyOtpLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const [cooldown, setCooldown] = useState(0); // เวลานับถอยหลัง resend
 
   useEffect(() => {
@@ -51,6 +50,7 @@ export const useOtpVerification = () => {
         email,
         code,
       });
+
       await new Promise((r) => setTimeout(r, 600));
       if (res.data.message === "OTP verified") {
         return true;

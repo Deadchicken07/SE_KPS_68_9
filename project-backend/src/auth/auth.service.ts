@@ -9,12 +9,14 @@ import * as bcrypt from 'bcrypt';
 import { CreateDoctorDto, RegisterDto } from './dto/register.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { Prisma } from '@prisma/client';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private mailService: MailService,
   ) {}
 
   async login(email: string, password: string) {
@@ -202,5 +204,29 @@ export class AuthService {
     });
 
     return { message: 'Password changed successfully' };
+  }
+
+  async resetPasswordByOtp(email: string, newPassword: string) {
+    const normalizedEmail = email.trim().toLowerCase();
+    this.mailService.consumeVerifiedEmail(normalizedEmail);
+
+    const user = await this.prisma.users.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Email not found');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await this.prisma.users.update({
+      where: { user_id: user.user_id },
+      data: {
+        password_hash: hashedPassword,
+      },
+    });
+
+    return { message: 'Password reset successfully' };
   }
 }

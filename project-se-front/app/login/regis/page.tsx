@@ -1,43 +1,19 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import axios from "axios";
 import { useNationCheck } from "@/hooks/useNationCheck";
 import { useRegister } from "@/hooks/useRegister";
 import { useLocationDropdown } from "@/hooks/useLocationDropdown";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Select, { StylesConfig } from "react-select";
-import { formatPhoneNumber } from "@/utils/formatPhoneNumber";
 import { useOtpVerification } from "@/hooks/useOtpVerification";
-import OtpInput from "@/components/OtpInput";
-import axios from "axios";
+import type { FormErrors, RegisterForm } from "@/types/Register.types";
+import RegisterStep1Nation from "@/components/register/RegisterStep1Nation";
+import RegisterStep2Form from "@/components/register/RegisterStep2Form";
+import RegisterStep3Otp from "@/components/register/RegisterStep3Otp";
 
-type FormErrors = {
-  nationId?: string;
-  email?: string;
-  name?: string;
-  surName?: string;
-  title?: string;
-  password?: string;
-  confirmPassword?: string;
-  phone?: string;
-  medicalCondition?: string;
-  allergyDrug?: string;
-  currentProvince?: string;
-  currentDistrict?: string;
-  currentSubDistrict?: string;
-  currentZipCode?: string;
-  nationProvince?: string;
-  nationDistrict?: string;
-  nationSubDistrict?: string;
-  nationZipCode?: string;
-  detailNation?: string;
-  detail?: string;
-};
-type SelectOption = {
-  value: number;
-  label: string;
-};
 const titles = ["เด็กชาย", "เด็กหญิง", "นาย", "นาง", "นางสาว"];
+
 export default function RegisterPage() {
   const router = useRouter();
   const { checkNation, loading: nationLoading } = useNationCheck();
@@ -45,6 +21,7 @@ export default function RegisterPage() {
 
   const current = useLocationDropdown();
   const nation = useLocationDropdown();
+
   const {
     sendOtp,
     verifyOtp,
@@ -53,18 +30,20 @@ export default function RegisterPage() {
     cooldown,
     error: otpError,
   } = useOtpVerification();
+
   const [registering, setRegistering] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [errors, setErrors] = useState<FormErrors>({});
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [otp, setOtp] = useState("");
-  const [form, setForm] = useState({
+
+  const [form, setForm] = useState<RegisterForm>({
     nationId: "",
     email: "",
     name: "",
     surName: "",
     password: "",
-    title: null as string | null,
+    title: null,
     confirmPassword: "",
     phone: "",
     medicalCondition: "",
@@ -72,13 +51,7 @@ export default function RegisterPage() {
     detail: "",
     detailNation: "",
   });
-  // useEffect(() => {
-  //   if (otp.length === 6) {
-  //     verifyOtp(form.email, otp).then((ok) => {
-  //       if (ok) registerUser();
-  //     });
-  //   }
-  // }, [otp]);
+
   useEffect(() => {
     if (error) {
       const newErrors: FormErrors = {};
@@ -97,7 +70,7 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (success) {
-      setSuccessMessage("สมัครสมาชิกสำเร็จ 🎉");
+      setSuccessMessage("สมัครสมาชิกสำเร็จ");
       setTimeout(() => {
         router.push("/login?registered=success");
       }, 1500);
@@ -167,26 +140,13 @@ export default function RegisterPage() {
         allergyDrug: data.allergyDrug || "",
       }));
 
-      // current address
       if (data.currentAddress) {
         const addr = data.currentAddress;
 
-        setTimeout(
-          () => current.setSelectedProvince(addr.provinceId ?? null),
-          100,
-        );
-        setTimeout(
-          () => current.setSelectedDistrict(addr.districtId ?? null),
-          200,
-        );
-        setTimeout(
-          () => current.setSelectedSubDistrict(addr.subDistrictId ?? null),
-          300,
-        );
-        setTimeout(
-          () => current.setSelectedZipCode(addr.zipCodeId ?? null),
-          400,
-        );
+        setTimeout(() => current.setSelectedProvince(addr.provinceId ?? null), 100);
+        setTimeout(() => current.setSelectedDistrict(addr.districtId ?? null), 200);
+        setTimeout(() => current.setSelectedSubDistrict(addr.subDistrictId ?? null), 300);
+        setTimeout(() => current.setSelectedZipCode(addr.zipCodeId ?? null), 400);
 
         setForm((prev) => ({
           ...prev,
@@ -194,34 +154,23 @@ export default function RegisterPage() {
         }));
       }
 
-      // nation address
       if (data.nationAddress) {
         const addr = data.nationAddress;
-        setTimeout(
-          () => nation.setSelectedProvince(addr.provinceId ?? null),
-          100,
-        );
-        setTimeout(
-          () => nation.setSelectedDistrict(addr.districtId ?? null),
-          200,
-        );
-        setTimeout(
-          () => nation.setSelectedSubDistrict(addr.subDistrictId ?? null),
-          300,
-        );
-        setTimeout(
-          () => nation.setSelectedZipCode(addr.zipCodeId ?? null),
-          400,
-        );
+        setTimeout(() => nation.setSelectedProvince(addr.provinceId ?? null), 100);
+        setTimeout(() => nation.setSelectedDistrict(addr.districtId ?? null), 200);
+        setTimeout(() => nation.setSelectedSubDistrict(addr.subDistrictId ?? null), 300);
+        setTimeout(() => nation.setSelectedZipCode(addr.zipCodeId ?? null), 400);
         setForm((prev) => ({
           ...prev,
           detailNation: addr.detail || "",
         }));
       }
+
       setErrors({});
       setStep(2);
     }
   };
+
   const handleSubmit = async () => {
     const newErrors: FormErrors = {};
     const res = await axios.post("http://localhost:4000/users/check-email", {
@@ -242,62 +191,30 @@ export default function RegisterPage() {
     }
     if (!form.detailNation) newErrors.detailNation = "กรุณากรอกรายละเอียด";
     if (!form.detail) newErrors.detail = "กรุณากรอกรายละเอียด";
-    if (!form.phone) newErrors.phone = "กรุณากรอกรหัสโทรศัพท์";
+    if (!form.phone) newErrors.phone = "กรุณากรอกเบอร์โทรศัพท์";
     if (!form.allergyDrug) newErrors.allergyDrug = "กรุณากรอกยาที่แพ้";
-    if (!form.medicalCondition)
+    if (!form.medicalCondition) {
       newErrors.medicalCondition = "กรุณากรอกรายละเอียดโรคประจำตัว";
-    if (current.selectedProvince === null)
-      newErrors.currentProvince = "กรุณาเลือกจังหวัด";
-    if (current.selectedDistrict === null)
-      newErrors.currentDistrict = "กรุณาเลือกอำเภอ";
-    if (current.selectedSubDistrict === null)
-      newErrors.currentSubDistrict = "กรุณาเลือกตำบล";
-    if (current.selectedZipCode === null)
-      newErrors.currentZipCode = "กรุณาเลือกรหัสไปรษณีย์";
+    }
 
-    if (nation.selectedProvince === null)
-      newErrors.nationProvince = "กรุณาเลือกจังหวัด";
-    if (nation.selectedDistrict === null)
-      newErrors.nationDistrict = "กรุณาเลือกอำเภอ";
-    if (nation.selectedSubDistrict === null)
-      newErrors.nationSubDistrict = "กรุณาเลือกตำบล";
-    if (nation.selectedZipCode === null)
-      newErrors.nationZipCode = "กรุณาเลือกรหัสไปรษณีย์";
+    if (current.selectedProvince === null) newErrors.currentProvince = "กรุณาเลือกจังหวัด";
+    if (current.selectedDistrict === null) newErrors.currentDistrict = "กรุณาเลือกอำเภอ";
+    if (current.selectedSubDistrict === null) newErrors.currentSubDistrict = "กรุณาเลือกตำบล";
+    if (current.selectedZipCode === null) newErrors.currentZipCode = "กรุณาเลือกรหัสไปรษณีย์";
+
+    if (nation.selectedProvince === null) newErrors.nationProvince = "กรุณาเลือกจังหวัด";
+    if (nation.selectedDistrict === null) newErrors.nationDistrict = "กรุณาเลือกอำเภอ";
+    if (nation.selectedSubDistrict === null) newErrors.nationSubDistrict = "กรุณาเลือกตำบล";
+    if (nation.selectedZipCode === null) newErrors.nationZipCode = "กรุณาเลือกรหัสไปรษณีย์";
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
+
     await sendOtp(form.email);
     setStep(3);
   };
-
-  const selectStyle: StylesConfig<SelectOption, false> = {
-    control: (base) => ({
-      ...base,
-      borderRadius: "12px",
-      borderColor: "#3F7F6D",
-      boxShadow: "none",
-      "&:hover": { borderColor: "#2F6E5D" },
-    }),
-  };
-  const getSelectStyle = (
-    hasError: boolean,
-  ): StylesConfig<SelectOption, false> => ({
-    control: (base) => ({
-      ...base,
-      borderRadius: "12px",
-      borderColor: hasError ? "#ef4444" : "#3F7F6D",
-      boxShadow: "none",
-      "&:hover": {
-        borderColor: hasError ? "#ef4444" : "#2F6E5D",
-      },
-    }),
-  });
-  const Label = ({ text }: { text: string }) => (
-    <label className="text-sm font-medium text-gray-600">
-      {text} <span className="text-red-500">*</span>
-    </label>
-  );
 
   const registerUser = async () => {
     if (registering) return;
@@ -330,497 +247,51 @@ export default function RegisterPage() {
       },
     });
   };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#E8EAD9] to-[#DDE3CF] flex items-center justify-center px-6 py-20">
       <div className="w-full max-w-3xl bg-white rounded-[28px] p-16 shadow-xl space-y-12">
-        <h2 className="text-4xl font-bold text-[#2F6E5D] text-center">
-          สมัครสมาชิก
-        </h2>
+        <h2 className="text-4xl font-bold text-[#2F6E5D] text-center">สมัครสมาชิก</h2>
 
         {step === 1 && (
-          <div className="space-y-6">
-            <Label text="เลขบัตรประชาชน" />
-            <input
-              value={form.nationId}
-              pattern="[0-9]*"
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  nationId: e.target.value.replace(/\D/g, "").slice(0, 13),
-                })
-              }
-              className={`input ${errors.nationId ? "border-red-500" : ""}`}
-            />
-            {errors.nationId && (
-              <p className="text-red-500 text-sm">{errors.nationId}</p>
-            )}
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label text="ชื่อ" />
-                <input
-                  value={form.name}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      name: e.target.value.replace(/[^a-zA-Zก-๙\s]/g, ""),
-                    })
-                  }
-                  className={`input ${errors.name ? "border-red-500" : ""}`}
-                />
-                {errors.name && (
-                  <p className="text-red-500 text-sm">{errors.name}</p>
-                )}
-              </div>
-
-              <div>
-                <Label text="นามสกุล" />
-                <input
-                  value={form.surName}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      surName: e.target.value.replace(/[^a-zA-Zก-๙\s]/g, ""),
-                    })
-                  }
-                  className={`input ${errors.surName ? "border-red-500" : ""}`}
-                />
-                {errors.surName && (
-                  <p className="text-red-500 text-sm">{errors.surName}</p>
-                )}
-              </div>
-            </div>
-
-            <button
-              onClick={handleNationCheck}
-              disabled={nationLoading}
-              className="btn-primary"
-            >
-              {nationLoading ? "กำลังตรวจสอบ..." : "ตรวจสอบ"}
-            </button>
-          </div>
+          <RegisterStep1Nation
+            form={form}
+            errors={errors}
+            setForm={setForm}
+            handleNationCheck={handleNationCheck}
+            nationLoading={nationLoading}
+          />
         )}
 
         {step === 2 && (
-          <div className="space-y-10">
-            <div className="space-y-6">
-              <div className="grid grid-cols-[1fr_2fr_2fr] gap-6">
-                {/* TITLE */}
-                <div>
-                  <Label text="คำนำหน้า" />
-
-                  <select
-                    value={form.title ?? ""}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        title: e.target.value || null,
-                      })
-                    }
-                    className={`input ${errors.title ? "border-red-500" : ""}`}
-                  >
-                    <option value=""></option>
-
-                    {titles.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-
-                  {errors.title && (
-                    <p className="text-red-500 text-sm mt-1">{errors.title}</p>
-                  )}
-                </div>
-
-                {/* NAME */}
-                <div>
-                  <Label text="ชื่อ" />
-
-                  <input
-                    placeholder="ชื่อ"
-                    value={form.name}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        name: e.target.value.replace(/[^a-zA-Zก-๙\s]/g, ""),
-                      })
-                    }
-                    className={`input ${errors.name ? "border-red-500" : ""}`}
-                  />
-
-                  {errors.name && (
-                    <p className="text-red-500 text-sm mt-1">{errors.name}</p>
-                  )}
-                </div>
-
-                {/* SURNAME */}
-                <div>
-                  <Label text="นามสกุล" />
-
-                  <input
-                    placeholder="นามสกุล"
-                    value={form.surName}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        surName: e.target.value.replace(/[^a-zA-Zก-๙\s]/g, ""),
-                      })
-                    }
-                    className={`input ${errors.surName ? "border-red-500" : ""}`}
-                  />
-
-                  {errors.surName && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.surName}
-                    </p>
-                  )}
-                </div>
-              </div>
-              <Label text="Email" />
-              <input
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className={`input ${errors.email ? "border-red-500" : ""}`}
-              />
-              {errors.email && (
-                <p className="text-red-500 text-sm">{errors.email}</p>
-              )}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label text="รหัสผ่าน" />
-                  <input
-                    type="password"
-                    value={form.password}
-                    onChange={(e) =>
-                      setForm({ ...form, password: e.target.value })
-                    }
-                    className={`input ${errors.password ? "border-red-500" : ""}`}
-                  />
-                  {errors.password && (
-                    <p className="text-red-500 text-sm">{errors.password}</p>
-                  )}
-                </div>
-
-                <div>
-                  <Label text="ยืนยันรหัสผ่าน" />
-                  <input
-                    type="password"
-                    value={form.confirmPassword}
-                    onChange={(e) =>
-                      setForm({ ...form, confirmPassword: e.target.value })
-                    }
-                    className={`input ${
-                      errors.confirmPassword ? "border-red-500" : ""
-                    }`}
-                  />
-                  {errors.confirmPassword && (
-                    <p className="text-red-500 text-sm">
-                      {errors.confirmPassword}
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label text="เบอร์โทร" />
-                  <input
-                    value={form.phone}
-                    pattern="[0-9]*"
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        phone: formatPhoneNumber(e.target.value),
-                      })
-                    }
-                    className="input"
-                  />
-                  {errors.phone && (
-                    <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
-                  )}
-                </div>
-
-                <div>
-                  <Label text="โรคประจำตัว" />
-                  <input
-                    placeholder="ถ้าไม่มีให้ใส่ -"
-                    value={form.medicalCondition}
-                    onChange={(e) =>
-                      setForm({ ...form, medicalCondition: e.target.value })
-                    }
-                    className="input"
-                  />
-                  {errors.medicalCondition && (
-                    <p className="text-red-500 text-sm">
-                      {errors.medicalCondition}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <Label text="แพ้ยา" />
-                  <input
-                    placeholder="ถ้าไม่มีให้ใส่ -"
-                    value={form.allergyDrug}
-                    onChange={(e) =>
-                      setForm({ ...form, allergyDrug: e.target.value })
-                    }
-                    className="input"
-                  />
-                  {errors.allergyDrug && (
-                    <p className="text-red-500 text-sm">{errors.allergyDrug}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <h4 className="text-lg font-semibold text-[#2F6E5D]">
-                ที่อยู่ปัจจุบัน *
-              </h4>
-
-              <input
-                placeholder="รายละเอียดที่อยู่"
-                value={form.detail}
-                onChange={(e) => setForm({ ...form, detail: e.target.value })}
-                className="input"
-              />
-              {errors.detail && (
-                <p className="text-red-500 text-sm">{errors.detail}</p>
-              )}
-              <div className="grid grid-cols-2 gap-4">
-                <Select
-                  styles={getSelectStyle(!!errors.currentProvince)}
-                  options={current.provinces.map((p) => ({
-                    value: p.id,
-                    label: p.name,
-                  }))}
-                  value={
-                    current.provinces
-                      .map((p) => ({ value: p.id, label: p.name }))
-                      .find((o) => o.value === current.selectedProvince) || null
-                  }
-                  onChange={(o) =>
-                    current.setSelectedProvince(o ? o.value : null)
-                  }
-                  placeholder="เลือกจังหวัด"
-                />
-
-                <Select
-                  styles={getSelectStyle(!!errors.currentDistrict)}
-                  options={current.districts.map((d) => ({
-                    value: d.id,
-                    label: d.name,
-                  }))}
-                  value={
-                    current.districts
-                      .map((d) => ({ value: d.id, label: d.name }))
-                      .find((o) => o.value === current.selectedDistrict) || null
-                  }
-                  onChange={(o) =>
-                    current.setSelectedDistrict(o ? o.value : null)
-                  }
-                  placeholder="เลือกอำเภอ"
-                  isDisabled={!current.selectedProvince}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <Select
-                  styles={getSelectStyle(!!errors.currentSubDistrict)}
-                  options={current.subDistricts.map((s) => ({
-                    value: s.id,
-                    label: s.name,
-                  }))}
-                  value={
-                    current.subDistricts
-                      .map((s) => ({ value: s.id, label: s.name }))
-                      .find((o) => o.value === current.selectedSubDistrict) ||
-                    null
-                  }
-                  onChange={(o) =>
-                    current.setSelectedSubDistrict(o ? o.value : null)
-                  }
-                  placeholder="เลือกตำบล"
-                  isDisabled={!current.selectedDistrict}
-                />
-
-                <Select
-                  styles={getSelectStyle(!!errors.currentZipCode)}
-                  options={current.zipCodes.map((z) => ({
-                    value: z.id,
-                    label: z.name,
-                  }))}
-                  value={
-                    current.zipCodes
-                      .map((z) => ({ value: z.id, label: z.name }))
-                      .find((o) => o.value === current.selectedZipCode) || null
-                  }
-                  onChange={(o) =>
-                    current.setSelectedZipCode(o ? o.value : null)
-                  }
-                  placeholder="เลือกรหัสไปรษณีย์"
-                  isDisabled={!current.selectedSubDistrict}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <h4 className="text-lg font-semibold text-[#2F6E5D]">
-                ที่อยู่ตามบัตรประชาชน *
-              </h4>
-
-              <input
-                placeholder="รายละเอียดที่อยู่"
-                value={form.detailNation}
-                onChange={(e) =>
-                  setForm({ ...form, detailNation: e.target.value })
-                }
-                className="input"
-              />
-
-              {errors.detailNation && (
-                <p className="text-red-500 text-sm">{errors.detailNation}</p>
-              )}
-
-              <div className="grid grid-cols-2 gap-4">
-                <Select
-                  styles={getSelectStyle(!!errors.nationProvince)}
-                  options={nation.provinces.map((p) => ({
-                    value: p.id,
-                    label: p.name,
-                  }))}
-                  value={
-                    nation.provinces
-                      .map((p) => ({ value: p.id, label: p.name }))
-                      .find((o) => o.value === nation.selectedProvince) || null
-                  }
-                  onChange={(o) =>
-                    nation.setSelectedProvince(o ? o.value : null)
-                  }
-                  placeholder="เลือกจังหวัด"
-                />
-
-                <Select
-                  styles={getSelectStyle(!!errors.nationDistrict)}
-                  options={nation.districts.map((d) => ({
-                    value: d.id,
-                    label: d.name,
-                  }))}
-                  value={
-                    nation.districts
-                      .map((d) => ({ value: d.id, label: d.name }))
-                      .find((o) => o.value === nation.selectedDistrict) || null
-                  }
-                  onChange={(o) =>
-                    nation.setSelectedDistrict(o ? o.value : null)
-                  }
-                  placeholder="เลือกอำเภอ"
-                  isDisabled={!nation.selectedProvince}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <Select
-                  styles={getSelectStyle(!!errors.nationSubDistrict)}
-                  options={nation.subDistricts.map((s) => ({
-                    value: s.id,
-                    label: s.name,
-                  }))}
-                  value={
-                    nation.subDistricts
-                      .map((s) => ({ value: s.id, label: s.name }))
-                      .find((o) => o.value === nation.selectedSubDistrict) ||
-                    null
-                  }
-                  onChange={(o) =>
-                    nation.setSelectedSubDistrict(o ? o.value : null)
-                  }
-                  placeholder="เลือกตำบล"
-                  isDisabled={!nation.selectedDistrict}
-                />
-
-                <Select
-                  styles={getSelectStyle(!!errors.nationZipCode)}
-                  options={nation.zipCodes.map((z) => ({
-                    value: z.id,
-                    label: z.name,
-                  }))}
-                  value={
-                    nation.zipCodes
-                      .map((z) => ({ value: z.id, label: z.name }))
-                      .find((o) => o.value === nation.selectedZipCode) || null
-                  }
-                  onChange={(o) =>
-                    nation.setSelectedZipCode(o ? o.value : null)
-                  }
-                  placeholder="เลือกรหัสไปรษณีย์"
-                  isDisabled={!nation.selectedSubDistrict}
-                />
-              </div>
-            </div>
-
-            <button
-              onClick={handleSubmit}
-              disabled={registerLoading}
-              className="btn-primary"
-            >
-              {sendOtpLoading ? "กำลังส่ง OTP..." : "สมัครสมาชิก"}
-            </button>
-
-            {successMessage && (
-              <p className="text-green-600 text-center text-sm">
-                {successMessage}
-              </p>
-            )}
-          </div>
+          <RegisterStep2Form
+            form={form}
+            errors={errors}
+            setForm={setForm}
+            titles={titles}
+            handleSubmit={handleSubmit}
+            sendOtpLoading={sendOtpLoading}
+            registerLoading={registerLoading}
+            successMessage={successMessage}
+            current={current}
+            nation={nation}
+          />
         )}
-        {step === 3 && (
-          <div className="space-y-6 text-center">
-            <h3 className="text-xl font-semibold text-[#2F6E5D]">ยืนยัน OTP</h3>
-            <p className="text-gray-500 text-sm">
-              กรุณากรอกรหัส OTP ที่ส่งไปยัง
-              <br />
-              <span className="font-medium text-gray-700">{form.email}</span>
-            </p>
-            {/* OTP INPUT */}
-            <OtpInput value={otp} onChange={setOtp} />
-            {/* ERROR */}
-            {otpError && <p className="text-red-500 text-sm">{otpError}</p>}
-            <button
-              disabled={verifyOtpLoading || registering || otp.length !== 6}
-              onClick={async () => {
-                const ok = await verifyOtp(form.email, otp);
 
-                if (ok) {
-                  await registerUser();
-                }
-              }}
-              className="btn-primary "
-            >
-              {verifyOtpLoading ? "กำลังตรวจสอบ..." : "ยืนยัน OTP"}
-            </button>
-            {/* RESEND OTP */}
-            <p
-              onClick={() => {
-                if (cooldown === 0 && !sendOtpLoading) {
-                  sendOtp(form.email);
-                  setOtp("");
-                }
-              }}
-              className={`text-sm ${
-                cooldown > 0
-                  ? "text-gray-400"
-                  : "text-blue-600 btn-primary-pointer hover:underline"
-              }`}
-            >
-              {cooldown > 0
-                ? `ขอ OTP ใหม่ใน ${cooldown}s`
-                : sendOtpLoading
-                  ? "กำลังส่ง OTP..."
-                  : "ขอ OTP ใหม่"}
-            </p>
-          </div>
+        {step === 3 && (
+          <RegisterStep3Otp
+            otp={otp}
+            setOtp={setOtp}
+            verifyOtp={verifyOtp}
+            verifyOtpLoading={verifyOtpLoading}
+            sendOtp={sendOtp}
+            sendOtpLoading={sendOtpLoading}
+            cooldown={cooldown}
+            otpError={otpError || undefined}
+            registering={registering}
+            registerUser={registerUser}
+            email={form.email}
+          />
         )}
       </div>
     </div>

@@ -5,6 +5,7 @@ import { OtpRecord } from './dto/OtpRecord.dto';
 @Injectable()
 export class MailService {
   private otpStore = new Map<string, OtpRecord>();
+  private verifiedStore = new Map<string, number>();
 
   private transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
@@ -50,6 +51,7 @@ export class MailService {
   }
 
   verifyOtp(email: string, code: string) {
+    email = email.trim().toLowerCase();
     const record = this.otpStore.get(email);
 
     if (!record) {
@@ -66,7 +68,24 @@ export class MailService {
     }
 
     this.otpStore.delete(email);
+    this.verifiedStore.set(email, Date.now() + 10 * 60 * 1000);
 
     return { message: 'OTP verified' };
+  }
+
+  consumeVerifiedEmail(email: string) {
+    email = email.trim().toLowerCase();
+    const expires = this.verifiedStore.get(email);
+
+    if (!expires) {
+      throw new BadRequestException('Email not verified by OTP');
+    }
+
+    if (Date.now() > expires) {
+      this.verifiedStore.delete(email);
+      throw new BadRequestException('OTP verification expired');
+    }
+
+    this.verifiedStore.delete(email);
   }
 }
