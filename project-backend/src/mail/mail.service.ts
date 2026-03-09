@@ -25,7 +25,7 @@ export class MailService {
 
     const otp = this.generateOtp();
 
-    const expires = Date.now() + 30000; // 2 นาที
+    const expires = Date.now() + 120000; // 2 นาที
 
     this.otpStore.set(email, {
       code: otp,

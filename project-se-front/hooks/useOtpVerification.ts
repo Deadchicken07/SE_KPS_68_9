@@ -27,8 +27,8 @@ export const useOtpVerification = () => {
 
       await axios.post(`${API}/mail/send-otp`, { email });
 
-      // เริ่ม cooldown 60 วินาที (ตาม backend OTP)
-      setCooldown(30);
+      // เริ่ม cooldown 120 วินาที (ตาม backend OTP)
+      setCooldown(120);
 
       return true;
     } catch (err: unknown) {
