@@ -2,8 +2,9 @@
 
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Button, ConfigProvider } from 'antd';
+import { Button, ConfigProvider, message, Spin } from 'antd';
 import locale from 'antd/locale/th_TH';
+import { supabase } from '@/utils/supabase';
 
 function PaymentContent() {
     const router = useRouter();
@@ -17,11 +18,61 @@ function PaymentContent() {
 
     const [step, setStep] = useState<'payment' | 'success'>('payment');
     const [uploadedSlip, setUploadedSlip] = useState<File | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleConfirmPayment = () => {
+    const handleConfirmPayment = async () => {
         if (!uploadedSlip) return alert('กรุณาแนบสลิปการโอนเงิน');
-        console.log('Payment confirmed for:', { staffName, date, time, duration, price, uploadedSlip });
-        setStep('success');
+        /*const appointmentId = searchParams.get('id');
+        
+        if (!appointmentId) {
+            alert('ไม่พบข้อมูลรหัสการนัดหมาย');
+            return;
+        }*/
+
+        setIsSubmitting(true);
+        try {
+            // 1. Upload image to Supabase Storage
+            const fileExt = uploadedSlip.name.split('.').pop();
+            const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+            const filePath = `slips/${fileName}`;
+
+            const { error: uploadError, data } = await supabase.storage
+                .from('Paid_appointment')
+                .upload(filePath, uploadedSlip);
+
+            if (uploadError) {
+                console.error("Upload error:", uploadError);
+                throw new Error('ไม่สามารถอัปโหลดสลิปได้');
+            }
+
+            // 2. Get Public URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('Paid_appointment')
+                .getPublicUrl(filePath);
+
+            // 3. Send URL to backend
+            /*const token = localStorage.getItem('token');
+            const response = await fetch(`http://localhost:4000/appointments/${appointmentId}/pay`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ slipUrl: publicUrl })
+            });
+
+            if (!response.ok) {
+                throw new Error('บันทึกข้อมูลการชำระเงินไม่สำเร็จ');
+            }*/
+
+            alert('Uploaded URL: ' + publicUrl);
+            setStep('success');
+        } catch (error: any) {
+            console.error('Payment error:', error);
+            alert(error.message || 'เกิดข้อผิดพลาดในการทำรายการ');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -109,8 +160,9 @@ function PaymentContent() {
                                     boxShadow: '0 4px 14px rgba(15,118,110,0.25)'
                                 }}
                                 onClick={handleConfirmPayment}
+                                disabled={isSubmitting}
                             >
-                                แจ้งโอนเงิน
+                                {isSubmitting ? <Spin size="small" /> : 'แจ้งโอนเงิน'}
                             </Button>
 
                             <Button

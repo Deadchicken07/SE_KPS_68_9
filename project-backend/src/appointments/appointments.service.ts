@@ -163,7 +163,11 @@ export class AppointmentsService {
     };
   }
 
-  async markAppointmentPaid(userId: number, appointmentId: number) {
+  async markAppointmentPaid(
+    userId: number,
+    appointmentId: number,
+    slipUrl: string,
+  ) {
     const appointment = await this.getOwnedAppointment(appointmentId, userId);
 
     if (appointment.status === pay_type_enum.Paid) {
@@ -189,6 +193,7 @@ export class AppointmentsService {
       where: { id: appointmentId },
       data: {
         status: pay_type_enum.Paid,
+        deposit_slip_file: slipUrl,
       },
     });
 

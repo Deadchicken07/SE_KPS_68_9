@@ -54,6 +54,38 @@ export class UserService {
       },
     };
   }
+
+  async findStaffs() {
+    const staffs = await this.prisma.users.findMany({
+      where: {
+        roles: {
+          name: {
+            in: ['จิตแพทย์', 'นักจิตวิทยา'],
+          },
+        },
+      },
+      select: {
+        user_id: true,
+        name: true,
+        sur_name: true,
+        file_name: true,
+        info: true,
+        roles: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    return staffs.map((staff) => ({
+      id: staff.user_id,
+      name: `${staff.name} ${staff.sur_name}`,
+      role: staff.roles?.name || '',
+      specialty: staff.info || '',
+      image: staff.file_name || '',
+    }));
+  }
   async findOne(userId: number): Promise<UserResponseDto> {
     const user = await this.prisma.users.findUnique({
       where: { user_id: userId }, // ✅ ตรง schema

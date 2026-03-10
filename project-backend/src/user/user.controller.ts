@@ -11,6 +11,11 @@ export class UserController {
     return this.userService.findAll(query);
   }
 
+  @Get('staff')
+  findStaffs() {
+    return this.userService.findStaffs();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.userService.findOne(+id);

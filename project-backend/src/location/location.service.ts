@@ -18,7 +18,7 @@ export class LocationService {
     return this.prisma.districts.findMany({
       where: {
         province_id: provinceId,
-        ...(q && { name: { contains: q, mode: 'insensitive' } }),
+        ...(q && { name_in_thai: { contains: q, mode: 'insensitive' } }),
       },
       select: { id: true, name: true },
       orderBy: { name: 'asc' },
