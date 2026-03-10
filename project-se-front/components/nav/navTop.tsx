@@ -1,12 +1,12 @@
-﻿  "use client"
+"use client"
 
-import { Layout, Avatar, Dropdown } from "antd"
+import { useState } from "react"
+import { Layout, Dropdown } from "antd"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { UserOutlined } from "@ant-design/icons"
 import { PhoneOutlined, HeartFilled } from "@ant-design/icons"
 
-  const { Header, Content } = Layout
+const { Header } = Layout
 
 const links = [
   { name: "หน้าเเรก", href: "/user" },
@@ -17,21 +17,18 @@ const links = [
 ]
 
 export default function ClinicLayout() {
-  const pathname = usePathname();
-  const router = useRouter();
-
-  const user = { name: "username" }
+  const pathname = usePathname()
+  const router = useRouter()
+  const [isLogin, setIsLogin] = useState(false)
 
   const handleLogout = () => {
-    router.push("/signin");
-  };
+    router.push("/signin")
+  }
 
   const menuItems = [
     { key: "profile", label: <Link href="/profile">Profile</Link> },
     { key: "logout", label: <span onClick={handleLogout}>Logout</span> },
-  ];
-  const [isLogin, setIsLogin] = useState(true);
-  
+  ]
 
   return (
     <Layout style={{ minHeight: "auto" }}>
@@ -66,13 +63,8 @@ export default function ClinicLayout() {
             <span style={{ color: "#111" }}>JitDee</span>
             <span style={{ color: "#0f766e" }}>Clinic</span>
           </div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 20,
-            }}
-          >
+
+          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
             <div
               style={{
                 display: "flex",
@@ -93,12 +85,12 @@ export default function ClinicLayout() {
 
             <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
               {isLogin ? (
-                <Dropdown>
-                      Hello
+                <Dropdown menu={{ items: menuItems }}>
+                  <span style={{ cursor: "pointer" }}>Hello</span>
                 </Dropdown>
               ) : (
                 <>
-                  <Link href="/signin">
+                  <Link href="/login/regis">
                     <div
                       style={{
                         display: "flex",
@@ -114,38 +106,41 @@ export default function ClinicLayout() {
                         alignItems: "center",
                       }}
                     >
-                      Sign in
+                      Sign Up
                     </div>
                   </Link>
 
-                <Link href="/login">
-                  <div
-                    style={{
-                      display: "flex",
-                      padding: "8px 20px",
-                      borderRadius: 999,
-                      backgroundColor: "#0f766e",
-                      color: "#fff",
-                      fontWeight: 500,
-                      cursor: "pointer",
-                      transition: "0.2s",
-                      height: 40,
-                      justifyContent: "center",
-                      alignItems: "center"
-                    }}
-                  >
-                    Login
-                  </div>
-                </Link>
-              </div>
+                  <Link href="/login">
+                    <div
+                      style={{
+                        display: "flex",
+                        padding: "8px 20px",
+                        borderRadius: 999,
+                        backgroundColor: "#0f766e",
+                        color: "#fff",
+                        fontWeight: 500,
+                        cursor: "pointer",
+                        transition: "0.2s",
+                        height: 40,
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      Login
+                    </div>
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </Header>
+
       <Header
         style={{
           backgroundColor: "#0f766e",
-          height: 50,           // 👈 กำหนดเอง
-          lineHeight: "50px",   // 👈 สำคัญ
+          height: 50,
+          lineHeight: "50px",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -160,14 +155,13 @@ export default function ClinicLayout() {
               color: pathname === link.href ? "#fff" : "#d1fae5",
               fontWeight: pathname === link.href ? "bold" : "normal",
               fontSize: 18,
-              padding: 36
+              padding: 36,
             }}
           >
             {link.name}
           </Link>
         ))}
       </Header>
-
     </Layout>
   )
 }
