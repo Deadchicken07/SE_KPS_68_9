@@ -1,11 +1,11 @@
-﻿"use client";
+"use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { notification } from "antd";
 import { useLogin } from "@/hooks/useLogin";
 
-export default function LoginPage() {
+function LoginContent() {
   const [api, contextHolder] = notification.useNotification();
   const { login, loading, error } = useLogin();
 
@@ -146,3 +146,10 @@ export default function LoginPage() {
   );
 }
 
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginContent />
+    </Suspense>
+  );
+}

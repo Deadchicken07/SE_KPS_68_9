@@ -1,4 +1,4 @@
-﻿  "use client"
+  "use client"
 
 import { Layout, Avatar, Dropdown } from "antd"
 import Link from "next/link"
@@ -128,7 +128,6 @@ const links = [
                   </div>
                 </Link>
               </div>
-            </Dropdown>
           </div>
         </div>
       </Header>
