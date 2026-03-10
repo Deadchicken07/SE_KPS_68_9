@@ -12,8 +12,7 @@ import { ChoicesModule } from './choices/choices.module';
 import { AnswersModule } from './answers/answers.module';
 
 @Module({
-  imports: [UserModule, PrismaModule, AuthModule, LocationModule, MailModule],
-  imports: [UserModule, PrismaModule, AuthModule, LocationModule, QuestionnairesModule, QuestionsModule, ChoicesModule, AnswersModule],
+  imports: [UserModule, PrismaModule, AuthModule, LocationModule, QuestionnairesModule,MailModule, QuestionsModule, ChoicesModule, AnswersModule],
   controllers: [AppController],
   providers: [AppService],
 })
