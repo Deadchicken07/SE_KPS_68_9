@@ -1,4 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
+import { Button, Input } from "antd";
 import type { FormErrors, RegisterForm } from "@/types/Register.types";
 import Label from "./Label";
 
@@ -21,7 +22,8 @@ export default function RegisterStep1Nation({
     <div className="space-y-6">
       <Label text="เลขบัตรประชาชน" />
 
-      <input
+      <Input
+        size="large"
         value={form.nationId}
         pattern="[0-9]*"
         onChange={(e) =>
@@ -30,7 +32,8 @@ export default function RegisterStep1Nation({
             nationId: e.target.value.replace(/\D/g, "").slice(0, 13),
           }))
         }
-        className={`input ${errors.nationId ? "border-red-500" : ""}`}
+        status={errors.nationId ? "error" : undefined}
+        className="input"
       />
 
       {errors.nationId && <p className="text-red-500 text-sm">{errors.nationId}</p>}
@@ -39,7 +42,8 @@ export default function RegisterStep1Nation({
         <div>
           <Label text="ชื่อ" />
 
-          <input
+          <Input
+            size="large"
             value={form.name}
             onChange={(e) =>
               setForm((prev) => ({
@@ -47,7 +51,8 @@ export default function RegisterStep1Nation({
                 name: e.target.value.replace(/[^a-zA-Zก-๙\s]/g, ""),
               }))
             }
-            className={`input ${errors.name ? "border-red-500" : ""}`}
+            status={errors.name ? "error" : undefined}
+            className="input"
           />
 
           {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
@@ -56,7 +61,8 @@ export default function RegisterStep1Nation({
         <div>
           <Label text="นามสกุล" />
 
-          <input
+          <Input
+            size="large"
             value={form.surName}
             onChange={(e) =>
               setForm((prev) => ({
@@ -64,16 +70,23 @@ export default function RegisterStep1Nation({
                 surName: e.target.value.replace(/[^a-zA-Zก-๙\s]/g, ""),
               }))
             }
-            className={`input ${errors.surName ? "border-red-500" : ""}`}
+            status={errors.surName ? "error" : undefined}
+            className="input"
           />
 
           {errors.surName && <p className="text-red-500 text-sm">{errors.surName}</p>}
         </div>
       </div>
 
-      <button onClick={handleNationCheck} disabled={nationLoading} className="btn-primary">
-        {nationLoading ? "กำลังตรวจสอบ..." : "ตรวจสอบ"}
-      </button>
+      <Button
+        type="primary"
+        size="large"
+        onClick={handleNationCheck}
+        loading={nationLoading}
+        className="btn-primary"
+      >
+        {nationLoading ? "ตรวจสอบเลขบัตรประชาชน..." : "ตรวจสอบเลขบัตรประชาชน"}
+      </Button>
     </div>
   );
 }

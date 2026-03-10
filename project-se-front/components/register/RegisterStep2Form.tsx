@@ -1,7 +1,7 @@
 "use client";
 
 import type { Dispatch, SetStateAction } from "react";
-import Select, { StylesConfig } from "react-select";
+import { Button, Input, Select } from "antd";
 import { formatPhoneNumber } from "@/utils/formatPhoneNumber";
 import type {
   FormErrors,
@@ -9,11 +9,6 @@ import type {
   RegisterForm,
 } from "@/types/Register.types";
 import Label from "./Label";
-
-type SelectOption = {
-  value: number;
-  label: string;
-};
 
 interface RegisterStep2Props {
   form: RegisterForm;
@@ -42,20 +37,6 @@ interface AddressSectionProps {
   };
 }
 
-const getSelectStyle = (
-  hasError: boolean,
-): StylesConfig<SelectOption, false> => ({
-  control: (base) => ({
-    ...base,
-    borderRadius: "12px",
-    borderColor: hasError ? "#ef4444" : "#3F7F6D",
-    boxShadow: "none",
-    "&:hover": {
-      borderColor: hasError ? "#ef4444" : "#2F6E5D",
-    },
-  }),
-});
-
 function AddressSection({
   title,
   detailValue,
@@ -66,68 +47,66 @@ function AddressSection({
 }: AddressSectionProps) {
   return (
     <div className="space-y-4">
-      <h4 className="text-lg font-semibold text-[#2F6E5D]">{title}</h4>
+      <h4 className="text-lg font-semibold text-[#0e5b50]">{title}</h4>
 
-      <input
+      <Input
+        size="large"
         placeholder="รายละเอียดที่อยู่"
         value={detailValue}
         onChange={(e) => detailOnChange(e.target.value)}
+        status={detailError ? "error" : undefined}
         className="input"
       />
       {detailError && <p className="text-red-500 text-sm">{detailError}</p>}
 
       <div className="grid grid-cols-2 gap-4">
         <Select
-          styles={getSelectStyle(!!errors.province)}
+          size="large"
+          status={errors.province ? "error" : undefined}
           options={location.provinces.map((p) => ({ value: p.id, label: p.name }))}
-          value={
-            location.provinces
-              .map((p) => ({ value: p.id, label: p.name }))
-              .find((o) => o.value === location.selectedProvince) || null
-          }
-          onChange={(o) => location.setSelectedProvince(o ? o.value : null)}
-          placeholder="เลือกจังหวัด"
+          value={location.selectedProvince ?? undefined}
+          onChange={(value) => location.setSelectedProvince(value ?? null)}
+          placeholder="จังหวัด"
+          className="w-full"
+          allowClear
         />
 
         <Select
-          styles={getSelectStyle(!!errors.district)}
+          size="large"
+          status={errors.district ? "error" : undefined}
           options={location.districts.map((d) => ({ value: d.id, label: d.name }))}
-          value={
-            location.districts
-              .map((d) => ({ value: d.id, label: d.name }))
-              .find((o) => o.value === location.selectedDistrict) || null
-          }
-          onChange={(o) => location.setSelectedDistrict(o ? o.value : null)}
-          placeholder="เลือกอำเภอ"
-          isDisabled={!location.selectedProvince}
+          value={location.selectedDistrict ?? undefined}
+          onChange={(value) => location.setSelectedDistrict(value ?? null)}
+          placeholder="เขต/อำเภอ"
+          className="w-full"
+          allowClear
+          disabled={!location.selectedProvince}
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <Select
-          styles={getSelectStyle(!!errors.subDistrict)}
+          size="large"
+          status={errors.subDistrict ? "error" : undefined}
           options={location.subDistricts.map((s) => ({ value: s.id, label: s.name }))}
-          value={
-            location.subDistricts
-              .map((s) => ({ value: s.id, label: s.name }))
-              .find((o) => o.value === location.selectedSubDistrict) || null
-          }
-          onChange={(o) => location.setSelectedSubDistrict(o ? o.value : null)}
-          placeholder="เลือกตำบล"
-          isDisabled={!location.selectedDistrict}
+          value={location.selectedSubDistrict ?? undefined}
+          onChange={(value) => location.setSelectedSubDistrict(value ?? null)}
+          placeholder="แขวง/ตำบล"
+          className="w-full"
+          allowClear
+          disabled={!location.selectedDistrict}
         />
 
         <Select
-          styles={getSelectStyle(!!errors.zipCode)}
+          size="large"
+          status={errors.zipCode ? "error" : undefined}
           options={location.zipCodes.map((z) => ({ value: z.id, label: z.name }))}
-          value={
-            location.zipCodes
-              .map((z) => ({ value: z.id, label: z.name }))
-              .find((o) => o.value === location.selectedZipCode) || null
-          }
-          onChange={(o) => location.setSelectedZipCode(o ? o.value : null)}
-          placeholder="เลือกรหัสไปรษณีย์"
-          isDisabled={!location.selectedSubDistrict}
+          value={location.selectedZipCode ?? undefined}
+          onChange={(value) => location.setSelectedZipCode(value ?? null)}
+          placeholder="รหัสไปรษณีย์"
+          className="w-full"
+          allowClear
+          disabled={!location.selectedSubDistrict}
         />
       </div>
     </div>
@@ -153,24 +132,20 @@ export default function RegisterStep2Form({
           <div>
             <Label text="คำนำหน้า" />
 
-            <select
-              value={form.title ?? ""}
-              onChange={(e) =>
+            <Select
+              size="large"
+              value={form.title ?? undefined}
+              onChange={(value) =>
                 setForm((prev) => ({
                   ...prev,
-                  title: e.target.value || null,
+                  title: value ?? null,
                 }))
               }
-              className={`input ${errors.title ? "border-red-500" : ""}`}
-            >
-              <option value=""></option>
-
-              {titles.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
+              status={errors.title ? "error" : undefined}
+              className="w-full"
+              options={titles.map((t) => ({ value: t, label: t }))}
+              allowClear
+            />
 
             {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
           </div>
@@ -178,7 +153,8 @@ export default function RegisterStep2Form({
           <div>
             <Label text="ชื่อ" />
 
-            <input
+            <Input
+              size="large"
               placeholder="ชื่อ"
               value={form.name}
               onChange={(e) =>
@@ -187,7 +163,8 @@ export default function RegisterStep2Form({
                   name: e.target.value.replace(/[^a-zA-Zก-๙\s]/g, ""),
                 }))
               }
-              className={`input ${errors.name ? "border-red-500" : ""}`}
+              status={errors.name ? "error" : undefined}
+              className="input"
             />
 
             {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
@@ -196,7 +173,8 @@ export default function RegisterStep2Form({
           <div>
             <Label text="นามสกุล" />
 
-            <input
+            <Input
+              size="large"
               placeholder="นามสกุล"
               value={form.surName}
               onChange={(e) =>
@@ -205,7 +183,8 @@ export default function RegisterStep2Form({
                   surName: e.target.value.replace(/[^a-zA-Zก-๙\s]/g, ""),
                 }))
               }
-              className={`input ${errors.surName ? "border-red-500" : ""}`}
+              status={errors.surName ? "error" : undefined}
+              className="input"
             />
 
             {errors.surName && <p className="text-red-500 text-sm mt-1">{errors.surName}</p>}
@@ -213,32 +192,38 @@ export default function RegisterStep2Form({
         </div>
 
         <Label text="Email" />
-        <input
+        <Input
+          size="large"
           value={form.email}
           onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
-          className={`input ${errors.email ? "border-red-500" : ""}`}
+          status={errors.email ? "error" : undefined}
+          className="input"
         />
         {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
 
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label text="รหัสผ่าน" />
-            <input
-              type="password"
+            <Input.Password
+              size="large"
               value={form.password}
               onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
-              className={`input ${errors.password ? "border-red-500" : ""}`}
+              status={errors.password ? "error" : undefined}
+              className="input"
             />
             {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
           </div>
 
           <div>
             <Label text="ยืนยันรหัสผ่าน" />
-            <input
-              type="password"
+            <Input.Password
+              size="large"
               value={form.confirmPassword}
-              onChange={(e) => setForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-              className={`input ${errors.confirmPassword ? "border-red-500" : ""}`}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, confirmPassword: e.target.value }))
+              }
+              status={errors.confirmPassword ? "error" : undefined}
+              className="input"
             />
             {errors.confirmPassword && (
               <p className="text-red-500 text-sm">{errors.confirmPassword}</p>
@@ -248,8 +233,9 @@ export default function RegisterStep2Form({
 
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <Label text="เบอร์โทร" />
-            <input
+            <Label text="เบอร์โทรศัพท์" />
+            <Input
+              size="large"
               value={form.phone}
               pattern="[0-9]*"
               onChange={(e) =>
@@ -258,6 +244,7 @@ export default function RegisterStep2Form({
                   phone: formatPhoneNumber(e.target.value),
                 }))
               }
+              status={errors.phone ? "error" : undefined}
               className="input"
             />
             {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
@@ -265,7 +252,8 @@ export default function RegisterStep2Form({
 
           <div>
             <Label text="โรคประจำตัว" />
-            <input
+            <Input
+              size="large"
               placeholder="ถ้าไม่มีให้ใส่ -"
               value={form.medicalCondition}
               onChange={(e) =>
@@ -274,6 +262,7 @@ export default function RegisterStep2Form({
                   medicalCondition: e.target.value,
                 }))
               }
+              status={errors.medicalCondition ? "error" : undefined}
               className="input"
             />
             {errors.medicalCondition && (
@@ -283,10 +272,12 @@ export default function RegisterStep2Form({
 
           <div>
             <Label text="แพ้ยา" />
-            <input
+            <Input
+              size="large"
               placeholder="ถ้าไม่มีให้ใส่ -"
               value={form.allergyDrug}
               onChange={(e) => setForm((prev) => ({ ...prev, allergyDrug: e.target.value }))}
+              status={errors.allergyDrug ? "error" : undefined}
               className="input"
             />
             {errors.allergyDrug && <p className="text-red-500 text-sm">{errors.allergyDrug}</p>}
@@ -309,7 +300,7 @@ export default function RegisterStep2Form({
       />
 
       <AddressSection
-        title="ที่อยู่ตามบัตรประชาชน *"
+        title="ที่อยู่ตามทะเบียน *"
         detailValue={form.detailNation}
         detailError={errors.detailNation}
         detailOnChange={(value) => setForm((prev) => ({ ...prev, detailNation: value }))}
@@ -322,9 +313,15 @@ export default function RegisterStep2Form({
         }}
       />
 
-      <button onClick={handleSubmit} disabled={sendOtpLoading} className="btn-primary">
-        {sendOtpLoading ? "กำลังส่ง OTP..." : "สมัครสมาชิก"}
-      </button>
+      <Button
+        type="primary"
+        size="large"
+        onClick={handleSubmit}
+        loading={sendOtpLoading}
+        className="btn-primary"
+      >
+        {sendOtpLoading ? "กำลังส่ง OTP..." : "ตรวจสอบข้อมูล"}
+      </Button>
 
       {successMessage && <p className="text-green-600 text-center text-sm">{successMessage}</p>}
     </div>
