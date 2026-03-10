@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   PaginatedUserResponse,
@@ -75,25 +79,29 @@ export class UserService {
     };
   }
   async findByNationId(nationId: string, name: string, surName: string) {
+    const normalizedNationId = nationId.trim();
+    const normalizedName = name.trim();
+    const normalizedSurName = surName.trim();
+
     const user = await this.prisma.users.findFirst({
       where: {
-        nation_id: nationId,
+        nation_id: normalizedNationId,
       },
       include: {
-        addresses_users_address_idToaddresses: {
+        currentAddress: {
           include: {
-            provinces: true,
-            districts: true,
-            sub_districts: true,
-            zip_codes: true,
+            province: true,
+            district: true,
+            subDistrict: true,
+            zipCode: true,
           },
         },
-        addresses_users_address_id_nationToaddresses: {
+        nationAddress: {
           include: {
-            provinces: true,
-            districts: true,
-            sub_districts: true,
-            zip_codes: true,
+            province: true,
+            district: true,
+            subDistrict: true,
+            zipCode: true,
           },
         },
       },
@@ -105,7 +113,10 @@ export class UserService {
     }
 
     // ⭐ เลขบัตรมี แต่ชื่อไม่ตรง
-    if (user.name !== name || user.sur_name !== surName) {
+    if (
+      user.name.trim() !== normalizedName ||
+      user.sur_name.trim() !== normalizedSurName
+    ) {
       return { status: 'mismatch' };
     }
 
@@ -128,39 +139,35 @@ export class UserService {
         medicalCondition: user.medical_condition,
         allergyDrug: user.allergy_drug,
 
-        currentAddress: user.addresses_users_address_idToaddresses
+        currentAddress: user.currentAddress
           ? {
-              provinceId:
-                user.addresses_users_address_idToaddresses.province_id,
-              districtId:
-                user.addresses_users_address_idToaddresses.district_id,
-              subDistrictId:
-                user.addresses_users_address_idToaddresses.sub_district_id,
-              zipCodeId: user.addresses_users_address_idToaddresses.zip_code_id,
-              detail: user.addresses_users_address_idToaddresses.detail,
+              provinceId: user.currentAddress.province_id,
+              districtId: user.currentAddress.district_id,
+              subDistrictId: user.currentAddress.sub_district_id,
+              zipCodeId: user.currentAddress.zip_code_id,
+              detail: user.currentAddress.detail,
             }
           : null,
 
-        nationAddress: user.addresses_users_address_id_nationToaddresses
+        nationAddress: user.nationAddress
           ? {
-              provinceId:
-                user.addresses_users_address_id_nationToaddresses.province_id,
-              districtId:
-                user.addresses_users_address_id_nationToaddresses.district_id,
-              subDistrictId:
-                user.addresses_users_address_id_nationToaddresses
-                  .sub_district_id,
-              zipCodeId:
-                user.addresses_users_address_id_nationToaddresses.zip_code_id,
-              detail: user.addresses_users_address_id_nationToaddresses.detail,
+              provinceId: user.nationAddress.province_id,
+              districtId: user.nationAddress.district_id,
+              subDistrictId: user.nationAddress.sub_district_id,
+              zipCodeId: user.nationAddress.zip_code_id,
+              detail: user.nationAddress.detail,
             }
           : null,
       },
     };
   }
   async checkEmail(email: string) {
+    if (!email || !email.trim()) {
+      throw new BadRequestException('Email is required');
+    }
+
     const user = await this.prisma.users.findUnique({
-      where: { email },
+      where: { email: email.trim().toLowerCase() },
     });
 
     if (user) {
