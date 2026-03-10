@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -20,9 +21,24 @@ export class AuthService {
   ) {}
 
   async login(email: string, password: string) {
-    const user = await this.prisma.users.findUnique({
-      where: { email },
-    });
+    const normalizedEmail = email.trim().toLowerCase();
+    let user;
+
+    try {
+      user = await this.prisma.users.findUnique({
+        where: { email: normalizedEmail },
+      });
+    } catch (error: unknown) {
+      if (
+        error instanceof Prisma.PrismaClientInitializationError ||
+        error instanceof Prisma.PrismaClientUnknownRequestError
+      ) {
+        throw new ServiceUnavailableException(
+          'Database is unavailable. Please try again later.',
+        );
+      }
+      throw error;
+    }
 
     if (!user) {
       throw new UnauthorizedException('User not found');
