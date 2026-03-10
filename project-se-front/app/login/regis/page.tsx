@@ -252,7 +252,11 @@ export default function RegisterPage() {
       <div className="auth-orb top-[-120px] left-[-120px] h-[260px] w-[260px] bg-[#2f6e5d]/30" />
       <div className="auth-orb alt bottom-[-140px] right-[-120px] h-[320px] w-[320px] bg-[#4e987f]/30" />
 
-      <section className="auth-card w-full max-w-5xl p-6 sm:p-10">
+      <section
+        className={`auth-card w-full p-6 sm:p-10 ${
+          step === 1 ? "max-w-3xl" : "max-w-5xl"
+        }`}
+      >
         <div className="mb-8 flex items-center justify-between gap-3">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#3f7f6d]/75">Create account</p>
