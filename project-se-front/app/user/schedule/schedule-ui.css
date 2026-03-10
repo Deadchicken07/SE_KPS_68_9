@@ -14,7 +14,7 @@
   margin: 0;
   min-height: 100vh;
   padding: 60px 24px 80px;
-  background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #f0fdf4 100%);
+  background: #f4efe8;
   color: var(--ink);
   font-family: 'Sarabun', Arial, sans-serif;
   overflow: hidden;
@@ -57,10 +57,7 @@
   line-height: 1.7;
   font-family: 'Sarabun', Arial, sans-serif;
   font-weight: 800;
-  background: linear-gradient(135deg, #3730a3 0%, #6d28d9 50%, #2563eb 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #1a5c4e;
 }
 
 .appt-refresh-btn {
@@ -357,7 +354,7 @@
 .appt-btn--primary,
 .appt-btn--join {
   border: none;
-  background: linear-gradient(135deg, #0f766e 0%, #059669 100%);
+  background: #0f766e;
   color: #ffffff;
   box-shadow: 0 4px 18px rgba(15, 118, 110, 0.3);
 }
