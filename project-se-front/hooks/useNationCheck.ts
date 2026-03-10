@@ -1,5 +1,6 @@
-import { useState } from "react";
-import axios from "axios";
+'use client'
+import { useState } from 'react';
+import axios, { AxiosError } from 'axios';
 
 const API = "http://localhost:4000";
 
