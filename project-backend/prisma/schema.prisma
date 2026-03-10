@@ -200,7 +200,7 @@ model users {
   allergy_drug                                     String?         @db.VarChar(255)
   password_hash                                    String?         @db.VarChar(255)
   created_at                                       DateTime?       @default(now()) @db.Timestamp(6)
-  file_name                                        String?         @db.VarChar(255)
+  file_name                                        String?
   info                                             String?         @db.VarChar(255)
   degree                                           String?         @db.VarChar(255)
   license                                          String?         @db.VarChar(255)

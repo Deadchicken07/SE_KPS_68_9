@@ -1,27 +1,26 @@
-"use client";
+  "use client"
 
-import { Layout, Avatar, Dropdown } from "antd";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { UserOutlined } from "@ant-design/icons";
-import { PhoneOutlined, HeartFilled } from "@ant-design/icons";
-import { useState } from "react";
+import { Layout, Avatar, Dropdown } from "antd"
+import Link from "next/link"
+import { usePathname, useRouter } from "next/navigation"
+import { UserOutlined } from "@ant-design/icons"
+import { PhoneOutlined, HeartFilled } from "@ant-design/icons"
 
-const { Header, Content } = Layout;
+  const { Header, Content } = Layout
 
 const links = [
   { name: "หน้าเเรก", href: "/user" },
   { name: "เเบบทดสอบ", href: "/user/exams" },
-  { name: "บริการของเรา", href: "/appointments" },
-  { name: "เกี่ยวกับเรา", href: "/user/staff/all" },
-  { name: "ติดต่อเรา", href: "/contact" },
-];
+  { name: "บริการของเรา", href: "/user/ourservices" },
+  { name: "เกี่ยวกับเรา", href: "/user/ourstaff" },
+  { name: "นัดหมายการปรึกษา", href: "/user/appointments" },
+]
 
 export default function ClinicLayout() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const user = { name: "Mung kai wa" };
+  const user = { name: "username" }
 
   const handleLogout = () => {
     router.push("/signin");
@@ -119,43 +118,41 @@ export default function ClinicLayout() {
                     </div>
                   </Link>
 
-                  <Link href="/login">
-                    <div
-                      style={{
-                        display: "flex",
-                        padding: "8px 20px",
-                        borderRadius: 999,
-                        backgroundColor: "#0f766e",
-                        color: "#fff",
-                        fontWeight: 500,
-                        cursor: "pointer",
-                        transition: "0.2s",
-                        height: 40,
-                        justifyContent: "center",
-                        alignItems: "center",
-                      }}
-                    >
-                      Login
-                    </div>
-                  </Link>
-                </>
-              )}
-            </div>
+                <Link href="/login">
+                  <div
+                    style={{
+                      display: "flex",
+                      padding: "8px 20px",
+                      borderRadius: 999,
+                      backgroundColor: "#0f766e",
+                      color: "#fff",
+                      fontWeight: 500,
+                      cursor: "pointer",
+                      transition: "0.2s",
+                      height: 40,
+                      justifyContent: "center",
+                      alignItems: "center"
+                    }}
+                  >
+                    Login
+                  </div>
+                </Link>
+              </div>
           </div>
         </div>
       </Header>
       <Header
         style={{
           backgroundColor: "#0f766e",
-          height: 50, // 👈 กำหนดเอง
-          lineHeight: "50px", // 👈 สำคัญ
+          height: 50,           // 👈 กำหนดเอง
+          lineHeight: "50px",   // 👈 สำคัญ
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           gap: 24,
         }}
       >
-        {links.map((link) => (
+        {links.map(link => (
           <Link
             key={link.href}
             href={link.href}
@@ -163,13 +160,14 @@ export default function ClinicLayout() {
               color: pathname === link.href ? "#fff" : "#d1fae5",
               fontWeight: pathname === link.href ? "bold" : "normal",
               fontSize: 18,
-              padding: 36,
+              padding: 36
             }}
           >
             {link.name}
           </Link>
         ))}
       </Header>
+
     </Layout>
-  );
+  )
 }

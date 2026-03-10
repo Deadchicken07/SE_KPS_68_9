@@ -3,16 +3,16 @@
 const psychiatrists = [
     {
         id: 1,
-        name: 'รศ.พญ.สมชาย ใจดี',
+        name: 'รศ.นพ.สมชาย ใจดี',
         role: 'จิตแพทย์',
         specialty: 'จิตเวชเด็กและวัยรุ่น',
-        image: '/docterProfile/docter1.png'
+        image: '/docterProfile/docter1.jpeg'
     },
     {
         id: 2,
         name: 'พญ.สมหยิง สนิมจัย',
         role: 'จิตแพทย์',
-        specialty: 'จิตเวชวัยรุ่น ผู้ใหญ่ ผู้สูงอายุ',
+        specialty: 'ครอบครัว ความสัมพันธ์ ความรัก',
         image: '/docterProfile/docter2.png'
     },
     {
@@ -63,45 +63,37 @@ const App = () => {
 
                 .staff-header {
                     text-align: center;
-                    margin-bottom: 56px;
+                    margin-bottom: 40px;
                 }
 
                 .staff-header-badge {
                     display: inline-block;
-                    background: #3fb8f0ff;
+                    background: #0f766e;
                     color: #ffffffff;
-                    font-size: 35px;
-                    font-weight: 600;
+                    font-size: 25px;
+                    font-weight: 700;
                     letter-spacing: 2px;
                     text-transform: uppercase;
-                    padding: 6px 20px;
+                    padding: 5px 18px;
                     border-radius: 999px;
                     margin-bottom: 18px;
                 }
 
                 .staff-header h1 {
-                    font-size: clamp(32px, 5vw, 52px);
+                    font-size: clamp(28px, 4vw, 44px);
                     font-weight: 800;
                     background: linear-gradient(135deg, #3730a3 0%, #6d28d9 50%, #2563eb 100%);
                     -webkit-background-clip: text;
                     -webkit-text-fill-color: transparent;
                     background-clip: text;
-                    margin: 0 0 14px;
-                    line-height: 1.2;
-                }
-
-                .staff-header-description {
-                    color: #000000ff;
-                    font-size: 20px;
-                    max-width: 600px;
-                    margin: 0 auto;
+                    margin: 0 0 12px;
                     line-height: 1.7;
                 }
 
                 .staff-header p {
                     color: #3a3131ff;
                     font-size: 16px;
-                    max-width: 480px;
+                    max-width: 500px;
                     margin: 0 auto;
                     line-height: 1.7;
                     font-weight: 600;
@@ -132,7 +124,7 @@ const App = () => {
                     position: absolute;
                     top: 0; left: 0; right: 0;
                     height: 4px;
-                    background: #3fb8f0ff;
+                    background: #0f766e;
                     border-radius: 24px 24px 0 0;
                 }
 
@@ -152,7 +144,7 @@ const App = () => {
                     height: 140px;
                     border-radius: 50%;
                     padding: 4px;
-                    background: #3fb8f0ff;
+                    background: #0f766e;
                     display: inline-block;
                 }
 
@@ -163,18 +155,6 @@ const App = () => {
                     object-fit: cover;
                     background: #e0e7ff;
                     display: block;
-                    border: 3px solid #ffffff;
-                }
-
-                .staff-avatar-fallback {
-                    width: 132px;
-                    height: 132px;
-                    border-radius: 50%;
-                    background: linear-gradient(135deg, #c7d2fe, #ddd6fe);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 48px;
                     border: 3px solid #ffffff;
                 }
 
@@ -213,7 +193,8 @@ const App = () => {
                 {/* Header Section */}
                 <div className="staff-header">
                     <div className="staff-header-badge">Therapists</div>
-                    <p>ทีมแพทย์ และนักจิตวิทยาผู้เชี่ยวชาญของเรา <br />พร้อมดูแลคุณด้วยความใส่ใจ</p>
+                    <h1>ทีมแพทย์ และนักจิตวิทยาผู้เชี่ยวชาญของเรา</h1>
+                    <p>พร้อมดูแลคุณด้วยความใส่ใจ</p>
                 </div>
 
                 {/* Staff Grid */}
@@ -234,7 +215,7 @@ const App = () => {
                                                 const fallback = target.nextElementSibling as HTMLElement;
                                                 if (fallback) fallback.style.display = 'flex';
                                             }}
-                                        />                            
+                                        />
                                     </div>
                                 </div>
 

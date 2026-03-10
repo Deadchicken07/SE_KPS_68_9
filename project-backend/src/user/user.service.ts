@@ -54,6 +54,38 @@ export class UserService {
       },
     };
   }
+
+  async findStaffs() {
+    const staffs = await this.prisma.users.findMany({
+      where: {
+        roles: {
+          name: {
+            in: ['จิตแพทย์', 'นักจิตวิทยา'],
+          },
+        },
+      },
+      select: {
+        user_id: true,
+        name: true,
+        sur_name: true,
+        file_name: true,
+        info: true,
+        roles: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    return staffs.map((staff) => ({
+      id: staff.user_id,
+      name: `${staff.name} ${staff.sur_name}`,
+      role: staff.roles?.name || '',
+      specialty: staff.info || '',
+      image: staff.file_name || '',
+    }));
+  }
   async findOne(userId: number): Promise<UserResponseDto> {
     const user = await this.prisma.users.findUnique({
       where: { user_id: userId }, // ✅ ตรง schema
@@ -80,7 +112,7 @@ export class UserService {
         nation_id: nationId,
       },
       include: {
-        addresses_users_address_idToaddresses: {
+        addresses: {
           include: {
             provinces: true,
             districts: true,
@@ -128,16 +160,16 @@ export class UserService {
         medicalCondition: user.medical_condition,
         allergyDrug: user.allergy_drug,
 
-        currentAddress: user.addresses_users_address_idToaddresses
+        currentAddress: user.addresses
           ? {
               provinceId:
-                user.addresses_users_address_idToaddresses.province_id,
+                user.addresses.province_id,
               districtId:
-                user.addresses_users_address_idToaddresses.district_id,
+                user.addresses.district_id,
               subDistrictId:
-                user.addresses_users_address_idToaddresses.sub_district_id,
-              zipCodeId: user.addresses_users_address_idToaddresses.zip_code_id,
-              detail: user.addresses_users_address_idToaddresses.detail,
+                user.addresses.sub_district_id,
+              zipCodeId: user.addresses.zip_code_id,
+              detail: user.addresses.detail,
             }
           : null,
 
