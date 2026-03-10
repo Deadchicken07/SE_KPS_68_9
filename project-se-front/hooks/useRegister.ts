@@ -15,15 +15,20 @@ export const useRegister = () => {
       setError(null);
       setSuccess(false);
 
-      await axios.post(API, data);
+      await axios.post(API, data, {
+        timeout: 25000,
+      });
 
       setSuccess(true);
       return true;
-
     } catch (err: unknown) {
       let message = "Something went wrong";
 
       if (axios.isAxiosError<{ message?: string | string[] }>(err)) {
+        if (err.code === 'ECONNABORTED') {
+          message = 'คำขอใช้เวลานานเกินไป กรุณาลองใหม่อีกครั้ง';
+        }
+
         const resMessage = err.response?.data?.message;
 
         if (Array.isArray(resMessage)) {
@@ -34,8 +39,7 @@ export const useRegister = () => {
       }
 
       setError(message);
-      return false;   // ✅ ไม่ throw แล้ว
-
+      return false;
     } finally {
       setLoading(false);
     }

@@ -213,8 +213,7 @@ export default function RegisterPage() {
       return;
     }
 
-    await sendOtp(form.email);
-    setStep(3);
+    const otpSent = await sendOtp(form.email);   if (otpSent) {      setStep(3);    }
   };
 
   const registerUser = async () => {
@@ -222,7 +221,7 @@ export default function RegisterPage() {
 
     setRegistering(true);
 
-    await register({
+    const registered = await register({
       email: form.email,
       name: form.name,
       surName: form.surName,
@@ -246,8 +245,7 @@ export default function RegisterPage() {
         detail: form.detailNation,
         zipCodeId: nation.selectedZipCode!,
       },
-    });
-  };
+    });    if (!registered) {    setRegistering(false); }  };
 
   return (
     <main className="auth-shell flex items-center justify-center px-4 py-8 sm:px-8 sm:py-12">

@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { OtpRecord } from './dto/OtpRecord.dto';
 
@@ -6,6 +6,7 @@ import { OtpRecord } from './dto/OtpRecord.dto';
 export class MailService {
   private otpStore = new Map<string, OtpRecord>();
   private verifiedStore = new Map<string, number>();
+  private readonly emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   private transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
@@ -24,18 +25,14 @@ export class MailService {
   async sendOtp(email: string) {
     email = email.trim().toLowerCase();
 
+    if (!this.emailPattern.test(email)) {
+      throw new BadRequestException('Invalid email address');
+    }
+
     const otp = this.generateOtp();
-
-    const expires = Date.now() + 120000; // 2 นาที
-
-    this.otpStore.set(email, {
-      code: otp,
-      expires,
-    });
 
     console.log('SEND OTP EMAIL:', email);
     console.log('OTP:', otp);
-    console.log('OTP STORE:', this.otpStore);
 
     await this.transporter.sendMail({
       from: `"OTP Service" <${process.env.EMAIL_USER}>`,
@@ -43,6 +40,15 @@ export class MailService {
       subject: 'OTP Verification',
       html: `<h2>Your OTP: ${otp}</h2><p>Expires in 2 minutes</p>`,
     });
+
+    const expires = Date.now() + 120000;
+
+    this.otpStore.set(email, {
+      code: otp,
+      expires,
+    });
+
+    console.log('OTP STORE:', this.otpStore);
 
     return {
       message: 'OTP sent',
