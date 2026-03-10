@@ -45,7 +45,7 @@ export default function LoginPage() {
         <div className="auth-orb top-[-140px] left-[-120px] h-[280px] w-[280px] bg-[#2f6e5d]/35" />
         <div className="auth-orb alt bottom-[-170px] right-[-120px] h-[320px] w-[320px] bg-[#4e987f]/35" />
 
-        <section className="w-full max-w-6xl overflow-hidden rounded-[34px] bg-white/20 shadow-[0_45px_120px_rgba(25,56,48,0.24)] backdrop-blur-sm">
+        <section className="w-full max-w-7xl overflow-hidden rounded-[34px] bg-white/20 shadow-[0_45px_120px_rgba(25,56,48,0.24)] backdrop-blur-sm">
           <div className="grid min-h-[740px] grid-cols-1 lg:grid-cols-[1.15fr_0.85fr]">
             <div className="auth-panel-premium relative hidden overflow-hidden p-12 text-white lg:block xl:p-16">
               <div className="absolute -right-16 top-12 h-52 w-52 rounded-full bg-white/12 blur-3xl" />
@@ -58,9 +58,9 @@ export default function LoginPage() {
                   </p>
 
                   <h1 className="mt-8 text-5xl font-semibold leading-[1.1] xl:text-6xl">
-                    Smart Care
+                    JITDEE
                     <br />
-                    Human Touch
+                   
                   </h1>
 
                   <p className="mt-7 max-w-xl text-base leading-relaxed text-white/88 xl:text-lg">
@@ -83,9 +83,9 @@ export default function LoginPage() {
 
             <div className="relative flex items-center justify-center p-6 sm:p-10 xl:p-14">
               <div className="auth-card w-full max-w-md p-8 sm:p-10">
-                <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#3f7f6d]/75">Welcome back</p>
+                {/* <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#3f7f6d]/75">Welcome back</p> */}
                 <h2 className="mt-3 text-3xl font-semibold text-[#1d493d]">เข้าสู่ระบบ</h2>
-                <p className="mt-2 text-sm text-slate-500">ลงชื่อเข้าใช้เพื่อเข้าถึงระบบจัดการและบริการทั้งหมด</p>
+                {/* <p className="mt-2 text-sm text-slate-500">ลงชื่อเข้าใช้เพื่อเข้าถึงระบบจัดการและบริการทั้งหมด</p> */}
 
                 <form onSubmit={handleSubmit} className="mt-8 space-y-5">
                   <div>
