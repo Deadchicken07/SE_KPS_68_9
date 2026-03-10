@@ -130,8 +130,10 @@ export class UserService {
 
         currentAddress: user.addresses_users_address_idToaddresses
           ? {
-              provinceId: user.addresses_users_address_idToaddresses.province_id,
-              districtId: user.addresses_users_address_idToaddresses.district_id,
+              provinceId:
+                user.addresses_users_address_idToaddresses.province_id,
+              districtId:
+                user.addresses_users_address_idToaddresses.district_id,
               subDistrictId:
                 user.addresses_users_address_idToaddresses.sub_district_id,
               zipCodeId: user.addresses_users_address_idToaddresses.zip_code_id,
