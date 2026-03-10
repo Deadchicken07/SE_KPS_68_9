@@ -322,7 +322,7 @@ export default function RegisterStep2Form({
         }}
       />
 
-      <button onClick={handleSubmit} disabled={registerLoading} className="btn-primary">
+      <button onClick={handleSubmit} disabled={sendOtpLoading} className="btn-primary">
         {sendOtpLoading ? "กำลังส่ง OTP..." : "สมัครสมาชิก"}
       </button>
 
