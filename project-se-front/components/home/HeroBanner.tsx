@@ -103,7 +103,7 @@ export default function HeroBanner({ slides, stats }: HeroBannerProps) {
                   ดูแลครบวงจรทั้งการรักษาและการให้คำปรึกษา
                 </Title>
                 <Text className={styles.heroInfoDesc}>
-                  หากสงสัย สามารถติดต่อได้ที่เบอร์ 02-745-4184
+                  หากสงสัย สามารถติดต่อได้ที่เบอร์ 096-767-6767
                 </Text>
               </div>
             </div>

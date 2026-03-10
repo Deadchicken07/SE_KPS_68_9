@@ -63,10 +63,7 @@
   font-family: 'Sarabun', Arial, sans-serif;
   font-size: clamp(28px, 4vw, 44px);
   font-weight: 800;
-  background: linear-gradient(135deg, #3730a3 0%, #6d28d9 50%, #2563eb 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #1a5c4e;
   line-height: 1.12;
 }
 
