@@ -1,4 +1,4 @@
-﻿"use client"
+  "use client"
 
 import { Layout, Avatar, Dropdown } from "antd"
 import Link from "next/link"
@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { UserOutlined } from "@ant-design/icons"
 import { PhoneOutlined, HeartFilled } from "@ant-design/icons"
 
-const { Header, Content } = Layout
+  const { Header, Content } = Layout
 
 const links = [
   { name: "หน้าเเรก", href: "/user" },
@@ -17,26 +17,28 @@ const links = [
 ]
 
 export default function ClinicLayout() {
-  const pathname = usePathname()
-  const router = useRouter()
+  const pathname = usePathname();
+  const router = useRouter();
 
   const user = { name: "username" }
 
   const handleLogout = () => {
-    router.push("/signin")
-  }
+    router.push("/signin");
+  };
 
   const menuItems = [
     { key: "profile", label: <Link href="/profile">Profile</Link> },
     { key: "logout", label: <span onClick={handleLogout}>Logout</span> },
-  ]
-  // const 
+  ];
+  const [isLogin, setIsLogin] = useState(true);
+  
+
   return (
-    <Layout style={{ minHeight: "auto", }}>
+    <Layout style={{ minHeight: "auto" }}>
       <Header
         style={{
           backgroundColor: "#ffffff",
-          height: 100
+          height: 100,
         }}
       >
         <div
@@ -46,7 +48,7 @@ export default function ClinicLayout() {
             justifyContent: "space-between",
             alignItems: "center",
             padding: "0 32px",
-            height: "100%"
+            height: "100%",
           }}
         >
           <div
@@ -57,18 +59,20 @@ export default function ClinicLayout() {
               fontSize: 39,
               fontWeight: 700,
               letterSpacing: 1,
-              cursor: "pointer"
+              cursor: "pointer",
             }}
           >
             <HeartFilled style={{ color: "#0f766e", fontSize: 22 }} />
             <span style={{ color: "#111" }}>JitDee</span>
             <span style={{ color: "#0f766e" }}>Clinic</span>
           </div>
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 20
-          }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 20,
+            }}
+          >
             <div
               style={{
                 display: "flex",
@@ -84,50 +88,56 @@ export default function ClinicLayout() {
               }}
             >
               <PhoneOutlined />
-              096-767-6767
+              02-745-4184
             </div>
 
             <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-              <Link href="/login/regis">
-                <div
-                  style={{
-                    display: "flex",
-                    padding: "8px 20px",
-                    borderRadius: 999,
-                    border: "1px solid #0f766e",
-                    color: "#0f766e",
-                    fontWeight: 500,
-                    cursor: "pointer",
-                    transition: "0.2s",
-                    height: 40,
-                    justifyContent: "center",
-                    alignItems: "center"
-                  }}
-                >
-                  Sign Up
-                </div>
-              </Link>
+              {isLogin ? (
+                <Dropdown>
+                      Hello
+                </Dropdown>
+              ) : (
+                <>
+                  <Link href="/signin">
+                    <div
+                      style={{
+                        display: "flex",
+                        padding: "8px 20px",
+                        borderRadius: 999,
+                        border: "1px solid #0f766e",
+                        color: "#0f766e",
+                        fontWeight: 500,
+                        cursor: "pointer",
+                        transition: "0.2s",
+                        height: 40,
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      Sign in
+                    </div>
+                  </Link>
 
-              <Link href="/login">
-                <div
-                  style={{
-                    display: "flex",
-                    padding: "8px 20px",
-                    borderRadius: 999,
-                    backgroundColor: "#0f766e",
-                    color: "#fff",
-                    fontWeight: 500,
-                    cursor: "pointer",
-                    transition: "0.2s",
-                    height: 40,
-                    justifyContent: "center",
-                    alignItems: "center"
-                  }}
-                >
-                  Login
-                </div>
-              </Link>
-            </div>
+                <Link href="/login">
+                  <div
+                    style={{
+                      display: "flex",
+                      padding: "8px 20px",
+                      borderRadius: 999,
+                      backgroundColor: "#0f766e",
+                      color: "#fff",
+                      fontWeight: 500,
+                      cursor: "pointer",
+                      transition: "0.2s",
+                      height: 40,
+                      justifyContent: "center",
+                      alignItems: "center"
+                    }}
+                  >
+                    Login
+                  </div>
+                </Link>
+              </div>
           </div>
         </div>
       </Header>
