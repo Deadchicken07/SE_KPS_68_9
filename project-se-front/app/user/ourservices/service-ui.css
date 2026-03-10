@@ -11,7 +11,7 @@
   --line: #e5e7eb;
   width: 100%;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #f0fdf4 100%);
+  background: #f4efe8;
   color: var(--ink);
   font-family: 'Sarabun', Arial, sans-serif;
   overflow-x: hidden;

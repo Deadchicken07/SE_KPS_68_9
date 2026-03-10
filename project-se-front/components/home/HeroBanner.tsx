@@ -42,8 +42,8 @@ export default function HeroBanner({ slides, stats }: HeroBannerProps) {
             <Button href="/user/exams" className={styles.heroBtnPrimary}>
               ทำเเบบทดสอบ
             </Button>
-            <Button href="/appointments" className={styles.heroBtnOutline}>
-              นัดหมาย / ติดต่อ
+            <Button href="/user/appointments" className={styles.heroBtnOutline}>
+              นัดหมาย
             </Button>
           </div>
         </div>

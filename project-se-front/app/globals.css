@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #f4efe8;
   --foreground: #171717;
 }
 
@@ -14,7 +14,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: #1e1e1e;
     --foreground: #ededed;
   }
 }
@@ -139,8 +139,6 @@ body {
   @apply absolute rounded-full blur-3xl pointer-events-none;
 }
 
-.auth-orb.alt {
-}
 
 .auth-card {
   @apply relative rounded-[30px] bg-white/82 backdrop-blur-xl;

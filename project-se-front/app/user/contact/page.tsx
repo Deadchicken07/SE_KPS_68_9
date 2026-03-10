@@ -48,9 +48,8 @@ export default function OnlineAppointmentsPage() {
   })
 
   return (
-    <div className="min-h-screen bg-gray-100 py-16">
-
-      <div className="max-w-4xl mx-auto px-6 space-y-10">
+    <div className="min-h-screen py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <h1 className="text-3xl font-bold text-gray-800">
           การนัดหมายออนไลน์ของฉัน

@@ -1,16 +1,15 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { notification } from "antd";
+import { notification, Form, Input, Button } from "antd";
 import { useLogin } from "@/hooks/useLogin";
 
 function LoginContent() {
   const [api, contextHolder] = notification.useNotification();
   const { login, loading, error } = useLogin();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [form] = Form.useForm();
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -27,10 +26,9 @@ function LoginContent() {
     }
   }, [registered, api, router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleFinish = async (values: any) => {
     try {
-      await login(email, password);
+      await login(values.email, values.password);
       router.push("/user");
     } catch {
       // managed by hook
@@ -87,37 +85,48 @@ function LoginContent() {
                 <h2 className="mt-3 text-3xl font-semibold text-[#1d493d]">เข้าสู่ระบบ</h2>
                 {/* <p className="mt-2 text-sm text-slate-500">ลงชื่อเข้าใช้เพื่อเข้าถึงระบบจัดการและบริการทั้งหมด</p> */}
 
-                <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-                  <div>
-                    <label className="text-sm font-medium text-slate-600">อีเมล</label>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      placeholder="example@email.com"
-                      className="input mt-2"
-                    />
-                  </div>
+                <Form 
+                  form={form} 
+                  layout="vertical" 
+                  onFinish={handleFinish} 
+                  className="mt-8 space-y-5"
+                  requiredMark={false}
+                >
+                  <Form.Item
+                    label={<span className="text-sm font-medium text-slate-600">อีเมล</span>}
+                    name="email"
+                    rules={[
+                      { required: true, message: "กรุณากรอกอีเมล" },
+                      { type: "email", message: "รูปแบบอีเมลไม่ถูกต้อง" }
+                    ]}
+                    style={{ marginBottom: 0 }}
+                  >
+                    <Input placeholder="example@email.com" className="input mt-2" size="large" />
+                  </Form.Item>
 
-                  <div>
-                    <label className="text-sm font-medium text-slate-600">รหัสผ่าน</label>
-                    <input
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      placeholder="********"
-                      className="input mt-2"
-                    />
-                  </div>
+                  <Form.Item
+                    label={<span className="text-sm font-medium text-slate-600">รหัสผ่าน</span>}
+                    name="password"
+                    rules={[{ required: true, message: "กรุณากรอกรหัสผ่าน" }]}
+                    style={{ marginBottom: 0 }}
+                  >
+                    <Input.Password placeholder="********" className="input mt-2" size="large" />
+                  </Form.Item>
 
-                  <button type="submit" disabled={loading} className="btn-primary mt-2">
-                    {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
-                  </button>
+                  <Form.Item style={{ marginBottom: 0, marginTop: "24px" }}>
+                    <Button 
+                      type="primary" 
+                      htmlType="submit" 
+                      loading={loading} 
+                      className="btn-primary w-full h-[52px]"
+                      style={{ border: "none" }}
+                    >
+                      {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
+                    </Button>
+                  </Form.Item>
 
-                  {error && <p className="text-center text-sm text-red-500">{error}</p>}
-                </form>
+                  {error && <p className="text-center text-sm text-red-500 mt-2">{error}</p>}
+                </Form>
 
                 <div className="mt-6 text-center text-sm text-slate-500">
                   <span

@@ -55,7 +55,7 @@ export default function Contact() {
                 </Title>
               </div>
             </div>
-            <Button href="/appointments" className={styles.contactBtn}>
+            <Button href="/user/appointments" className={styles.contactBtn}>
               จองคิวเบื้องต้น
             </Button>
           </div>

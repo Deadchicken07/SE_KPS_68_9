@@ -221,7 +221,7 @@ export default function AppointmentsPage() {
 
                 .appt-page {
                     min-height: 100vh;
-                    background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #f0fdf4 100%);
+                    background: #f4efe8;
                     padding: 60px 24px 80px;
                     font-family: 'Sarabun', Arial, sans-serif;
                 }

@@ -77,9 +77,8 @@ const stats = [
 ];
 
 export default function UserPage() {
-
   return (
-    <main className="min-h-screen bg-[#f4efe8] text-slate-800">
+    <main className="min-h-screen text-slate-800">
       <HeroBanner slides={heroSlides} stats={stats}/>
       <Information services={services}/>
       <AppointmentSolution/>
