@@ -167,7 +167,6 @@ export default function QuestionnairePage({ params }: { params: Promise<{ examId
                     </div>
 
                     <Space size="middle" wrap>
-                        {error ? <Tag color="orange">ใช้ mock บางส่วน</Tag> : null}
                         <Tag color="blue">ตอบแล้ว {answeredCount}/{examQuestions.length}</Tag>
                         <Tag color="geekblue">ความคืบหน้า {progressPercent}%</Tag>
                     </Space>
