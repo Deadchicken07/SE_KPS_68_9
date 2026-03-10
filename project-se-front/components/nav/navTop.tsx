@@ -1,4 +1,4 @@
-  "use client"
+﻿  "use client"
 
 import { Layout, Avatar, Dropdown } from "antd"
 import Link from "next/link"
@@ -88,7 +88,7 @@ export default function ClinicLayout() {
               }}
             >
               <PhoneOutlined />
-              02-745-4184
+              096-767-6767
             </div>
 
             <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
