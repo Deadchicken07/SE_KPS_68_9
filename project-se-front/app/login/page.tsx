@@ -1,147 +1,148 @@
-"use client";
+﻿"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useLogin } from '@/hooks/useLogin';
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { notification } from "antd";
+import { useLogin } from "@/hooks/useLogin";
 
 export default function LoginPage() {
-  const router = useRouter();
+  const [api, contextHolder] = notification.useNotification();
   const { login, loading, error } = useLogin();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const registered = searchParams.get("registered");
+
+  useEffect(() => {
+    if (registered === "success") {
+      api.success({
+        title: "สมัครสมาชิกสำเร็จ",
+        description: "กรุณาเข้าสู่ระบบ",
+        duration: 4,
+      });
+      router.replace("/login");
+    }
+  }, [registered, api, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     try {
       await login(email, password);
-      router.push('/dashboard'); // เปลี่ยน path ตามที่คุณใช้
+      router.push("/user");
     } catch {
-      // error ถูกจัดการใน hook แล้ว
+      // managed by hook
     }
   };
 
   return (
-    <div className="min-h-screen flex bg-[#E8EAD9] overflow-hidden">
+    <>
+      {contextHolder}
 
-      {/* ================= LEFT SECTION ================= */}
-      <div className="hidden md:flex w-[65%] relative overflow-hidden bg-gradient-to-br from-[#2f6e5d] via-[#3F7F6D] to-[#4A8F7A] text-white">
+      <main className="auth-shell flex items-center justify-center px-4 py-8 sm:px-8 sm:py-12">
+        <div className="auth-orb top-[-140px] left-[-120px] h-[280px] w-[280px] bg-[#2f6e5d]/35" />
+        <div className="auth-orb alt bottom-[-170px] right-[-120px] h-[320px] w-[320px] bg-[#4e987f]/35" />
 
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(255,255,255,0.15),transparent_40%)]"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_70%,rgba(255,255,255,0.1),transparent_40%)]"></div>
-        <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-white/10 rounded-full blur-3xl"></div>
+        <section className="w-full max-w-7xl overflow-hidden rounded-[34px] bg-white/20 shadow-[0_45px_120px_rgba(25,56,48,0.24)] backdrop-blur-sm">
+          <div className="grid min-h-[740px] grid-cols-1 lg:grid-cols-[1.15fr_0.85fr]">
+            <div className="auth-panel-premium relative hidden overflow-hidden p-12 text-white lg:block xl:p-16">
+              <div className="absolute -right-16 top-12 h-52 w-52 rounded-full bg-white/12 blur-3xl" />
+              <div className="absolute -bottom-16 -left-8 h-72 w-72 rounded-full bg-white/15 blur-3xl" />
 
-        <div className="relative z-10 flex flex-col justify-center px-24 max-w-2xl">
+              <div className="relative z-10 flex h-full flex-col justify-between">
+                <div>
+                  <p className="inline-flex rounded-full bg-white/10 px-4 py-1 text-xs tracking-[0.18em] text-white/90">
+                    MENTALCARE PLATFORM
+                  </p>
 
-          <div className="text-sm tracking-widest uppercase opacity-80 mb-8">
-            MentalCare Platform
-          </div>
+                  <h1 className="mt-8 text-5xl font-semibold leading-[1.1] xl:text-6xl">
+                    JITDEE
+                    <br />
+                   
+                  </h1>
 
-          <h1 className="text-6xl font-bold leading-tight mb-6">
-            ดูแลสุขภาพใจ<br />
-            อย่างมืออาชีพ
-          </h1>
+                  <p className="mt-7 max-w-xl text-base leading-relaxed text-white/88 xl:text-lg">
+                    ระบบให้คำปรึกษาออนไลน์ที่ออกแบบเพื่อความปลอดภัย ความเป็นส่วนตัว และประสบการณ์ใช้งานที่ลื่นไหลทุกอุปกรณ์
+                  </p>
+                </div>
 
-          <p className="text-xl opacity-90 leading-relaxed mb-10">
-            ระบบให้คำปรึกษาออนไลน์ที่ออกแบบเพื่อความปลอดภัย
-            และความเป็นส่วนตัวระดับมาตรฐานทางการแพทย์
-          </p>
-
-          <div className="w-96 opacity-90">
-            <svg viewBox="0 0 500 300" fill="none">
-              <circle cx="120" cy="150" r="60" fill="rgba(255,255,255,0.2)" />
-              <rect x="200" y="80" width="180" height="120" rx="20" fill="rgba(255,255,255,0.15)" />
-              <circle cx="260" cy="140" r="20" fill="white" />
-              <circle cx="320" cy="140" r="20" fill="white" />
-              <rect x="250" y="170" width="80" height="10" rx="5" fill="white" />
-            </svg>
-          </div>
-
-        </div>
-      </div>
-
-      {/* ================= RIGHT SECTION ================= */}
-      <div className="flex w-full md:w-[35%] items-center justify-center px-8">
-
-        <div className="w-full max-w-md">
-
-          <div className="bg-white rounded-3xl p-12 shadow-[0_30px_80px_rgba(0,0,0,0.15)] border border-gray-100">
-
-            <h2 className="text-3xl font-semibold text-[#3F7F6D] mb-10">
-              เข้าสู่ระบบ
-            </h2>
-
-            <form onSubmit={handleSubmit} className="space-y-7">
-
-              {/* EMAIL */}
-              <div>
-                <label className="text-sm text-gray-500 tracking-wide">
-                  อีเมล
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="example@email.com"
-                  className="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200 focus:border-[#4A8F7A] focus:ring-2 focus:ring-[#4A8F7A]/30 outline-none transition"
-                />
+                <div className="grid grid-cols-2 gap-4 text-sm text-white/90">
+                  <div className="rounded-2xl bg-white/10 p-4">
+                    <p className="text-3xl font-semibold">24/7</p>
+                    <p className="mt-1 text-white/80">ดูแลต่อเนื่อง</p>
+                  </div>
+                  <div className="rounded-2xl bg-white/10 p-4">
+                    <p className="text-3xl font-semibold">AES</p>
+                    <p className="mt-1 text-white/80">ข้อมูลปลอดภัย</p>
+                  </div>
+                </div>
               </div>
-
-              {/* PASSWORD */}
-              <div>
-                <label className="text-sm text-gray-500 tracking-wide">
-                  รหัสผ่าน
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  placeholder="••••••••"
-                  className="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200 focus:border-[#4A8F7A] focus:ring-2 focus:ring-[#4A8F7A]/30 outline-none transition"
-                />
-              </div>
-
-              {/* BUTTON */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full mt-4 bg-[#3F7F6D] hover:bg-[#356e5f] text-white py-3 rounded-xl text-lg font-medium shadow-lg transition duration-300 disabled:opacity-60"
-              >
-                {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
-              </button>
-
-              {/* ERROR MESSAGE */}
-              {error && (
-                <p className="text-red-500 text-sm mt-4 text-center">
-                  {error}
-                </p>
-              )}
-
-            </form>
-
-            <div className="text-center mt-8 text-sm text-gray-500 hover:underline cursor-pointer">
-              ลืมรหัสผ่าน?
             </div>
 
-            <div className="text-center mt-2 text-sm text-gray-600">
-              ยังไม่มีบัญชี?{" "}
-              <span
-                onClick={() => router.push('/login/regis')}
-                className="text-[#3F7F6D] font-medium cursor-pointer hover:underline"
-              >
-                สมัครสมาชิก
-              </span>
+            <div className="relative flex items-center justify-center p-6 sm:p-10 xl:p-14">
+              <div className="auth-card w-full max-w-md p-8 sm:p-10">
+                {/* <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#3f7f6d]/75">Welcome back</p> */}
+                <h2 className="mt-3 text-3xl font-semibold text-[#1d493d]">เข้าสู่ระบบ</h2>
+                {/* <p className="mt-2 text-sm text-slate-500">ลงชื่อเข้าใช้เพื่อเข้าถึงระบบจัดการและบริการทั้งหมด</p> */}
+
+                <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+                  <div>
+                    <label className="text-sm font-medium text-slate-600">อีเมล</label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      placeholder="example@email.com"
+                      className="input mt-2"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-slate-600">รหัสผ่าน</label>
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      placeholder="********"
+                      className="input mt-2"
+                    />
+                  </div>
+
+                  <button type="submit" disabled={loading} className="btn-primary mt-2">
+                    {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
+                  </button>
+
+                  {error && <p className="text-center text-sm text-red-500">{error}</p>}
+                </form>
+
+                <div className="mt-6 text-center text-sm text-slate-500">
+                  <span
+                    onClick={() => router.push("/login/forgot-password")}
+                    className="cursor-pointer font-medium text-[#2f6e5d] hover:underline"
+                  >
+                    ลืมรหัสผ่าน?
+                  </span>
+                </div>
+
+                <div className="mt-2 text-center text-sm text-slate-600">
+                  ยังไม่มีบัญชี?{" "}
+                  <span
+                    onClick={() => router.push("/login/regis")}
+                    className="cursor-pointer font-semibold text-[#2f6e5d] hover:underline"
+                  >
+                    สมัครสมาชิก
+                  </span>
+                </div>
+              </div>
             </div>
-
           </div>
-
-        </div>
-
-      </div>
-
-    </div>
+        </section>
+      </main>
+    </>
   );
 }
+

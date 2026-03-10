@@ -1,3 +1,4 @@
+'use client'
 import { useState } from 'react';
 import axios, { AxiosError } from 'axios';
 import { LoginResponse } from '@/types/auth.types';
@@ -21,7 +22,8 @@ export const useLogin = () => {
 
       const res = await axios.post<LoginResponse>(
         `${API}/auth/login`,
-        { email, password }
+        { email, password },
+        { withCredentials: true }
       );
 
       const token = res.data.access_token;

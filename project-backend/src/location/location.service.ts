@@ -37,4 +37,20 @@ export class LocationService {
       take: 20,
     });
   }
+  async searchZipCodes(subDistrictId: number) {
+    const data = await this.prisma.zip_codes.findMany({
+      where: { sub_district_id: subDistrictId },
+      select: {
+        id: true,
+        code: true,
+      },
+      orderBy: {
+        code: 'asc',
+      },
+    });
+    return data.map((z) => ({
+      id: z.id,
+      name: z.code,
+    }));
+  }
 }

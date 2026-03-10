@@ -1,4 +1,4 @@
-export interface Questionnaire{
+export interface Questionnaires{
     id : number,
     title : string,
     status : 'show' | 'hidden',

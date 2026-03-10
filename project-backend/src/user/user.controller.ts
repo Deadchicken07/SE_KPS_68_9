@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserQueryDto } from './dto/user-query.dto';
 
@@ -21,7 +21,15 @@ export class UserController {
     return this.userService.findOne(+id);
   }
   @Get('by-nation/:nationId')
-  findByNation(@Param('nationId') nationId: string) {
-    return this.userService.findByNationId(nationId);
+  findByNation(
+    @Param('nationId') nationId: string,
+    @Query('name') name: string,
+    @Query('surName') surName: string,
+  ) {
+    return this.userService.findByNationId(nationId, name, surName);
+  }
+  @Post('check-email')
+  async checkEmail(@Body('email') email: string) {
+    return this.userService.checkEmail(email);
   }
 }

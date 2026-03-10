@@ -20,11 +20,11 @@ const mockAppointments = [
   },
   {
     id: 2,
-    appointment_date: "2026-03-15",
-    time_select: "14:00 - 15:00",
+    appointment_date: "2026-03-04",
+    time_select: "22:00 - 23:00",
     appointment_type: "online",
-    status: "Not_paying",
-    meet_link: "",
+    status: "Paid",
+    meet_link: "https://meet.google.com/abc-defg-hij",
     users_appointments_staff_idTousers: {
       name: "วิภา",
       sur_name: "รุ่งเรือง",

@@ -1,7 +1,7 @@
 'use client'
 
 import { Button, Card, Col, Flex, List, Row } from "antd"
-import styles from "./Exam.module.css"
+import styles from "./page.module.css"
 import { useQuestionnaire } from "@/hooks/useQuestionnaire"
 import { useRouter } from "next/navigation"
 

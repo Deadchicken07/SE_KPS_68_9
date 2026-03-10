@@ -10,10 +10,14 @@ export const useLocationDropdown = () => {
   const [provinces, setProvinces] = useState<LocationItem[]>([]);
   const [districts, setDistricts] = useState<LocationItem[]>([]);
   const [subDistricts, setSubDistricts] = useState<LocationItem[]>([]);
+  const [zipCodes, setZipCodes] = useState<LocationItem[]>([]);
 
   const [selectedProvince, setSelectedProvince] = useState<number | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<number | null>(null);
-  const [selectedSubDistrict, setSelectedSubDistrict] = useState<number | null>(null);
+  const [selectedSubDistrict, setSelectedSubDistrict] = useState<number | null>(
+    null,
+  );
+  const [selectedZipCode, setSelectedZipCode] = useState<number | null>(null);
 
   const API = "http://localhost:4000/location";
 
@@ -53,13 +57,26 @@ export const useLocationDropdown = () => {
     }
   };
 
+  const fetchZipCodes = async (subDistrictId: number) => {
+    try {
+      const res = await axios.get<LocationItem[]>(`${API}/zip-codes`, {
+        params: { subDistrictId },
+      });
+      setZipCodes(res.data);
+    } catch (error) {
+      console.error("โหลดรหัสไปรษณีย์ไม่สำเร็จ", error);
+    }
+  };
+
   // เมื่อเลือกจังหวัด
   useEffect(() => {
     if (selectedProvince !== null) {
       fetchDistricts(selectedProvince);
       setSelectedDistrict(null);
       setSelectedSubDistrict(null);
+      setSelectedZipCode(null);
       setSubDistricts([]);
+      setZipCodes([]);
     }
   }, [selectedProvince]);
 
@@ -68,18 +85,33 @@ export const useLocationDropdown = () => {
     if (selectedDistrict !== null) {
       fetchSubDistricts(selectedDistrict);
       setSelectedSubDistrict(null);
+      setSelectedZipCode(null);
+      setZipCodes([]);
     }
   }, [selectedDistrict]);
+
+  // เมื่อเลือกตำบล
+  useEffect(() => {
+    if (selectedSubDistrict !== null) {
+      fetchZipCodes(selectedSubDistrict);
+      setSelectedZipCode(null);
+    }
+  }, [selectedSubDistrict]);
 
   return {
     provinces,
     districts,
     subDistricts,
+    zipCodes,
+
     selectedProvince,
     selectedDistrict,
     selectedSubDistrict,
+    selectedZipCode,
+
     setSelectedProvince,
     setSelectedDistrict,
     setSelectedSubDistrict,
+    setSelectedZipCode,
   };
 };
