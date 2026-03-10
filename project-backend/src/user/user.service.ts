@@ -80,7 +80,7 @@ export class UserService {
         nation_id: nationId,
       },
       include: {
-        addresses: {
+        addresses_users_address_idToaddresses: {
           include: {
             provinces: true,
             districts: true,
@@ -128,13 +128,14 @@ export class UserService {
         medicalCondition: user.medical_condition,
         allergyDrug: user.allergy_drug,
 
-        currentAddress: user.addresses
+        currentAddress: user.addresses_users_address_idToaddresses
           ? {
-              provinceId: user.addresses.province_id,
-              districtId: user.addresses.district_id,
-              subDistrictId: user.addresses.sub_district_id,
-              zipCodeId: user.addresses.zip_code_id,
-              detail: user.addresses.detail,
+              provinceId: user.addresses_users_address_idToaddresses.province_id,
+              districtId: user.addresses_users_address_idToaddresses.district_id,
+              subDistrictId:
+                user.addresses_users_address_idToaddresses.sub_district_id,
+              zipCodeId: user.addresses_users_address_idToaddresses.zip_code_id,
+              detail: user.addresses_users_address_idToaddresses.detail,
             }
           : null,
 
