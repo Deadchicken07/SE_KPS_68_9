@@ -33,7 +33,6 @@
     // const 
     return (
       <Layout style={{ minHeight: "auto",}}>
-
         <Header
           style={{
             backgroundColor: "#ffffff",
@@ -42,7 +41,6 @@
         >
           <div
             style={{
-              // maxWidth: 1200,
               margin: "0 auto",
               display: "flex",
               justifyContent: "space-between", 
@@ -63,7 +61,7 @@
               }}
             >
               <HeartFilled style={{ color: "#0f766e", fontSize: 22 }} />
-              <span style={{ color: "#111" }}>Mai Me</span>
+              <span style={{ color: "#111" }}>JitDee</span>
               <span style={{ color: "#0f766e" }}>Clinic</span>
             </div>
             <div style={{
@@ -88,12 +86,6 @@
                 <PhoneOutlined />
                   02-745-4184
               </div>
-              {/* <Dropdown menu={{ items: menuItems }}>
-                <div style={{ cursor: "pointer", gap: 10 ,display: "flex",alignItems: "center",}}>
-                  <Avatar icon={<UserOutlined />} />
-                  <span style={{ color: "#000000" }}>{user.name}</span>
-                </div>
-              </Dropdown> */}
               
               <div style={{ display: "flex", gap: 12 , alignItems: "center"}}>
                 <Link href="/signin">

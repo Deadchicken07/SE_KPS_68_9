@@ -1,3 +1,4 @@
+'use client'
 import { useState } from 'react';
 import axios, { AxiosError } from 'axios';
 import { LoginResponse } from '@/types/auth.types';

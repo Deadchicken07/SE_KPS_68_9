@@ -1,0 +1,31 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="900" fill="#E7E1D6"/>
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <circle cx="1335" cy="143" r="236" fill="#E6C99A" fill-opacity="0.55"/>
+  <circle cx="196" cy="764" r="302" fill="#7AA8A0" fill-opacity="0.3"/>
+  <rect x="870" y="126" width="502" height="648" rx="42" fill="#F6F2EA"/>
+  <rect x="931" y="214" width="208" height="286" rx="104" fill="#D9E8E3"/>
+  <circle cx="1035" cy="284" r="65" fill="#F2D7BF"/>
+  <path d="M956 448C956 402.161 993.161 365 1039 365H1031C1076.84 365 1114 402.161 1114 448V506H956V448Z" fill="#0E5B50"/>
+  <rect x="1168" y="248" width="121" height="236" rx="22" fill="#C7DED8"/>
+  <rect x="1193" y="282" width="72" height="168" rx="16" fill="#F9FBFA"/>
+  <rect x="126" y="115" width="576" height="596" rx="52" fill="#FCFAF6" fill-opacity="0.78"/>
+  <rect x="126" y="115" width="576" height="596" rx="52" stroke="#FFFFFF" stroke-opacity="0.7" stroke-width="3"/>
+  <path d="M205 256H450" stroke="#0E5B50" stroke-width="10" stroke-linecap="round"/>
+  <path d="M205 316H612" stroke="#0E5B50" stroke-opacity="0.18" stroke-width="10" stroke-linecap="round"/>
+  <path d="M205 368H558" stroke="#0E5B50" stroke-opacity="0.18" stroke-width="10" stroke-linecap="round"/>
+  <rect x="205" y="463" width="203" height="54" rx="27" fill="#0E5B50"/>
+  <rect x="432" y="463" width="161" height="54" rx="27" fill="#DAB07C"/>
+  <rect x="205" y="563" width="397" height="102" rx="28" fill="#EEF3EF"/>
+  <circle cx="275" cy="614" r="28" fill="#D6E6E0"/>
+  <path d="M262 614H288" stroke="#0E5B50" stroke-width="8" stroke-linecap="round"/>
+  <path d="M275 601V627" stroke="#0E5B50" stroke-width="8" stroke-linecap="round"/>
+  <path d="M329 596H552" stroke="#0E5B50" stroke-opacity="0.2" stroke-width="8" stroke-linecap="round"/>
+  <path d="M329 632H512" stroke="#0E5B50" stroke-opacity="0.2" stroke-width="8" stroke-linecap="round"/>
+  <defs>
+    <linearGradient id="bg" x1="161" y1="122" x2="1433" y2="811" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F7F2EA"/>
+      <stop offset="1" stop-color="#E6EFEA"/>
+    </linearGradient>
+  </defs>
+</svg>
