@@ -34,12 +34,17 @@ export class MailService {
     console.log('SEND OTP EMAIL:', email);
     console.log('OTP:', otp);
 
-    await this.transporter.sendMail({
-      from: `"OTP Service" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: 'OTP Verification',
-      html: `<h2>Your OTP: ${otp}</h2><p>Expires in 2 minutes</p>`,
-    });
+    try {
+      await this.transporter.sendMail({
+        from: `"OTP Service" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: 'OTP Verification',
+        html: `<h2>Your OTP: ${otp}</h2><p>Expires in 2 minutes</p>`,
+      });
+    } catch (error) {
+      console.error('SEND OTP ERROR:', error);
+      throw new BadRequestException('เมลนี้ไม่มีอยู่จริง');
+    }
 
     const expires = Date.now() + 120000;
 
