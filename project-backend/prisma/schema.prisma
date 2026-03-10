@@ -69,12 +69,13 @@ model consultations {
 }
 
 model districts {
-  id            Int             @id @default(autoincrement())
-  name          String?         @db.VarChar(255)
-  province_id   Int?
-  addresses     addresses[]
-  provinces     provinces?      @relation(fields: [province_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  sub_districts sub_districts[]
+  id              Int             @id @default(autoincrement())
+  name_in_thai    String?         @db.VarChar(255)
+  province_id     Int?
+  name_in_english String?         @db.VarChar
+  addresses       addresses[]
+  provinces       provinces?      @relation(fields: [province_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sub_districts   sub_districts[]
 }
 
 model fees {
@@ -103,10 +104,11 @@ model prescription_items {
 }
 
 model provinces {
-  id        Int         @id @default(autoincrement())
-  name      String?     @db.VarChar(255)
-  addresses addresses[]
-  districts districts[]
+  id              Int         @id @default(autoincrement())
+  name_in_thai    String?     @db.VarChar(255)
+  name_in_english String?     @db.VarChar(255)
+  addresses       addresses[]
+  districts       districts[]
 }
 
 model questionnaires {
@@ -200,12 +202,13 @@ model users {
   allergy_drug                                     String?         @db.VarChar(255)
   password_hash                                    String?         @db.VarChar(255)
   created_at                                       DateTime?       @default(now()) @db.Timestamp(6)
-  file_name                                        String?         @db.VarChar(255)
+  file_name                                        String?
   info                                             String?         @db.VarChar(255)
   degree                                           String?         @db.VarChar(255)
   license                                          String?         @db.VarChar(255)
   status                                           String?         @db.VarChar(255)
   address_id_nation                                Int?
+  title                                            String?         @db.VarChar
   appointments_appointments_staff_idTousers        appointments[]  @relation("appointments_staff_idTousers")
   appointments_appointments_user_idTousers         appointments[]  @relation("appointments_user_idTousers")
   consultations_consultations_pharmacist_idTousers consultations[] @relation("consultations_pharmacist_idTousers")

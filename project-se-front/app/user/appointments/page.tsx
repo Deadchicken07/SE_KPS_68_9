@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Modal, Button, Input, DatePicker, ConfigProvider } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
+import Badge from '@/components/ui/Badge';
 import 'dayjs/locale/th';
 import buddhistEra from 'dayjs/plugin/buddhistEra';
 import locale from 'antd/locale/th_TH';
@@ -229,18 +230,6 @@ export default function AppointmentsPage() {
                 .appt-header {
                     text-align: center;
                     margin-bottom: 40px;
-                }
-                .appt-header-badge {
-                    display: inline-block;
-                    background: #0f766e;
-                    color: #fff;
-                    font-size: 25px;
-                    font-weight: 700;
-                    letter-spacing: 2px;
-                    text-transform: uppercase;
-                    padding: 5px 18px;
-                    border-radius: 999px;
-                    margin-bottom: 14px;
                 }
                 .appt-header h1 {
                     font-size: clamp(28px, 4vw, 44px);
@@ -574,7 +563,7 @@ export default function AppointmentsPage() {
             <div className="appt-page">
                 {/* Header */}
                 <div className="appt-header">
-                    <div className="appt-header-badge">Appointments</div>
+                    <Badge style={{ marginBottom: 14 }}>Appointments</Badge>
                     <h1>จองนัดหมายเพื่อรับคำปรึกษา</h1>
                     <p>เลือกบุคลากรที่คุณต้องการ หรือเลือกวันเวลาที่สะดวก<br />แล้วทำการจองนัดหมาย</p>
 

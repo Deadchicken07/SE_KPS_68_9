@@ -12,7 +12,7 @@ const links = [
   { name: "หน้าเเรก", href: "/user" },
   { name: "เเบบทดสอบ", href: "/user/exams" },
   { name: "บริการของเรา", href: "/user/ourservices" },
-  { name: "เกี่ยวกับเรา", href: "/user/staff/all" },
+  { name: "เกี่ยวกับเรา", href: "/user/ourstaff" },
   { name: "นัดหมายการปรึกษา", href: "/user/appointments" },
 ]
 
@@ -86,7 +86,7 @@ export default function ClinicLayout() {
               }}
             >
               <PhoneOutlined />
-              099-6767-6767
+              096-767-6767
             </div>
             <Dropdown menu={{ items: menuItems }}>
               <div style={{ cursor: "pointer", gap: 10, display: "flex", alignItems: "center", }}>

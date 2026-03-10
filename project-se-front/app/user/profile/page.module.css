@@ -91,7 +91,7 @@
 }
 
 .editButton:hover {
-  background: #0f766e;
+  background: #10b981;
   color: #ffffff;
 }
 
@@ -103,11 +103,11 @@
 }
 
 .saveButton:hover {
-  background: linear-gradient(135deg, #3730a3 0%, #6d28d9 50%, #2563eb 100%);
+  background: #10b981;
   color: #ffffff;
   border-color: transparent;
   transform: translateY(-2px);
-  box-shadow: 0 4px 14px rgba(55, 48, 163, 0.2);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
 }
 
 .cancelButton {
@@ -118,34 +118,42 @@
 }
 
 .cancelButton:hover {
-  background: #ef4444;
+  background: #f87171;
   color: #ffffff;
-  border-color: #ef4444;
+  border-color: #f87171;
   transform: translateY(-2px);
-  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 14px rgba(248, 113, 113, 0.3);
 }
 
 .notice {
   margin: 0;
   border-radius: 999px;
-  padding: 8px 16px;
+  padding: 10px 24px;
   background: #f0fdf4;
   border: 1px solid #bbf7d0;
   color: #065f46;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   display: inline-block;
   white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(15, 118, 110, 0.2);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  transform: translateY(0);
 }
 
 .noticeSlot {
-  margin: 0;
-  min-height: 46px;
-  flex: 0 0 auto;
+  position: fixed;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  pointer-events: none;
 }
 
 .noticeHidden {
+  opacity: 0;
   visibility: hidden;
+  transform: translateY(-15px);
 }
 
 .formGrid {

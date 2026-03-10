@@ -4,6 +4,7 @@ import { CSSProperties, useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link";
 import "./schedule-ui.css";
 import { createMockSchedule } from "./mockData";
+import Badge from "@/components/ui/Badge";
 
 type TabKey = "upcoming" | "past";
 type AppointmentStatus = "pending" | "confirmed" | "completed";
@@ -623,6 +624,7 @@ export default function AppointmentSchedulePage() {
 
       <header className="appt-header">
         <div className="appt-header__top">
+          <Badge>Schedule</Badge>
           <h1 className="appt-title">ตารางนัดหมาย</h1>
         </div>
         <div className="appt-divider" />
@@ -634,7 +636,7 @@ export default function AppointmentSchedulePage() {
             role="tab"
             type="button"
           >
-            Upcoming
+            กำลังจะมาถึง
           </button>
           <button
             aria-selected={activeTab === "past"}
@@ -643,7 +645,7 @@ export default function AppointmentSchedulePage() {
             role="tab"
             type="button"
           >
-            Past
+            ประวัติการนัดหมาย
           </button>
         </div>
       </header>
@@ -791,12 +793,13 @@ export default function AppointmentSchedulePage() {
                     </>
                   ) : (
                     <>
-                      <div className="appt-actions appt-actions--single">
+                      <div className="appt-actions" style={{ gridTemplateColumns: '1fr' }}>
                         <Link
                           className="appt-btn appt-btn--ghost"
                           href={`/user/medical-records?appointmentId=${item.id}`}
+                          style={{ padding: '0 40px', width: 'auto', marginLeft: 'auto' }}
                         >
-                          ดูบันทึกการรักษา
+                          ดูบันทึกการปรึกษา
                         </Link>
                       </div>
                       <p className="appt-note">
@@ -995,6 +998,3 @@ export default function AppointmentSchedulePage() {
     </section>
   );
 }
-
-
-
