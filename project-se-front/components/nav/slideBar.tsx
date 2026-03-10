@@ -2,12 +2,24 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { NavLinks } from "@/types/role.types";
+import { Roles } from "@/types/role.types";
 
-const links = [
-  { name: "Dashboard", href: "/staff" },
-  { name: "Users", href: "/staff/users" },
-  { name: "Reports", href: "/staff/reports" },
-]
+const role : Roles = "admin" ;
+let links: NavLinks[] = [];
+
+if (role === "admin"){
+    links = [
+    { name: "Dashboard", href: "/staff" },
+    { name: "Users", href: "/staff/users" },
+    { name: "Reports", href: "/staff/reports" },
+  ]
+}else{
+    links = [
+    { name: "Dashboard", href: "/staff" },
+    { name: "Users", href: "/staff/users" },
+  ]
+}
 
 export default function SidebarNav() {
   const pathname = usePathname()
