@@ -10,7 +10,7 @@ export class LocationService {
       where: q ? { name: { contains: q, mode: 'insensitive' } } : undefined,
       select: { id: true, name: true },
       orderBy: { name: 'asc' },
-      take: 20,
+      take: 100,
     });
   }
 

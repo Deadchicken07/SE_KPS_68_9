@@ -270,15 +270,21 @@ export class AppointmentsService {
     ]);
 
     if (userConflict) {
-      throw new BadRequestException('You already have an appointment in this slot');
+      throw new BadRequestException(
+        'You already have an appointment in this slot',
+      );
     }
 
     if (staffConflict) {
-      throw new BadRequestException('This consultant is not available in this slot');
+      throw new BadRequestException(
+        'This consultant is not available in this slot',
+      );
     }
 
     if (leaveRecord?.status === 'leave') {
-      throw new BadRequestException('This consultant is on leave for the selected date');
+      throw new BadRequestException(
+        'This consultant is on leave for the selected date',
+      );
     }
   }
 
@@ -319,12 +325,17 @@ export class AppointmentsService {
     const trimmed = value?.trim();
 
     if (!trimmed || !/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-      throw new BadRequestException('appointmentDate must be in YYYY-MM-DD format');
+      throw new BadRequestException(
+        'appointmentDate must be in YYYY-MM-DD format',
+      );
     }
 
     const asDate = new Date(`${trimmed}T00:00:00.000Z`);
 
-    if (Number.isNaN(asDate.getTime()) || this.dateToIsoDate(asDate) !== trimmed) {
+    if (
+      Number.isNaN(asDate.getTime()) ||
+      this.dateToIsoDate(asDate) !== trimmed
+    ) {
       throw new BadRequestException('appointmentDate is invalid');
     }
 
