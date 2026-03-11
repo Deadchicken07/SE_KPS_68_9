@@ -387,16 +387,6 @@ export default function AppointmentSchedulePage() {
   );
 
   const fetchAppointments = useCallback(async (withLoading: boolean) => {
-    const token = getTokenFromStorage();
-
-    if (!token) {
-      setIsAuthRequired(false);
-      setError(null);
-      setSchedule(createMockSchedule());
-      setLoading(false);
-      return;
-    }
-
     setIsAuthRequired(false);
     setError(null);
 
@@ -404,37 +394,9 @@ export default function AppointmentSchedulePage() {
       setLoading(true);
     }
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/appointments/me`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          setIsAuthRequired(false);
-          setError(null);
-          setSchedule(createMockSchedule());
-          return;
-        }
-
-        throw new Error(await parseErrorMessage(response));
-      }
-
-      const payload = (await response.json()) as AppointmentScheduleApiResponse;
-
-      setSchedule({
-        upcoming: normalizeApiItems(payload.upcoming),
-        past: normalizeApiItems(payload.past),
-      });
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "ไม่สามารถโหลดข้อมูลนัดหมายได้";
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
+    // ใช้ mock data เสมอ (สำหรับ demo / development)
+    setSchedule(createMockSchedule());
+    setLoading(false);
   }, []);
 
   const openRescheduleDialog = useCallback((item: AppointmentItem) => {
@@ -799,7 +761,7 @@ export default function AppointmentSchedulePage() {
                           href={`/user/medical-records?appointmentId=${item.id}`}
                           style={{ padding: '0 40px', width: 'auto', marginLeft: 'auto' }}
                         >
-                          ดูบันทึกการปรึกษา
+                          ดูรายละเอียดการปรึกษา
                         </Link>
                       </div>
                       <p className="appt-note">
