@@ -65,12 +65,12 @@ function ServiceCard({ title, description, imageUrl, delay, accentClass }: Servi
 const services = [
   {
     title: "Video Call",
-    description: "พูดคุยเห็นหน้าแบบเรียลไทม์ เข้าใจอารมณ์ได้ลึกขึ้น",
+    description: "พูดคุยเห็นหน้าแบบเรียลไทม์ รับฟังปรึกษาได้อย่างเข้าใจ",
     imageUrl: "/images/service/online.png",
   },
   {
     title: "Onsite Booking",
-    description: "จองคิวพบผู้เชี่ยวชาญที่คลินิก ใกล้คุณในเวลาที่สะดวก",
+    description: "พูดคุยปรึกษากับผู้เชี่ยวชาญของเราโดยตรงที่คลินิก",
     imageUrl: "/images/service/onsite.png",
   },
 ] as const;

@@ -82,10 +82,7 @@ const App = () => {
                 .staff-header h1 {
                     font-size: clamp(28px, 4vw, 44px);
                     font-weight: 800;
-                    background: linear-gradient(135deg, #3730a3 0%, #6d28d9 50%, #2563eb 100%);
-                    -webkit-background-clip: text;
-                    -webkit-text-fill-color: transparent;
-                    background-clip: text;
+                    color: #1a5c4e;
                     margin: 0 0 12px;
                     line-height: 1.7;
                 }
