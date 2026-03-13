@@ -12,7 +12,7 @@ import type { FormErrors, RegisterForm } from "@/types/Register.types";
 import RegisterStep1Nation from "@/components/register/RegisterStep1Nation";
 import RegisterStep2Form from "@/components/register/RegisterStep2Form";
 import RegisterStep3Otp from "@/components/register/RegisterStep3Otp";
-import { backButtonStyle, cardStyle, orbBaseStyle, shellStyle } from "@/style/regis.styles";
+import { backButtonStyle } from "@/style/regis.styles";
 
 
 const titles = ["เด็กชาย", "เด็กหญิง", "นาย", "นาง", "นางสาว"];
@@ -260,10 +260,10 @@ export default function RegisterPage() {
   return (
      <>
      {contextHolder}
-    <Layout style={shellStyle}>
+    <Layout className="auth-shell" style={{ padding: "32px 16px", background: "#efe6da" }}>
       <div
+        className="auth-orb"
         style={{
-          ...orbBaseStyle,
           top: -120,
           left: -120,
           width: 260,
@@ -272,8 +272,8 @@ export default function RegisterPage() {
         }}
       />
       <div
+        className="auth-orb"
         style={{
-          ...orbBaseStyle,
           right: -120,
           bottom: -140,
           width: 320,
@@ -282,10 +282,15 @@ export default function RegisterPage() {
         }}
       />
 
-      <Flex align="center" justify="center" style={{ minHeight: "100%" }}>
-        <Card variant="borderless" styles={{ body: { padding: 40 } }} style={cardStyle}>
-          <Flex justify="space-between" align="center" gap={12} wrap style={{ marginBottom: 32 }}>
-            <div>
+      <Flex align="center" justify="center" style={{ minHeight: "100%", width: "100%", padding: "16px 0" }}>
+        <Card
+          variant="borderless"
+          className="auth-card"
+          styles={{ body: { padding: 32 } }}
+          style={{ width: "100%", maxWidth: 960, borderRadius: 30 }}
+        >
+          <Flex justify="space-between" align="flex-start" gap={16} wrap style={{ marginBottom: 28 }}>
+            <div style={{ flex: "1 1 320px" }}>
               <Typography.Text
                 style={{
                   fontSize: 12,
@@ -305,9 +310,6 @@ export default function RegisterPage() {
               </Typography.Title>
             </div>
 
-            <Button onClick={() => router.push("/login")} size="large" style={backButtonStyle}>
-              กลับหน้าเข้าสู่ระบบ
-            </Button>
           </Flex>
 
           {otpError && <Alert style={{ marginBottom: 24 }} type="error" title={otpError} showIcon />}

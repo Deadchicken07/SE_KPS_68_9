@@ -44,6 +44,16 @@ body {
   disabled:opacity-50;
 }
 
+.btn-primary:disabled,
+.btn-primary[disabled],
+.btn-primary.ant-btn:disabled,
+.btn-primary.ant-btn[disabled] {
+  background: #8faea4 !important;
+  border-color: #8faea4 !important;
+  color: #e6f0ec !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+}
 .btn-secondary {
   @apply w-full border border-[#3F7F6D]
   text-[#3F7F6D] py-3 rounded-xl font-medium

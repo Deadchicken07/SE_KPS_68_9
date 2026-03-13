@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { CSSProperties, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Alert,
@@ -16,7 +16,6 @@ import {
   notification,
 } from "antd";
 import { useLogin } from "@/hooks/useLogin";
-import { formLabelStyle, inputStyle, loginCardStyle, orbBaseStyle, outerPanelStyle, premiumGlowStyle, premiumPanelStyle, primaryButtonStyle, shellStyle } from "@/style/login.styles";
 
 export default function LoginPage() {
   const [api, contextHolder] = notification.useNotification();
@@ -53,10 +52,17 @@ export default function LoginPage() {
     <>
       {contextHolder}
 
-      <Layout style={shellStyle}>
+      <Layout
+        className="auth-shell"
+        style={{
+          padding: "32px 16px",
+          background:
+            "radial-gradient(circle at 15% 20%, rgba(14, 91, 80, 0.16), transparent 46%), radial-gradient(circle at 85% 78%, rgba(192, 144, 87, 0.14), transparent 46%), linear-gradient(135deg, #f8f3ed 0%, #efe6da 52%, #e8dccd 100%)",
+        }}
+      >
         <div
+          className="auth-orb"
           style={{
-            ...orbBaseStyle,
             top: -140,
             left: -120,
             width: 280,
@@ -65,8 +71,8 @@ export default function LoginPage() {
           }}
         />
         <div
+          className="auth-orb"
           style={{
-            ...orbBaseStyle,
             right: -120,
             bottom: -170,
             width: 320,
@@ -76,13 +82,53 @@ export default function LoginPage() {
         />
 
         <Flex align="center" justify="center" style={{ minHeight: "100%" }}>
-          <div style={outerPanelStyle}>
+          <div
+            style={{
+              width: "100%",
+              maxWidth: 1320,
+              overflow: "hidden",
+              borderRadius: 34,
+              background: "rgba(255,255,255,0.2)",
+              backdropFilter: "blur(14px)",
+              boxShadow: "0 45px 120px rgba(25, 56, 48, 0.24)",
+            }}
+          >
             <Row gutter={0} wrap>
               <Col xs={0} lg={14}>
-                <div style={premiumPanelStyle}>
-                  <div style={{ ...premiumGlowStyle, top: 48, right: -64, width: 208, height: 208 }} />
+                <div
+                  className="auth-panel-premium"
+                  style={{
+                    position: "relative",
+                    overflow: "hidden",
+                    minHeight: 740,
+                    padding: 48,
+                    color: "#ffffff",
+                    background: "#155f54",
+                  }}
+                >
                   <div
-                    style={{ ...premiumGlowStyle, left: -32, bottom: -64, width: 288, height: 288 }}
+                    style={{
+                      position: "absolute",
+                      borderRadius: "9999px",
+                      background: "rgba(255,255,255,0.12)",
+                      filter: "blur(48px)",
+                      top: 48,
+                      right: -64,
+                      width: 208,
+                      height: 208,
+                    }}
+                  />
+                  <div
+                    style={{
+                      position: "absolute",
+                      borderRadius: "9999px",
+                      background: "rgba(255,255,255,0.12)",
+                      filter: "blur(48px)",
+                      left: -32,
+                      bottom: -64,
+                      width: 288,
+                      height: 288,
+                    }}
                   />
 
                   <Flex vertical justify="space-between" style={{ position: "relative", zIndex: 1, minHeight: 644 }}>
@@ -124,14 +170,14 @@ export default function LoginPage() {
                           lineHeight: 1.8,
                         }}
                       >
-                        ระบบให้คำปรึกษาออนไลน์ที่ออกแบบเพื่อความปลอดภัย ความเป็นส่วนตัว
+                        ระบบให้คำปรึกษาออนไลน์ที่ออกแบบเพื่อความปลอดภัยความเป็นส่วนตัว
                       </Typography.Paragraph>
                     </div>
 
                     <Row gutter={16}>
                       <Col span={12}>
                         <Card
-                         variant="borderless"
+                          variant="borderless"
                           styles={{ body: { padding: 16 } }}
                           style={{ borderRadius: 20, background: "rgba(255,255,255,0.10)", color: "#fff" }}
                         >
@@ -145,7 +191,7 @@ export default function LoginPage() {
                       </Col>
                       <Col span={12}>
                         <Card
-                         variant="borderless"
+                          variant="borderless"
                           styles={{ body: { padding: 16 } }}
                           style={{ borderRadius: 20, background: "rgba(255,255,255,0.10)", color: "#fff" }}
                         >
@@ -172,9 +218,10 @@ export default function LoginPage() {
                   }}
                 >
                   <Card
-                   variant="borderless"
+                    variant="borderless"
+                    className="auth-card"
                     styles={{ body: { padding: 40 } }}
-                    style={loginCardStyle}
+                    style={{ width: "100%", maxWidth: 460 }}
                   >
                     <Typography.Title
                       level={2}
@@ -191,7 +238,7 @@ export default function LoginPage() {
                       style={{ marginTop: 32 }}
                     >
                       <Form.Item
-                        label={<span style={formLabelStyle}>อีเมล</span>}
+                        label={<span style={{ fontSize: 14, fontWeight: 500, color: "#475569" }}>อีเมล</span>}
                         name="email"
                         rules={[
                           { required: true, message: "กรุณากรอกอีเมล" },
@@ -199,24 +246,24 @@ export default function LoginPage() {
                         ]}
                         style={{ marginBottom: 20 }}
                       >
-                        <Input placeholder="example@email.com" style={inputStyle} />
+                        <Input placeholder="example@email.com" className="input" />
                       </Form.Item>
 
                       <Form.Item
-                        label={<span style={formLabelStyle}>รหัสผ่าน</span>}
+                        label={<span style={{ fontSize: 14, fontWeight: 500, color: "#475569" }}>รหัสผ่าน</span>}
                         name="password"
                         rules={[{ required: true, message: "กรุณากรอกรหัสผ่าน" }]}
                         style={{ marginBottom: 24 }}
                       >
-                        <Input.Password placeholder="********" style={inputStyle} />
+                        <Input.Password placeholder="********" className="input" />
                       </Form.Item>
 
                       <Form.Item style={{ marginBottom: error ? 16 : 0 }}>
                         <Button
-                          type="primary"
                           htmlType="submit"
                           loading={loading}
-                          style={primaryButtonStyle}
+                          className="btn-primary"
+                          style={{ height: 52, border: "none" }}
                         >
                           {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
                         </Button>
@@ -226,12 +273,12 @@ export default function LoginPage() {
                     </Form>
 
                     <Flex vertical gap={8} align="center" style={{ marginTop: 24 }}>
-                      <Typography.Link
+                      {/* <Typography.Link
                         onClick={() => router.push("/login/forgot-password")}
                         style={{ color: "#0e5b50", fontSize: 14, fontWeight: 500 }}
                       >
                         ลืมรหัสผ่าน?
-                      </Typography.Link>
+                      </Typography.Link> */}
 
                       <Typography.Text style={{ color: "#475569", fontSize: 14 }}>
                         ยังไม่มีบัญชี?{" "}

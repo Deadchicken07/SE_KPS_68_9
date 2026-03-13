@@ -18,8 +18,13 @@ export default function RegisterStep1Nation({
   handleNationCheck,
   nationLoading,
 }: RegisterStep1Props) {
+  const isStepComplete =
+    /^\d{13}$/.test(form.nationId) &&
+    form.name.trim().length > 0 &&
+    form.surName.trim().length > 0;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <Label text="เลขบัตรประชาชน" />
 
       <Input
@@ -38,7 +43,7 @@ export default function RegisterStep1Nation({
 
       {errors.nationId && <p className="text-red-500 text-sm">{errors.nationId}</p>}
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-x-4 gap-y-6">
         <div>
           <Label text="ชื่อ" />
 
@@ -82,6 +87,7 @@ export default function RegisterStep1Nation({
         type="primary"
         size="large"
         onClick={handleNationCheck}
+        disabled={!isStepComplete}
         loading={nationLoading}
         className="btn-primary"
       >

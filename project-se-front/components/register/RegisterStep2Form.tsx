@@ -46,7 +46,7 @@ function AddressSection({
   errors,
 }: AddressSectionProps) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <h4 className="text-lg font-semibold text-[#0e5b50]">{title}</h4>
 
       <Input
@@ -59,7 +59,7 @@ function AddressSection({
       />
       {detailError && <p className="text-red-500 text-sm">{detailError}</p>}
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-x-4 gap-y-5">
         <Select
           size="large"
           status={errors.province ? "error" : undefined}
@@ -84,7 +84,7 @@ function AddressSection({
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-x-4 gap-y-5">
         <Select
           size="large"
           status={errors.subDistrict ? "error" : undefined}
@@ -125,10 +125,32 @@ export default function RegisterStep2Form({
   current,
   nation,
 }: RegisterStep2Props) {
+  const isStepComplete =
+    !!form.title &&
+    form.name.trim().length > 0 &&
+    form.surName.trim().length > 0 &&
+    form.email.trim().length > 0 &&
+    form.password.length > 0 &&
+    form.confirmPassword.length > 0 &&
+    form.password === form.confirmPassword &&
+    form.phone.trim().length > 0 &&
+    form.medicalCondition.trim().length > 0 &&
+    form.allergyDrug.trim().length > 0 &&
+    form.detail.trim().length > 0 &&
+    form.detailNation.trim().length > 0 &&
+    current.selectedProvince !== null &&
+    current.selectedDistrict !== null &&
+    current.selectedSubDistrict !== null &&
+    current.selectedZipCode !== null &&
+    nation.selectedProvince !== null &&
+    nation.selectedDistrict !== null &&
+    nation.selectedSubDistrict !== null &&
+    nation.selectedZipCode !== null;
+
   return (
     <div className="space-y-10">
-      <div className="space-y-6">
-        <div className="grid grid-cols-[1fr_2fr_2fr] gap-6">
+      <div className="space-y-8">
+        <div className="grid grid-cols-[1fr_2fr_2fr] gap-x-6 gap-y-6">
           <div>
             <Label text="คำนำหน้า" />
 
@@ -201,7 +223,7 @@ export default function RegisterStep2Form({
         />
         {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-6">
           <div>
             <Label text="รหัสผ่าน" />
             <Input.Password
@@ -231,7 +253,7 @@ export default function RegisterStep2Form({
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-x-4 gap-y-6">
           <div>
             <Label text="เบอร์โทรศัพท์" />
             <Input
@@ -317,6 +339,7 @@ export default function RegisterStep2Form({
         type="primary"
         size="large"
         onClick={handleSubmit}
+        disabled={!isStepComplete}
         loading={sendOtpLoading}
         className="btn-primary"
       >
