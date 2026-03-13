@@ -1,33 +1,14 @@
 'use client'
 import {Questions} from "@/types/question.types"
+import { Pagination } from "@/types/pagination.types"
 import axios from "axios"
 import { useEffect, useState } from "react"
 
-const API = process.env.NEXT_PUBLIC_API_URL
-
-type QuestionResponse =
-    | Questions[]
-    | { questions?: Questions[] }
-    | { data?: Questions[] }
-
-const normalizeQuestions = (payload: QuestionResponse): Questions[] => {
-    if (Array.isArray(payload)) {
-        return payload
-    }
-
-    if ("questions" in payload && Array.isArray(payload.questions)) {
-        return payload.questions
-    }
-
-    if ("data" in payload && Array.isArray(payload.data)) {
-        return payload.data
-    }
-
-    return []
-}
+const API = process.env.NEXT_PUBLIC_API_URL;
 
 export const  useQuestions = (questionnaireId: number) => {
     const [questions,setQuestions] = useState<Questions[]>([])
+    const [paginate,setPaginate] = useState<Pagination[]>([])
     const [loading,setLoading] = useState(false)
     const [error,setError] = useState<string | null>(null);
 
@@ -36,11 +17,12 @@ export const  useQuestions = (questionnaireId: number) => {
             try {
                 setLoading(true)
                 
-                const res = await axios.get<QuestionResponse>(  
+                const res = await axios.get<{data : Questions[],meta : Pagination[]}>(  
                     `${API}/questionnaires/${questionnaireId}/questions`
                 )
-                
-                setQuestions(normalizeQuestions(res.data))
+                console.log(res)
+                setQuestions(res.data.data)
+                setPaginate(res.data.meta)
             } catch {
                 setError("ไม่สามารถดึงข้อมูลได้")
                 setQuestions([])
@@ -52,5 +34,5 @@ export const  useQuestions = (questionnaireId: number) => {
         fetch()
     }, [questionnaireId])
 
-     return { questions, loading, error, }
+     return { questions, paginate,loading, error, }
 }
