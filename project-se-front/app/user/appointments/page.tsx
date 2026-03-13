@@ -52,7 +52,7 @@ const allStaff = [
         name: 'ดร.มั่นใจ คารมดี',
         role: 'นักจิตวิทยา',
         specialty: 'ปัญหาความสัมพันธ์',
-        image: '/docterProfile/psy2.jfif',
+        image: '/docterProfile/psy5.jpg',
         slots: ['10:00', '11:00', '14:00', '16:00', '17:00'],
     },
 ];

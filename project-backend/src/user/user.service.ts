@@ -9,7 +9,7 @@ import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async findAll(query: UserQueryDto): Promise<PaginatedUserResponse> {
     const page = Number(query.page) || 1;
@@ -19,11 +19,11 @@ export class UserService {
 
     const where: Prisma.usersWhereInput = search
       ? {
-          OR: [
-            { name: { contains: search, mode: 'insensitive' } },
-            { email: { contains: search, mode: 'insensitive' } },
-          ],
-        }
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+        ],
+      }
       : {};
 
     const [users, total] = await Promise.all([
@@ -162,27 +162,27 @@ export class UserService {
 
         currentAddress: user.addresses
           ? {
-              provinceId: user.addresses.province_id,
-              districtId: user.addresses.district_id,
-              subDistrictId: user.addresses.sub_district_id,
-              zipCodeId: user.addresses.zip_code_id,
-              detail: user.addresses.detail,
-            }
+            provinceId: user.addresses.province_id,
+            districtId: user.addresses.district_id,
+            subDistrictId: user.addresses.sub_district_id,
+            zipCodeId: user.addresses.zip_code_id,
+            detail: user.addresses.detail,
+          }
           : null,
 
         nationAddress: user.addresses_users_address_id_nationToaddresses
           ? {
-              provinceId:
-                user.addresses_users_address_id_nationToaddresses.province_id,
-              districtId:
-                user.addresses_users_address_id_nationToaddresses.district_id,
-              subDistrictId:
-                user.addresses_users_address_id_nationToaddresses
-                  .sub_district_id,
-              zipCodeId:
-                user.addresses_users_address_id_nationToaddresses.zip_code_id,
-              detail: user.addresses_users_address_id_nationToaddresses.detail,
-            }
+            provinceId:
+              user.addresses_users_address_id_nationToaddresses.province_id,
+            districtId:
+              user.addresses_users_address_id_nationToaddresses.district_id,
+            subDistrictId:
+              user.addresses_users_address_id_nationToaddresses
+                .sub_district_id,
+            zipCodeId:
+              user.addresses_users_address_id_nationToaddresses.zip_code_id,
+            detail: user.addresses_users_address_id_nationToaddresses.detail,
+          }
           : null,
       },
     };
@@ -201,6 +201,43 @@ export class UserService {
 
     return {
       exists: false,
+    };
+  }
+
+  async findStaffById(staffId: number) {
+    const staff = await this.prisma.users.findUnique({
+      where: {
+        user_id: staffId,
+        roles: {
+          name: {
+            in: ['จิตแพทย์', 'นักจิตวิทยา'],
+          },
+        },
+      },
+      select: {
+        user_id: true,
+        name: true,
+        sur_name: true,
+        file_name: true,
+        info: true,
+        roles: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!staff) {
+      throw new NotFoundException('Staff not found');
+    }
+
+    return {
+      id: staff.user_id,
+      name: `${staff.name} ${staff.sur_name}`,
+      role: staff.roles?.name || '',
+      specialty: staff.info || '',
+      image: staff.file_name || '',
     };
   }
 }
