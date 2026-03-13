@@ -10,7 +10,7 @@ export class LocationService {
       where: q ? { name: { contains: q, mode: 'insensitive' } } : undefined,
       select: { id: true, name: true },
       orderBy: { name: 'asc' },
-      take: 20,
+      take: 100,
     });
   }
 
@@ -18,7 +18,7 @@ export class LocationService {
     return this.prisma.districts.findMany({
       where: {
         province_id: provinceId,
-        ...(q && { name: { contains: q, mode: 'insensitive' } }),
+        ...(q && { name_in_thai: { contains: q, mode: 'insensitive' } }),
       },
       select: { id: true, name: true },
       orderBy: { name: 'asc' },
@@ -36,5 +36,21 @@ export class LocationService {
       orderBy: { name: 'asc' },
       take: 20,
     });
+  }
+  async searchZipCodes(subDistrictId: number) {
+    const data = await this.prisma.zip_codes.findMany({
+      where: { sub_district_id: subDistrictId },
+      select: {
+        id: true,
+        code: true,
+      },
+      orderBy: {
+        code: 'asc',
+      },
+    });
+    return data.map((z) => ({
+      id: z.id,
+      name: z.code,
+    }));
   }
 }

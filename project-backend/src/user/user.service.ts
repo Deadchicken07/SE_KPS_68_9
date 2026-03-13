@@ -9,7 +9,7 @@ import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async findAll(query: UserQueryDto): Promise<PaginatedUserResponse> {
     const page = Number(query.page) || 1;
@@ -19,11 +19,11 @@ export class UserService {
 
     const where: Prisma.usersWhereInput = search
       ? {
-          OR: [
-            { name: { contains: search, mode: 'insensitive' } },
-            { email: { contains: search, mode: 'insensitive' } },
-          ],
-        }
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+        ],
+      }
       : {};
 
     const [users, total] = await Promise.all([
@@ -54,6 +54,38 @@ export class UserService {
       },
     };
   }
+
+  async findStaffs() {
+    const staffs = await this.prisma.users.findMany({
+      where: {
+        roles: {
+          name: {
+            in: ['จิตแพทย์', 'นักจิตวิทยา'],
+          },
+        },
+      },
+      select: {
+        user_id: true,
+        name: true,
+        sur_name: true,
+        file_name: true,
+        info: true,
+        roles: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    return staffs.map((staff) => ({
+      id: staff.user_id,
+      name: `${staff.name} ${staff.sur_name}`,
+      role: staff.roles?.name || '',
+      specialty: staff.info || '',
+      image: staff.file_name || '',
+    }));
+  }
   async findOne(userId: number): Promise<UserResponseDto> {
     const user = await this.prisma.users.findUnique({
       where: { user_id: userId }, // ✅ ตรง schema
@@ -74,11 +106,12 @@ export class UserService {
       email: user.email,
     };
   }
-  async findByNationId(nationId: string) {
-    const user = await this.prisma.users.findUnique({
-      where: { nation_id: nationId },
+  async findByNationId(nationId: string, name: string, surName: string) {
+    const user = await this.prisma.users.findFirst({
+      where: {
+        nation_id: nationId,
+      },
       include: {
-        // address ปัจจุบัน
         addresses: {
           include: {
             provinces: true,
@@ -87,8 +120,6 @@ export class UserService {
             zip_codes: true,
           },
         },
-
-        // address ตามบัตร
         addresses_users_address_id_nationToaddresses: {
           include: {
             provinces: true,
@@ -100,58 +131,113 @@ export class UserService {
       },
     });
 
+    // ⭐ ไม่มีเลขบัตรในระบบ
     if (!user) {
-      throw new NotFoundException('User not found');
+      return { status: 'new' };
+    }
+
+    // ⭐ เลขบัตรมี แต่ชื่อไม่ตรง
+    if (user.name !== name || user.sur_name !== surName) {
+      return { status: 'mismatch' };
+    }
+
+    // ⭐ สมัครแล้ว
+    if (user.email) {
+      return { status: 'completed' };
+    }
+
+    // ⭐ มีข้อมูลแต่ยังสมัครไม่เสร็จ
+    return {
+      status: 'incomplete',
+      data: {
+        id: user.user_id,
+        name: user.name,
+        surName: user.sur_name,
+        title: user.title,
+        email: user.email,
+        phone: user.phone,
+        nationId: user.nation_id,
+        medicalCondition: user.medical_condition,
+        allergyDrug: user.allergy_drug,
+
+        currentAddress: user.addresses
+          ? {
+            provinceId: user.addresses.province_id,
+            districtId: user.addresses.district_id,
+            subDistrictId: user.addresses.sub_district_id,
+            zipCodeId: user.addresses.zip_code_id,
+            detail: user.addresses.detail,
+          }
+          : null,
+
+        nationAddress: user.addresses_users_address_id_nationToaddresses
+          ? {
+            provinceId:
+              user.addresses_users_address_id_nationToaddresses.province_id,
+            districtId:
+              user.addresses_users_address_id_nationToaddresses.district_id,
+            subDistrictId:
+              user.addresses_users_address_id_nationToaddresses
+                .sub_district_id,
+            zipCodeId:
+              user.addresses_users_address_id_nationToaddresses.zip_code_id,
+            detail: user.addresses_users_address_id_nationToaddresses.detail,
+          }
+          : null,
+      },
+    };
+  }
+  async checkEmail(email: string) {
+    const user = await this.prisma.users.findUnique({
+      where: { email },
+    });
+
+    if (user) {
+      return {
+        exists: true,
+        message: 'Email already exists',
+      };
     }
 
     return {
-      id: user.user_id, // เพราะ schema ใช้ user_id_
-      name: user.name,
-      surName: user.sur_name,
-      email: user.email,
-      phone: user.phone,
-      nationId: user.nation_id,
-      medicalCondition: user.medical_condition,
-      allergyDrug: user.allergy_drug,
+      exists: false,
+    };
+  }
 
-      // ที่อยู่ปัจจุบัน
-      currentAddress: user.addresses
-        ? {
-            provinceId: user.addresses.province_id,
-            provinceName: user.addresses.provinces?.name,
-            districtId: user.addresses.district_id,
-            districtName: user.addresses.districts?.name,
-            subDistrictId: user.addresses.sub_district_id,
-            subDistrictName: user.addresses.sub_districts?.name,
-            zipCodeId: user.addresses.zip_code_id,
-            zipCode: user.addresses.zip_codes?.code,
-            detail: user.addresses.detail,
-          }
-        : null,
+  async findStaffById(staffId: number) {
+    const staff = await this.prisma.users.findUnique({
+      where: {
+        user_id: staffId,
+        roles: {
+          name: {
+            in: ['จิตแพทย์', 'นักจิตวิทยา'],
+          },
+        },
+      },
+      select: {
+        user_id: true,
+        name: true,
+        sur_name: true,
+        file_name: true,
+        info: true,
+        roles: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
 
-      // ที่อยู่ตามบัตร
-      nationAddress: user.addresses_users_address_id_nationToaddresses
-        ? {
-            provinceId:
-              user.addresses_users_address_id_nationToaddresses.province_id,
-            provinceName:
-              user.addresses_users_address_id_nationToaddresses.provinces?.name,
-            districtId:
-              user.addresses_users_address_id_nationToaddresses.district_id,
-            districtName:
-              user.addresses_users_address_id_nationToaddresses.districts?.name,
-            subDistrictId:
-              user.addresses_users_address_id_nationToaddresses.sub_district_id,
-            subDistrictName:
-              user.addresses_users_address_id_nationToaddresses.sub_districts
-                ?.name,
-            zipCodeId:
-              user.addresses_users_address_id_nationToaddresses.zip_code_id,
-            zipCode:
-              user.addresses_users_address_id_nationToaddresses.zip_codes?.code,
-            detail: user.addresses_users_address_id_nationToaddresses.detail,
-          }
-        : null,
+    if (!staff) {
+      throw new NotFoundException('Staff not found');
+    }
+
+    return {
+      id: staff.user_id,
+      name: `${staff.name} ${staff.sur_name}`,
+      role: staff.roles?.name || '',
+      specialty: staff.info || '',
+      image: staff.file_name || '',
     };
   }
 }

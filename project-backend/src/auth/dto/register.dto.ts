@@ -3,9 +3,11 @@ export class AddressDto {
   districtId: number;
   subDistrictId: number;
   detail: string;
+  zipCodeId: number;
 }
 
 export class RegisterDto {
+  title?: string;
   email: string;
   name: string;
   surName: string;

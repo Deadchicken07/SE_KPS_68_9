@@ -20,11 +20,11 @@ const mockAppointments = [
   },
   {
     id: 2,
-    appointment_date: "2026-03-15",
-    time_select: "14:00 - 15:00",
+    appointment_date: "2026-03-04",
+    time_select: "22:00 - 23:00",
     appointment_type: "online",
-    status: "Not_paying",
-    meet_link: "",
+    status: "Paid",
+    meet_link: "https://meet.google.com/abc-defg-hij",
     users_appointments_staff_idTousers: {
       name: "วิภา",
       sur_name: "รุ่งเรือง",
@@ -48,9 +48,8 @@ export default function OnlineAppointmentsPage() {
   })
 
   return (
-    <div className="min-h-screen bg-gray-100 py-16">
-
-      <div className="max-w-4xl mx-auto px-6 space-y-10">
+    <div className="min-h-screen py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <h1 className="text-3xl font-bold text-gray-800">
           การนัดหมายออนไลน์ของฉัน

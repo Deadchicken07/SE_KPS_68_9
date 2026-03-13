@@ -163,7 +163,61 @@ export class AppointmentsService {
     };
   }
 
-  async markAppointmentPaid(userId: number, appointmentId: number) {
+  async getAppointmentDetails(userId: number, appointmentId: number) {
+    const appointment = await this.prisma.appointments.findUnique({
+      where: { id: appointmentId },
+      include: {
+        users_appointments_staff_idTousers: {
+          include: {
+            roles: true,
+          },
+        },
+      },
+    });
+
+    if (!appointment) {
+      throw new NotFoundException('Appointment not found');
+    }
+
+    if (appointment.user_id !== userId) {
+      throw new ForbiddenException('Appointment does not belong to this user');
+    }
+
+    const staff = appointment.users_appointments_staff_idTousers;
+    const role = staff?.roles;
+    let pricePerHour = 0;
+
+    if (role?.fee_id) {
+      const fee = await this.prisma.fees.findUnique({
+        where: { id: role.fee_id },
+      });
+      pricePerHour = fee?.price_per_hours ? Number(fee.price_per_hours) : 0;
+    }
+
+    const parsedRange = this.tryParseTimeRange(appointment.time_select);
+    let durationMinutes = 0;
+    if (parsedRange) {
+      durationMinutes = parsedRange.endMinutes - parsedRange.startMinutes;
+    }
+
+    const totalPrice = (durationMinutes / 60) * pricePerHour;
+
+    return {
+      id: appointment.id,
+      staffName: this.buildConsultantName(staff?.name, staff?.sur_name),
+      date: appointment.appointment_date ? this.dateToIsoDate(appointment.appointment_date) : null,
+      time: appointment.time_select,
+      duration: durationMinutes,
+      price: totalPrice,
+      status: appointment.status,
+    };
+  }
+
+  async markAppointmentPaid(
+    userId: number,
+    appointmentId: number,
+    slipUrl: string,
+  ) {
     const appointment = await this.getOwnedAppointment(appointmentId, userId);
 
     if (appointment.status === pay_type_enum.Paid) {
@@ -189,6 +243,7 @@ export class AppointmentsService {
       where: { id: appointmentId },
       data: {
         status: pay_type_enum.Paid,
+        deposit_slip_file: slipUrl,
       },
     });
 
@@ -265,15 +320,21 @@ export class AppointmentsService {
     ]);
 
     if (userConflict) {
-      throw new BadRequestException('You already have an appointment in this slot');
+      throw new BadRequestException(
+        'You already have an appointment in this slot',
+      );
     }
 
     if (staffConflict) {
-      throw new BadRequestException('This consultant is not available in this slot');
+      throw new BadRequestException(
+        'This consultant is not available in this slot',
+      );
     }
 
     if (leaveRecord?.status === 'leave') {
-      throw new BadRequestException('This consultant is on leave for the selected date');
+      throw new BadRequestException(
+        'This consultant is on leave for the selected date',
+      );
     }
   }
 
@@ -314,12 +375,17 @@ export class AppointmentsService {
     const trimmed = value?.trim();
 
     if (!trimmed || !/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-      throw new BadRequestException('appointmentDate must be in YYYY-MM-DD format');
+      throw new BadRequestException(
+        'appointmentDate must be in YYYY-MM-DD format',
+      );
     }
 
     const asDate = new Date(`${trimmed}T00:00:00.000Z`);
 
-    if (Number.isNaN(asDate.getTime()) || this.dateToIsoDate(asDate) !== trimmed) {
+    if (
+      Number.isNaN(asDate.getTime()) ||
+      this.dateToIsoDate(asDate) !== trimmed
+    ) {
       throw new BadRequestException('appointmentDate is invalid');
     }
 
