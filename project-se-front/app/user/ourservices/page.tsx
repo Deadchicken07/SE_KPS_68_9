@@ -1,9 +1,13 @@
 ﻿"use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import "./service-ui.css";
+import { navigateToAppointmentsWithLoginGuard } from "@/utils/guardedNavigation";
 
 export default function OurService() {
+  const router = useRouter();
+
   return (
     <div className="service-shell">
       <div className="service-frame">
@@ -26,6 +30,7 @@ export default function OurService() {
                   imageUrl={service.imageUrl}
                   delay={index * 0.12}
                   accentClass={index === 0 ? "is-video" : "is-onsite"}
+                  onBook={() => navigateToAppointmentsWithLoginGuard(router)}
                 />
               ))}
             </div>
@@ -43,9 +48,10 @@ type ServiceCardProps = {
   imageUrl: string;
   delay: number;
   accentClass: "is-video" | "is-onsite";
+  onBook: () => void;
 };
 
-function ServiceCard({ title, description, imageUrl, delay, accentClass }: ServiceCardProps) {
+function ServiceCard({ title, description, imageUrl, delay, accentClass, onBook }: ServiceCardProps) {
   return (
     <article className={`service-card ${accentClass}`}>
       <div className="service-card__image-wrap">
@@ -54,7 +60,15 @@ function ServiceCard({ title, description, imageUrl, delay, accentClass }: Servi
       <div className="service-card__content">
         <h3 className="service-card__title">{title}</h3>
         <p className="service-card__description">{description}</p>
-        <Link href="/user/appointments" className="service-card__button" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none' }}>
+        <Link
+          href="/user/appointments"
+          className="service-card__button"
+          style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none' }}
+          onClick={(e) => {
+            e.preventDefault();
+            onBook();
+          }}
+        >
           นัดหมายเลย
         </Link>
       </div>

@@ -1,12 +1,13 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Layout, Dropdown } from "antd"
-import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
-import { PhoneOutlined, HeartFilled } from "@ant-design/icons"
+import { useState } from "react";
+import { Layout, Dropdown } from "antd";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { PhoneOutlined, HeartFilled } from "@ant-design/icons";
+import { navigateToAppointmentsWithLoginGuard } from "@/utils/guardedNavigation";
 
-const { Header } = Layout
+const { Header } = Layout;
 
 const links = [
   { name: "หน้าเเรก", href: "/user" },
@@ -14,21 +15,21 @@ const links = [
   { name: "บริการของเรา", href: "/user/ourservices" },
   { name: "เกี่ยวกับเรา", href: "/user/ourstaff" },
   { name: "นัดหมายการปรึกษา", href: "/user/appointments" },
-]
+];
 
 export default function ClinicLayout() {
-  const pathname = usePathname()
-  const router = useRouter()
-  const [isLogin, setIsLogin] = useState(false)
+  const pathname = usePathname();
+  const router = useRouter();
+  const [isLogin, setIsLogin] = useState(false);
 
   const handleLogout = () => {
-    router.push("/signin")
-  }
+    router.push("/signin");
+  };
 
   const menuItems = [
     { key: "profile", label: <Link href="/profile">Profile</Link> },
     { key: "logout", label: <span onClick={handleLogout}>Logout</span> },
-  ]
+  ];
 
   return (
     <Layout style={{ minHeight: "auto" }}>
@@ -147,21 +148,40 @@ export default function ClinicLayout() {
           gap: 24,
         }}
       >
-        {links.map(link => (
-          <Link
-            key={link.href}
-            href={link.href}
-            style={{
-              color: pathname === link.href ? "#fff" : "#d1fae5",
-              fontWeight: pathname === link.href ? "bold" : "normal",
-              fontSize: 18,
-              padding: 36,
-            }}
-          >
-            {link.name}
-          </Link>
-        ))}
+        {links.map((link) =>
+          link.href === "/user/appointments" ? (
+            <button
+              key={link.href}
+              type="button"
+              onClick={() => navigateToAppointmentsWithLoginGuard(router)}
+              style={{
+                color: pathname === link.href ? "#fff" : "#d1fae5",
+                fontWeight: pathname === link.href ? "bold" : "normal",
+                fontSize: 18,
+                padding: 36,
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              {link.name}
+            </button>
+          ) : (
+            <Link
+              key={link.href}
+              href={link.href}
+              style={{
+                color: pathname === link.href ? "#fff" : "#d1fae5",
+                fontWeight: pathname === link.href ? "bold" : "normal",
+                fontSize: 18,
+                padding: 36,
+              }}
+            >
+              {link.name}
+            </Link>
+          ),
+        )}
       </Header>
     </Layout>
-  )
+  );
 }

@@ -1,9 +1,15 @@
+"use client";
+
 import { Button, Row, Col, Typography } from "antd";
+import { useRouter } from "next/navigation";
 import styles from "@/components/home.module.css";
+import { navigateToAppointmentsWithLoginGuard } from "@/utils/guardedNavigation";
 
 const { Title, Text } = Typography;
 
 export default function Contact() {
+  const router = useRouter();
+
   return (
     <section id="contact" className={styles.contactSection}>
       <Row gutter={[24, 24]}>
@@ -55,7 +61,10 @@ export default function Contact() {
                 </Title>
               </div>
             </div>
-            <Button href="/user/appointments" className={styles.contactBtn}>
+            <Button
+              className={styles.contactBtn}
+              onClick={() => navigateToAppointmentsWithLoginGuard(router)}
+            >
               จองคิวเบื้องต้น
             </Button>
           </div>

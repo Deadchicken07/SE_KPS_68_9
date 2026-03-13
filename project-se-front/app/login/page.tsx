@@ -42,10 +42,12 @@ export default function LoginPage() {
   const passwordValue = Form.useWatch("password", form);
   const router = useRouter();
   const [registered, setRegistered] = useState<string | null>(null);
+  const [redirectTarget, setRedirectTarget] = useState<string | null>(null);
   const isLoginDisabled = !emailValue?.trim() || !passwordValue?.trim();
 
   useEffect(() => {
     setRegistered(new URLSearchParams(window.location.search).get("registered"));
+    setRedirectTarget(new URLSearchParams(window.location.search).get("redirect"));
   }, []);
 
   useEffect(() => {
@@ -62,7 +64,7 @@ export default function LoginPage() {
   const handleFinish = async (values: { email: string; password: string }) => {
     try {
       const me = await login(values.email, values.password);
-      router.push(getRedirectPathByRoleId(me.role_id));
+      router.push(redirectTarget || getRedirectPathByRoleId(me.role_id));
     } catch {
       // handled by hook
     }

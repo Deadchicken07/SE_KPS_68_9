@@ -1,6 +1,10 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { Button, Row, Col, Typography } from "antd";
+import { useRouter } from "next/navigation";
 import styles from "@/components/home.module.css";
+import { navigateToAppointmentsWithLoginGuard } from "@/utils/guardedNavigation";
 
 const { Title, Text } = Typography;
 
@@ -19,6 +23,7 @@ type HeroBannerProps = {
 
 export default function HeroBanner({ slides, stats }: HeroBannerProps) {
   const [activeSlide, setActiveSlide] = useState(0);
+  const router = useRouter();
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -42,7 +47,10 @@ export default function HeroBanner({ slides, stats }: HeroBannerProps) {
             <Button href="/user/exams" className={styles.heroBtnPrimary}>
               ทำเเบบทดสอบ
             </Button>
-            <Button href="/user/appointments" className={styles.heroBtnOutline}>
+            <Button
+              className={styles.heroBtnOutline}
+              onClick={() => navigateToAppointmentsWithLoginGuard(router)}
+            >
               นัดหมาย
             </Button>
           </div>
