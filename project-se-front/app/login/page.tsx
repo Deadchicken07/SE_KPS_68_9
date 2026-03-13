@@ -17,12 +17,32 @@ import {
 } from "antd";
 import { useLogin } from "@/hooks/useLogin";
 
+const getRedirectPathByRoleId = (roleId: number | null) => {
+  switch (roleId) {
+    case 1:
+      return "/staff/admin-report";
+    case 2:
+      return "/user";
+    case 3:
+      return "/staff/patient-history";
+    case 4:
+      return "/staff/patient-history";
+    case 5:
+      return "/staff/patient-history";
+    default:
+      return "/user";
+  }
+};
+
 export default function LoginPage() {
   const [api, contextHolder] = notification.useNotification();
   const { login, loading, error } = useLogin();
   const [form] = Form.useForm();
+  const emailValue = Form.useWatch("email", form);
+  const passwordValue = Form.useWatch("password", form);
   const router = useRouter();
   const [registered, setRegistered] = useState<string | null>(null);
+  const isLoginDisabled = !emailValue?.trim() || !passwordValue?.trim();
 
   useEffect(() => {
     setRegistered(new URLSearchParams(window.location.search).get("registered"));
@@ -41,8 +61,8 @@ export default function LoginPage() {
 
   const handleFinish = async (values: { email: string; password: string }) => {
     try {
-      await login(values.email, values.password);
-      router.push("/user");
+      const me = await login(values.email, values.password);
+      router.push(getRedirectPathByRoleId(me.role_id));
     } catch {
       // handled by hook
     }
@@ -240,10 +260,6 @@ export default function LoginPage() {
                       <Form.Item
                         label={<span style={{ fontSize: 14, fontWeight: 500, color: "#475569" }}>อีเมล</span>}
                         name="email"
-                        rules={[
-                          { required: true, message: "กรุณากรอกอีเมล" },
-                          { type: "email", message: "รูปแบบอีเมลไม่ถูกต้อง" },
-                        ]}
                         style={{ marginBottom: 20 }}
                       >
                         <Input placeholder="example@email.com" className="input" />
@@ -252,7 +268,6 @@ export default function LoginPage() {
                       <Form.Item
                         label={<span style={{ fontSize: 14, fontWeight: 500, color: "#475569" }}>รหัสผ่าน</span>}
                         name="password"
-                        rules={[{ required: true, message: "กรุณากรอกรหัสผ่าน" }]}
                         style={{ marginBottom: 24 }}
                       >
                         <Input.Password placeholder="********" className="input" />
@@ -262,6 +277,7 @@ export default function LoginPage() {
                         <Button
                           htmlType="submit"
                           loading={loading}
+                          disabled={isLoginDisabled}
                           className="btn-primary"
                           style={{ height: 52, border: "none" }}
                         >

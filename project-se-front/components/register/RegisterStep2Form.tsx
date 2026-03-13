@@ -1,7 +1,7 @@
 "use client";
 
-import type { Dispatch, SetStateAction } from "react";
-import { Button, Input, Select } from "antd";
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { Button, Checkbox, Input, Select } from "antd";
 import { formatPhoneNumber } from "@/utils/formatPhoneNumber";
 import type {
   FormErrors,
@@ -9,6 +9,7 @@ import type {
   RegisterForm,
 } from "@/types/Register.types";
 import Label from "./Label";
+import styles from "./RegisterStep2Form.module.css";
 
 interface RegisterStep2Props {
   form: RegisterForm;
@@ -29,6 +30,7 @@ interface AddressSectionProps {
   detailError?: string;
   detailOnChange: (value: string) => void;
   location: LocationDropdownState;
+  disabled?: boolean;
   errors: {
     province?: string;
     district?: string;
@@ -43,6 +45,7 @@ function AddressSection({
   detailError,
   detailOnChange,
   location,
+  disabled = false,
   errors,
 }: AddressSectionProps) {
   return (
@@ -56,9 +59,12 @@ function AddressSection({
         onChange={(e) => detailOnChange(e.target.value)}
         status={detailError ? "error" : undefined}
         className="input"
+        disabled={disabled}
       />
       {detailError && <p className="text-red-500 text-sm">{detailError}</p>}
-
+      <br />
+       <br />
+        
       <div className="grid grid-cols-2 gap-x-4 gap-y-5">
         <Select
           size="large"
@@ -67,8 +73,9 @@ function AddressSection({
           value={location.selectedProvince ?? undefined}
           onChange={(value) => location.setSelectedProvince(value ?? null)}
           placeholder="จังหวัด"
-          className="w-full"
+          className="select-input"
           allowClear
+          disabled={disabled}
         />
 
         <Select
@@ -78,9 +85,9 @@ function AddressSection({
           value={location.selectedDistrict ?? undefined}
           onChange={(value) => location.setSelectedDistrict(value ?? null)}
           placeholder="เขต/อำเภอ"
-          className="w-full"
+          className="select-input"
           allowClear
-          disabled={!location.selectedProvince}
+          disabled={disabled || !location.selectedProvince}
         />
       </div>
 
@@ -92,9 +99,9 @@ function AddressSection({
           value={location.selectedSubDistrict ?? undefined}
           onChange={(value) => location.setSelectedSubDistrict(value ?? null)}
           placeholder="แขวง/ตำบล"
-          className="w-full"
+          className="select-input"
           allowClear
-          disabled={!location.selectedDistrict}
+          disabled={disabled || !location.selectedDistrict}
         />
 
         <Select
@@ -104,9 +111,9 @@ function AddressSection({
           value={location.selectedZipCode ?? undefined}
           onChange={(value) => location.setSelectedZipCode(value ?? null)}
           placeholder="รหัสไปรษณีย์"
-          className="w-full"
+          className="select-input"
           allowClear
-          disabled={!location.selectedSubDistrict}
+          disabled={disabled || !location.selectedSubDistrict}
         />
       </div>
     </div>
@@ -125,6 +132,46 @@ export default function RegisterStep2Form({
   current,
   nation,
 }: RegisterStep2Props) {
+  const [sameAsCurrentAddress, setSameAsCurrentAddress] = useState(false);
+
+  useEffect(() => {
+    if (!sameAsCurrentAddress) {
+      return;
+    }
+
+    setForm((prev) =>
+      prev.detailNation === form.detail
+        ? prev
+        : {
+            ...prev,
+            detailNation: form.detail,
+          },
+    );
+
+    const timers = [
+      setTimeout(() => nation.setSelectedProvince(current.selectedProvince), 0),
+      setTimeout(() => nation.setSelectedDistrict(current.selectedDistrict), 100),
+      setTimeout(() => nation.setSelectedSubDistrict(current.selectedSubDistrict), 200),
+      setTimeout(() => nation.setSelectedZipCode(current.selectedZipCode), 300),
+    ];
+
+    return () => {
+      timers.forEach((timer) => clearTimeout(timer));
+    };
+  }, [
+    current.selectedDistrict,
+    current.selectedProvince,
+    current.selectedSubDistrict,
+    current.selectedZipCode,
+    form.detail,
+    nation.setSelectedDistrict,
+    nation.setSelectedProvince,
+    nation.setSelectedSubDistrict,
+    nation.setSelectedZipCode,
+    sameAsCurrentAddress,
+    setForm,
+  ]);
+
   const isStepComplete =
     !!form.title &&
     form.name.trim().length > 0 &&
@@ -132,7 +179,6 @@ export default function RegisterStep2Form({
     form.email.trim().length > 0 &&
     form.password.length > 0 &&
     form.confirmPassword.length > 0 &&
-    form.password === form.confirmPassword &&
     form.phone.trim().length > 0 &&
     form.medicalCondition.trim().length > 0 &&
     form.allergyDrug.trim().length > 0 &&
@@ -148,7 +194,7 @@ export default function RegisterStep2Form({
     nation.selectedZipCode !== null;
 
   return (
-    <div className="space-y-10">
+    <div className={`${styles.registerStep2} space-y-10`}>
       <div className="space-y-8">
         <div className="grid grid-cols-[1fr_2fr_2fr] gap-x-6 gap-y-6">
           <div>
@@ -164,7 +210,7 @@ export default function RegisterStep2Form({
                 }))
               }
               status={errors.title ? "error" : undefined}
-              className="w-full"
+              className="select-input"
               options={titles.map((t) => ({ value: t, label: t }))}
               allowClear
             />
@@ -222,7 +268,8 @@ export default function RegisterStep2Form({
           className="input"
         />
         {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
-
+              <br/>
+              <br/>
         <div className="grid grid-cols-2 gap-x-4 gap-y-6">
           <div>
             <Label text="รหัสผ่าน" />
@@ -321,12 +368,22 @@ export default function RegisterStep2Form({
         }}
       />
 
+      <div className="pt-1">
+        <Checkbox
+          checked={sameAsCurrentAddress}
+          onChange={(e) => setSameAsCurrentAddress(e.target.checked)}
+        >
+          ที่อยู่ตามบัตรเหมือนที่อยู่ปัจจุบัน
+        </Checkbox>
+      </div>
+
       <AddressSection
         title="ที่อยู่ตามทะเบียน *"
         detailValue={form.detailNation}
         detailError={errors.detailNation}
         detailOnChange={(value) => setForm((prev) => ({ ...prev, detailNation: value }))}
         location={nation}
+        disabled={sameAsCurrentAddress}
         errors={{
           province: errors.nationProvince,
           district: errors.nationDistrict,

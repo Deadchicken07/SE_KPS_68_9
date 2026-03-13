@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react';
 import axios, { AxiosError } from 'axios';
-import { LoginResponse } from '@/types/auth.types';
+import { AuthMeResponse, LoginResponse } from '@/types/auth.types';
 import { ErrorResponse } from '@/types/api.types';
 
 const API = 'http://localhost:4000';
@@ -15,7 +15,7 @@ export const useLogin = () => {
   const login = async (
     email: string,
     password: string
-  ): Promise<string> => {
+  ): Promise<AuthMeResponse> => {
     try {
       setLoading(true);
       setError(null);
@@ -26,11 +26,15 @@ export const useLogin = () => {
         { withCredentials: true }
       );
 
-      const token = res.data.access_token;
+      if (res.data.access_token) {
+        localStorage.setItem('access_token', res.data.access_token);
+      }
 
-      localStorage.setItem('access_token', token);
+      const me = await axios.get<AuthMeResponse>(`${API}/auth/me`, {
+        withCredentials: true,
+      });
 
-      return token;
+      return me.data;
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         const axiosError = err as AxiosError<ErrorResponse>;

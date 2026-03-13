@@ -33,6 +33,35 @@ body {
   focus:ring-2 focus:ring-[#3F7F6D]/30
   outline-none transition duration-200;
 }
+
+.input.ant-input,
+.input.ant-input-affix-wrapper {
+  height: 52px !important;
+}
+
+.input.ant-input:hover,
+.input.ant-input:focus,
+.input.ant-input:focus-within,
+.input.ant-input-affix-wrapper:hover,
+.input.ant-input-affix-wrapper:focus,
+.input.ant-input-affix-wrapper:focus-within,
+.input.ant-input-affix-wrapper.ant-input-affix-wrapper-focused {
+  border-color: #3f7f6d !important;
+}
+
+.input.ant-input:focus,
+.input.ant-input:focus-within,
+.input.ant-input-affix-wrapper:focus,
+.input.ant-input-affix-wrapper:focus-within,
+.input.ant-input-affix-wrapper.ant-input-affix-wrapper-focused {
+  background: white !important;
+  box-shadow: 0 0 0 2px rgb(63 127 109 / 0.3) !important;
+}
+
+.input.ant-input-affix-wrapper input.ant-input {
+  height: auto !important;
+  box-shadow: none !important;
+}
 .input-error {
   @apply border-red-500 focus:border-red-500 focus:ring-red-200;
 }
