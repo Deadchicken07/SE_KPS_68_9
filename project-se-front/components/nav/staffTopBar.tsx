@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
-import { Avatar, Button, Dropdown, Space, Typography } from "antd";
+import { Avatar, Dropdown, Space, Typography } from "antd";
 import type { MenuProps } from "antd";
 import { UserOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
@@ -76,25 +76,14 @@ export default function StaffTopBar() {
   const avatarLabel = buildAvatarLabel(me);
   const avatarSrc = me?.file_name || undefined;
 
-  const menuItems = useMemo<MenuProps["items"]>(
-    () => [
-      {
-        key: "logout",
-        label: (
-          <Button
-            type="text"
-            
-            loading={loggingOut}
-            onClick={() => void handleLogout()}
-            style={{ paddingInline: 0 }}
-          >
-            Logout
-          </Button>
-        ),
-      },
-    ],
-    [loggingOut],
-  );
+  const menuItems: MenuProps["items"] = [
+    {
+      key: "logout",
+      label: "Logout",
+      danger: true,
+      disabled: loggingOut,
+    },
+  ];
 
   return (
     <div
@@ -134,7 +123,14 @@ export default function StaffTopBar() {
       </div>
 
       <Dropdown
-        menu={{ items: menuItems }}
+        menu={{
+          items: menuItems,
+          onClick: ({ key }) => {
+            if (key === "logout") {
+              void handleLogout();
+            }
+          },
+        }}
         trigger={["click"]}
         placement="bottomRight"
       >
