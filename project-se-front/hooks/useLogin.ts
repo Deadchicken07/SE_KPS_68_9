@@ -4,7 +4,7 @@ import axios, { AxiosError } from 'axios';
 import { LoginResponse } from '@/types/auth.types';
 import { ErrorResponse } from '@/types/api.types';
 
-const API = 'http://localhost:4000';
+const API = process.env.NEXT_PUBLIC_API_URL;
 
 
 

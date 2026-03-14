@@ -1,14 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-
-interface Staff {
-    id: number;
-    name: string;
-    role: string;
-    specialty: string;
-    image: string;
-}
+import { useStaff } from '@/hooks/useStaff';
 
 const roleColorMap: Record<string, { badge: string; accent: string }> = {
     'จิตแพทย์': { badge: '#e0e7ff', accent: '#4f46e5' },
@@ -16,32 +8,7 @@ const roleColorMap: Record<string, { badge: string; accent: string }> = {
 };
 
 const App = () => {
-    const [staffList, setStaffList] = useState<Staff[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        const fetchStaffs = async () => {
-            try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-                const response = await fetch(`${apiUrl}/users/staff`);
-                
-                if (!response.ok) {
-                    throw new Error('Failed to fetch staff data');
-                }
-                
-                const data = await response.json();
-                setStaffList(data);
-            } catch (err: any) {
-                console.error('Error fetching staff:', err);
-                setError(err.message || 'An error occurred while fetching staff data');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchStaffs();
-    }, []);
+    const { staffs: staffList, loading, error } = useStaff();
 
     return (
         <>

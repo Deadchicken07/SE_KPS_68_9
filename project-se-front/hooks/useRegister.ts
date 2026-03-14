@@ -7,7 +7,7 @@ export const useRegister = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const API = "http://localhost:4000/auth/register";
+  const API = process.env.NEXT_PUBLIC_API_URL;
 
   const register = async (data: RegisterPayload) => {
     try {
@@ -15,7 +15,7 @@ export const useRegister = () => {
       setError(null);
       setSuccess(false);
 
-      await axios.post(API, data, {
+      await axios.post(`${API}/auth/register`, data, {
         timeout: 25000,
       });
 

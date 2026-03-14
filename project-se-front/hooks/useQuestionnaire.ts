@@ -6,29 +6,29 @@ import axios from "axios"
 const API = process.env.NEXT_PUBLIC_API_URL
 
 export const useQuestionnaire = () => {
-    const [questionnaires,setQuestionnaires] = useState<Questionnaires[]>([])
-    const [loading,setLoading] = useState(false)
-    const [error,setError] = useState<string | null>(null);
+    const [questionnaires, setQuestionnaires] = useState<Questionnaires[]>([])
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {                                
+    useEffect(() => {
         const fetch = async () => {
             try {
                 setLoading(true)
-                
-                const res = await axios.get<Questionnaires[]>(  
+
+                const res = await axios.get<Questionnaires[]>(
                     `${API}/questionnaires`
                 )
-                
-                setQuestionnaires(res.data)          
+
+                setQuestionnaires(res.data)
             } catch {
                 setError("ไม่สามารถดึงข้อมูลได้")
             } finally {
-                setLoading(false)                    
+                setLoading(false)
             }
         }
 
         fetch()
-    }, [])                                           
+    }, [])
 
 
 
