@@ -96,7 +96,6 @@ export default function QuestionnairePage({ params }: { params: Promise<{ examId
     const { questionnaires } = useQuestionnaire()
     const [currentPage, setCurrentPage] = useState(1)
     const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({})
-
     const examQuestions = useMemo(
         () =>
             buildExamQuestions(
@@ -152,7 +151,7 @@ export default function QuestionnairePage({ params }: { params: Promise<{ examId
 
     const answeredCount = Object.keys(selectedAnswers).length
     const progressPercent = Math.round((answeredCount / examQuestions.length) * 100)
-
+    console.log(questionnaires)
     return (
         <div className={styles.wrapper}>
             <Card className={styles.examCard}>
