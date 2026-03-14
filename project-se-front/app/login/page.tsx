@@ -306,11 +306,11 @@ export default function LoginPage() {
 
                       <Form.Item style={{ marginBottom: error ? 16 : 0 }}>
                         <Button
+                          type="primary"
                           htmlType="submit"
                           loading={loading}
                           disabled={isLoginDisabled}
-                          className="btn-primary"
-                          style={{ height: 52, border: "none" }}
+                          style={{ width: "100%", height: 52, border: "none", borderRadius: 12, fontWeight: 600 }}
                         >
                           {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
                         </Button>
