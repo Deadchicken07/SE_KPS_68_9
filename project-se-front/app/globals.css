@@ -3,6 +3,13 @@
 :root {
   --background: #f4efe8;
   --foreground: #171717;
+  --brand-primary: #0f766e;
+  --brand-primary-hover: #115e59;
+  --brand-primary-active: #134e4a;
+  --brand-primary-border: #0f766e;
+  --brand-primary-bg: #e6fffb;
+  --brand-primary-bg-hover: #ccfbf1;
+  --brand-primary-text: #ffffff;
 }
 
 @theme inline {

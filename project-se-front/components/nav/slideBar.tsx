@@ -25,7 +25,7 @@ export default function SidebarNav() {
   const pathname = usePathname()
 
   return (
-    <aside className="w-60 bg-gray-900 text-white min-h-screen p-6">
+    <aside className="w-60 bg-[#0f766e] text-white min-h-screen p-6">
       <h2 className="text-xl font-bold mb-6">Staff Panel</h2>
 
       <div className="flex flex-col gap-4">
@@ -38,8 +38,8 @@ export default function SidebarNav() {
               href={link.href}
               className={`p-2 rounded ${
                 isActive
-                  ? "bg-gray-700"
-                  : "hover:bg-gray-800"
+                  ? "bg-[#065f46] text-white"
+                  : "text-[#d1fae5] hover:bg-[#065f46] hover:text-white"
               }`}
             >
               {link.name}
