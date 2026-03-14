@@ -80,7 +80,6 @@ export default function StaffTopBar() {
     {
       key: "logout",
       label: "Logout",
-      danger: true,
       disabled: loggingOut,
     },
   ];

@@ -34,6 +34,7 @@ const formatCurrency = (value: number | null) =>
 export default function PharmacistMedicationPage() {
   const router = useRouter();
   const [messageApi, contextHolder] = message.useMessage();
+  const [modalApi, modalContextHolder] = Modal.useModal();
   const [medicationForm] = Form.useForm<MedicationFormValues>();
   const {
     medications,
@@ -84,7 +85,7 @@ export default function PharmacistMedicationPage() {
   };
 
   const handleDeleteMedication = (id: number) => {
-    Modal.confirm({
+    modalApi.confirm({
       title: "ลบรายการยา",
       content: "ต้องการลบรายการยานี้หรือไม่",
       okText: "ลบ",
@@ -154,6 +155,7 @@ export default function PharmacistMedicationPage() {
   return (
     <main className="staff-shell" style={{ width: "100%", overflowX: "hidden" }}>
       {contextHolder}
+      {modalContextHolder}
 
       <section className="staff-page-header">
         <Typography.Text className="staff-kicker">

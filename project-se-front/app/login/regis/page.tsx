@@ -3,6 +3,7 @@
 import {  useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, Button, Card, Flex, Layout, notification, Typography } from "antd";
+import { ArrowLeftOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { useNationCheck } from "@/hooks/useNationCheck";
 import { useRegister } from "@/hooks/useRegister";
@@ -12,7 +13,7 @@ import type { FormErrors, RegisterForm } from "@/types/Register.types";
 import RegisterStep1Nation from "@/components/register/RegisterStep1Nation";
 import RegisterStep2Form from "@/components/register/RegisterStep2Form";
 import RegisterStep3Otp from "@/components/register/RegisterStep3Otp";
-import { backButtonStyle } from "@/style/regis.styles";
+
 
 
 const titles = ["เด็กชาย", "เด็กหญิง", "นาย", "นาง", "นางสาว"];
@@ -260,7 +261,38 @@ export default function RegisterPage() {
   return (
      <>
      {contextHolder}
-    <Layout className="auth-shell" style={{ padding: "32px 16px", background: "#efe6da" }}>
+    <Layout
+      className="auth-shell"
+      style={{
+        minHeight: "100dvh",
+        padding: "32px 16px",
+        boxSizing: "border-box",
+        background:
+          "radial-gradient(circle at 15% 20%, rgba(14, 91, 80, 0.16), transparent 46%), radial-gradient(circle at 85% 78%, rgba(192, 144, 87, 0.14), transparent 46%), linear-gradient(135deg, #f8f3ed 0%, #efe6da 52%, #e8dccd 100%)",
+      }}
+    >
+      <Button
+        type="text"
+        icon={<ArrowLeftOutlined />}
+        onClick={() => router.push("/user")}
+        style={{
+          position: "absolute",
+          top: 18,
+          left: 18,
+          zIndex: 3,
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 8,
+          height: 40,
+          paddingInline: 14,
+          borderRadius: 999,
+          background: "rgba(255,255,255,0.74)",
+          color: "#0f766e",
+          boxShadow: "0 12px 30px rgba(15, 118, 110, 0.12)",
+        }}
+      >
+        กลับหน้าหลัก
+      </Button>
       <div
         className="auth-orb"
         style={{
@@ -282,7 +314,11 @@ export default function RegisterPage() {
         }}
       />
 
-      <Flex align="center" justify="center" style={{ minHeight: "100%", width: "100%", padding: "16px 0" }}>
+      <Flex
+        align="center"
+        justify="center"
+        style={{ minHeight: "calc(100dvh - 64px)", width: "100%", padding: "16px 0" }}
+      >
         <Card
           variant="borderless"
           className="auth-card"

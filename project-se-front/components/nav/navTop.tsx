@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Layout, Dropdown } from "antd";
+import { Layout, Dropdown, Modal } from "antd";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { PhoneOutlined, HeartFilled } from "@ant-design/icons";
@@ -20,6 +20,7 @@ const links = [
 export default function ClinicLayout() {
   const pathname = usePathname();
   const router = useRouter();
+  const [modalApi, modalContextHolder] = Modal.useModal();
   const [isLogin, setIsLogin] = useState(false);
 
   const handleLogout = () => {
@@ -33,6 +34,7 @@ export default function ClinicLayout() {
 
   return (
     <Layout style={{ minHeight: "auto" }}>
+      {modalContextHolder}
       <Header
         style={{
           backgroundColor: "#ffffff",
@@ -153,7 +155,7 @@ export default function ClinicLayout() {
             <button
               key={link.href}
               type="button"
-              onClick={() => navigateToAppointmentsWithLoginGuard(router)}
+              onClick={() => navigateToAppointmentsWithLoginGuard(router, modalApi)}
               style={{
                 color: pathname === link.href ? "#fff" : "#d1fae5",
                 fontWeight: pathname === link.href ? "bold" : "normal",

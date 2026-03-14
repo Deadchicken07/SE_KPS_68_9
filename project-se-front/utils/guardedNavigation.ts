@@ -1,9 +1,27 @@
 "use client";
 
-import { Modal } from "antd";
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 
-export function navigateToAppointmentsWithLoginGuard(router: AppRouterInstance) {
+type ModalApi = {
+  confirm: (config: {
+    title: string;
+    content: string;
+    okText: string;
+    cancelText: string;
+    centered?: boolean;
+    onOk?: () => void;
+    okButtonProps?: {
+      type?: "primary" | "default" | "dashed" | "link" | "text";
+      className?: string;
+      style?: React.CSSProperties;
+    };
+  }) => void;
+};
+
+export function navigateToAppointmentsWithLoginGuard(
+  router: AppRouterInstance,
+  modalApi: ModalApi,
+) {
   const accessToken = window.localStorage.getItem("access_token");
 
   if (accessToken) {
@@ -11,12 +29,23 @@ export function navigateToAppointmentsWithLoginGuard(router: AppRouterInstance) 
     return;
   }
 
-  Modal.confirm({
+  modalApi.confirm({
     title: "กรุณาเข้าสู่ระบบก่อน",
-    content: "คุณต้องเข้าสู่ระบบก่อนจึงจะเข้าใช้งานหน้านัดหมายได้",
+    content: "คุณต้องเข้าสู่ระบบก่อนจึงจะเข้าใช้งานหน้าการนัดหมายได้",
     okText: "เข้าสู่ระบบ",
     cancelText: "ยกเลิก",
     centered: true,
+    okButtonProps: {
+      type: "primary",
+      className: "btn-primary",
+      style: {
+        width: "auto",
+        minWidth: 0,
+        height: 32,
+        border: "none",
+        paddingInline: 15,
+      },
+    },
     onOk: () => {
       router.push("/login?redirect=/user/appointments");
     },

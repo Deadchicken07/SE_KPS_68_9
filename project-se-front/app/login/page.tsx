@@ -15,6 +15,7 @@ import {
   Typography,
   notification,
 } from "antd";
+import { ArrowLeftOutlined } from "@ant-design/icons";
 import { useLogin } from "@/hooks/useLogin";
 
 const getRedirectPathByRoleId = (roleId: number | null) => {
@@ -77,11 +78,35 @@ export default function LoginPage() {
       <Layout
         className="auth-shell"
         style={{
+          minHeight: "100dvh",
           padding: "32px 16px",
+          boxSizing: "border-box",
           background:
             "radial-gradient(circle at 15% 20%, rgba(14, 91, 80, 0.16), transparent 46%), radial-gradient(circle at 85% 78%, rgba(192, 144, 87, 0.14), transparent 46%), linear-gradient(135deg, #f8f3ed 0%, #efe6da 52%, #e8dccd 100%)",
         }}
       >
+        <Button
+          type="text"
+          icon={<ArrowLeftOutlined />}
+          onClick={() => router.push("/user")}
+          style={{
+            position: "absolute",
+            top: 18,
+            left: 18,
+            zIndex: 3,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            height: 40,
+            paddingInline: 14,
+            borderRadius: 999,
+            background: "rgba(255,255,255,0.74)",
+            color: "#0f766e",
+            boxShadow: "0 12px 30px rgba(15, 118, 110, 0.12)",
+          }}
+        >
+          กลับหน้าหลัก
+        </Button>
         <div
           className="auth-orb"
           style={{
@@ -103,7 +128,11 @@ export default function LoginPage() {
           }}
         />
 
-        <Flex align="center" justify="center" style={{ minHeight: "100%" }}>
+        <Flex
+          align="center"
+          justify="center"
+          style={{ minHeight: "calc(100dvh - 64px)" }}
+        >
           <div
             style={{
               width: "100%",

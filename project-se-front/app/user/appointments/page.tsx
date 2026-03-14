@@ -145,6 +145,7 @@ function TimeSlotGrid({
 
 export default function AppointmentsPage() {
     const router = useRouter();
+    const [modalApi, modalContextHolder] = Modal.useModal();
     const [isAuthChecking, setIsAuthChecking] = useState(true);
     const [mode, setMode] = useState<'staff' | 'time'>('staff');
 
@@ -169,7 +170,7 @@ export default function AppointmentsPage() {
                     return;
                 }
 
-                Modal.confirm({
+                modalApi.confirm({
                     title: 'กรุณาเข้าสู่ระบบก่อน',
                     content: 'คุณต้องเข้าสู่ระบบก่อนจึงจะเข้าใช้งานหน้านัดหมายได้',
                     okText: 'เข้าสู่ระบบ',
@@ -189,9 +190,8 @@ export default function AppointmentsPage() {
 
         return () => {
             isMounted = false;
-            Modal.destroyAll();
         };
-    }, [router]);
+    }, [modalApi, router]);
 
     const [selectedDuration, setSelectedDuration] = useState<number>(30);
 
@@ -268,6 +268,7 @@ export default function AppointmentsPage() {
 
     return (
         <ConfigProvider locale={locale}>
+            {modalContextHolder}
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&display=swap');
 

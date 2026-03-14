@@ -8,8 +8,8 @@ type AppThemeProviderProps = {
 };
 
 const BRAND_PRIMARY = "#0f766e";
-const BRAND_PRIMARY_HOVER = "#115e59";
-const BRAND_PRIMARY_ACTIVE = "#134e4a";
+const BRAND_PRIMARY_HOVER = "#ffffff";
+const BRAND_PRIMARY_ACTIVE = "#ffffff";
 const BRAND_PRIMARY_BG = "#e6fffb";
 const BRAND_PRIMARY_BG_HOVER = "#ccfbf1";
 const BRAND_PRIMARY_TEXT = "#ffffff";
