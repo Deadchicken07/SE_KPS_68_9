@@ -89,37 +89,10 @@ export default function PharmacistDeliveryHistoryPage() {
         <Typography.Title level={2} style={{ marginTop: 8, marginBottom: 8 }}>
           ประวัติการส่งยา
         </Typography.Title>
-        <Typography.Paragraph className="staff-section-muted" style={{ maxWidth: 760, marginBottom: 0 }}>
-          หน้านี้แสดงรายการส่งยาจาก receipts และ receipt_details แยกจากหน้าจัดการยา เพื่อให้ตารางติดตามงานไม่ปนกับ CRUD
-        </Typography.Paragraph>
+        
       </section>
 
-      <Row gutter={[16, 16]} className="staff-stats-grid">
-        <Col xs={24} md={8}>
-          <Card className="staff-stat-card" variant="borderless">
-            <Typography.Text className="staff-section-muted">จำนวนรายการ</Typography.Text>
-            <Typography.Title level={3} style={{ margin: "8px 0 4px" }}>
-              {deliverySummary.totalRows.toLocaleString("th-TH")}
-            </Typography.Title>
-          </Card>
-        </Col>
-        <Col xs={24} md={8}>
-          <Card className="staff-stat-card" variant="borderless">
-            <Typography.Text className="staff-section-muted">มูลค่ารวม</Typography.Text>
-            <Typography.Title level={3} style={{ margin: "8px 0 4px" }}>
-              {formatCurrency(deliverySummary.totalValue)}
-            </Typography.Title>
-          </Card>
-        </Col>
-        <Col xs={24} md={8}>
-          <Card className="staff-stat-card" variant="borderless">
-            <Typography.Text className="staff-section-muted">ทางลัด</Typography.Text>
-            <Button type="link" style={{ paddingLeft: 0 }} onClick={() => router.push("/staff/pharmacist")}>
-              กลับไปหน้า CRUD ยา
-            </Button>
-          </Card>
-        </Col>
-      </Row>
+      
 
       <Card className="staff-content-card" variant="borderless">
         <div className="staff-toolbar">

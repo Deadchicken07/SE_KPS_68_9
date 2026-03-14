@@ -12,9 +12,32 @@ export type MedicationFormValues = {
   price: number | null
 }
 
+const normalizeErrorMessage = (message: unknown) => {
+  if (Array.isArray(message)) {
+    return message
+      .map((item) => normalizeErrorMessage(item))
+      .filter(Boolean)
+      .join(', ')
+  }
+
+  if (typeof message === 'string') {
+    return message
+  }
+
+  if (message && typeof message === 'object') {
+    const nestedMessage = (message as { message?: unknown }).message
+    if (nestedMessage !== undefined) {
+      return normalizeErrorMessage(nestedMessage)
+    }
+  }
+
+  return ''
+}
+
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (axios.isAxiosError(error)) {
-    return error.response?.data?.message || fallback
+    const message = normalizeErrorMessage(error.response?.data?.message)
+    return message || fallback
   }
 
   return fallback

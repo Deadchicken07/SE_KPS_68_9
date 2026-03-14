@@ -107,17 +107,20 @@ export default function PharmacistMedicationPage() {
       title: "รหัสยา",
       dataIndex: "id",
       width: 100,
+       align: "center",
       sorter: (a, b) => a.id - b.id,
       defaultSortOrder: "ascend",
     },
     {
       title: "ชื่อยา",
       dataIndex: "name",
+      width: 200,
       sorter: (a, b) => a.name.localeCompare(b.name),
     },
     {
       title: "ราคาขาย",
       dataIndex: "retail",
+      width: 160,
       align: "left",
       sorter: (a, b) => (a.retail ?? 0) - (b.retail ?? 0),
       render: (value: number | null) => formatCurrency(value),
@@ -125,6 +128,7 @@ export default function PharmacistMedicationPage() {
     {
       title: "ต้นทุน",
       dataIndex: "price",
+      width: 160,
       align: "left",
       sorter: (a, b) => (a.price ?? 0) - (b.price ?? 0),
       render: (value: number | null) => formatCurrency(value),
@@ -133,6 +137,7 @@ export default function PharmacistMedicationPage() {
       title: "จัดการ",
       key: "actions",
       width: 150,
+      fixed: "right",
       render: (_, record) => (
         <Space wrap>
           <Button type="primary" ghost onClick={() => handleOpenEdit(record)}>
@@ -147,7 +152,7 @@ export default function PharmacistMedicationPage() {
   ];
 
   return (
-    <main className="staff-shell">
+    <main className="staff-shell" style={{ width: "100%", overflowX: "hidden" }}>
       {contextHolder}
 
       <section className="staff-page-header">
@@ -157,37 +162,43 @@ export default function PharmacistMedicationPage() {
         <Typography.Title level={2} style={{ marginTop: 8, marginBottom: 8 }}>
           จัดการคลังยา
         </Typography.Title>
-       
+     
       </section>
 
-      <Card className="staff-content-card" variant="borderless">
+
+      <Card
+        className="staff-content-card"
+        variant="borderless"
+        styles={{ body: { overflowX: "auto" } }}
+      >
         <div
           style={{
             display: "flex",
             flexWrap: "wrap",
-            alignItems: "end",
+            alignItems: "flex-end",
             justifyContent: "space-between",
             gap: 16,
             marginBottom: 18,
           }}
         >
-          <div style={{ flex: "1 1 320px", maxWidth: 560 }}>
-            <Typography.Text
-              strong
-              style={{ display: "block", marginBottom: 8 }}
-            >
+          <div style={{ flex: "1 1 420px", minWidth: 0, maxWidth: 720 }}>
+            <Typography.Text strong style={{ display: "block", marginBottom: 8 }}>
               ค้นหารายการยา
             </Typography.Text>
-            <Input
-              value={medicationSearch}
-              onChange={(event) => setMedicationSearch(event.target.value)}
-              onPressEnter={() => void fetchMedications()}
-              placeholder="ค้นหาชื่อยา"
-              className="input"
-            />
+            <Space.Compact style={{ width: "100%" }}>
+              <Input
+                value={medicationSearch}
+                onChange={(event) => setMedicationSearch(event.target.value)}
+                onPressEnter={() => void fetchMedications()}
+                placeholder="ค้นหาชื่อยา"
+                className="input"
+              />
+              <Button style={{ height: 52, paddingInline: 20 }} onClick={() => void fetchMedications()}>
+                ค้นหา
+              </Button>
+            </Space.Compact>
           </div>
           <Space wrap>
-            <Button onClick={() => void fetchMedications()}>ค้นหา</Button>
             <Button type="primary" onClick={handleOpenCreate}>
               เพิ่มยา
             </Button>
@@ -201,11 +212,12 @@ export default function PharmacistMedicationPage() {
           loading={medicationsLoading}
           columns={medicationColumns}
           dataSource={medications}
-          scroll={{ x: 720 }}
+          scroll={{ x: 900 }}
           locale={{ emptyText: "ยังไม่มีข้อมูลยา" }}
           pagination={{
             pageSize: 8,
             showSizeChanger: false,
+            responsive: true,
             showTotal: (total, range) =>
               `${range[0]}-${range[1]} จาก ${total} รายการ`,
           }}
@@ -229,7 +241,11 @@ export default function PharmacistMedicationPage() {
           >
             <Input className="input" placeholder="เช่น Fluoxetine 20 mg" />
           </Form.Item>
-          <Form.Item name="retail" label="ราคาขาย">
+          <Form.Item
+            name="retail"
+            label="ราคาขาย"
+            rules={[{ required: true, message: "กรุณากรอกราคาขาย" }]}
+          >
             <InputNumber
               min={0}
               precision={2}
@@ -237,7 +253,11 @@ export default function PharmacistMedicationPage() {
               placeholder="0.00"
             />
           </Form.Item>
-          <Form.Item name="price" label="ต้นทุน">
+          <Form.Item
+            name="price"
+            label="ต้นทุน"
+            rules={[{ required: true, message: "กรุณากรอกต้นทุน" }]}
+          >
             <InputNumber
               min={0}
               precision={2}

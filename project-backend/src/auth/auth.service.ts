@@ -49,6 +49,33 @@ export class AuthService {
     };
   }
 
+  async getMe(userId: number) {
+    const user = await this.prisma.users.findUnique({
+      where: { user_id: userId },
+      select: {
+        user_id: true,
+        email: true,
+        role_id: true,
+        name: true,
+        sur_name: true,
+        file_name: true,
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    return {
+      sub: user.user_id,
+      email: user.email,
+      role_id: user.role_id,
+      name: user.name,
+      sur_name: user.sur_name,
+      file_name: user.file_name,
+    };
+  }
+
   async register(body: RegisterDto) {
     try {
       const hashedPassword = await bcrypt.hash(body.password, 10);
@@ -125,7 +152,7 @@ export class AuthService {
               allergy_drug: body.allergyDrug ?? null,
               address_id: address.id,
               address_id_nation: addressNationId,
-              role_id: 1,
+              role_id: 2,
               password_hash: hashedPassword,
             },
           });

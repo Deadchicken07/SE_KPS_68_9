@@ -335,10 +335,18 @@ export class PharmacistService {
       throw new BadRequestException('Medication name is required');
     }
 
+    if (dto.retail === null || dto.retail === undefined || dto.retail === '') {
+      throw new BadRequestException('Medication retail is required');
+    }
+
+    if (dto.price === null || dto.price === undefined || dto.price === '') {
+      throw new BadRequestException('Medication price is required');
+    }
+
     return {
       name,
-      retail: this.parseDecimal(dto.retail, 'retail') ?? null,
-      price: this.parseDecimal(dto.price, 'price') ?? null,
+      retail: this.parseDecimal(dto.retail, 'retail'),
+      price: this.parseDecimal(dto.price, 'price'),
     };
   }
 
@@ -358,10 +366,16 @@ export class PharmacistService {
     }
 
     if (Object.prototype.hasOwnProperty.call(dto, 'retail')) {
+      if (dto.retail === null || dto.retail === '') {
+        throw new BadRequestException('Medication retail is required');
+      }
       data.retail = this.parseDecimal(dto.retail, 'retail');
     }
 
     if (Object.prototype.hasOwnProperty.call(dto, 'price')) {
+      if (dto.price === null || dto.price === '') {
+        throw new BadRequestException('Medication price is required');
+      }
       data.price = this.parseDecimal(dto.price, 'price');
     }
 
