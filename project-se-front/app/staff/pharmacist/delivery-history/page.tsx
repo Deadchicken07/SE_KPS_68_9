@@ -1,0 +1,183 @@
+"use client";
+
+import type { ColumnsType } from "antd/es/table";
+import { Button, Card, Col, Input, Row, Select, Space, Table, Tag, Typography, message } from "antd";
+import { useRouter } from "next/navigation";
+import { usePharmacistDeliveryHistory } from "@/hooks/usePharmacistDeliveryHistory";
+import type { DeliveryHistory } from "@/types/pharmacist.types";
+
+const currencyFormatter = new Intl.NumberFormat("th-TH", {
+  style: "currency",
+  currency: "THB",
+  minimumFractionDigits: 2,
+});
+
+const dateFormatter = new Intl.DateTimeFormat("th-TH", {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
+
+const formatCurrency = (value: number | null) =>
+  value === null ? "-" : currencyFormatter.format(value);
+
+const formatDateTime = (value: string | null) =>
+  value ? dateFormatter.format(new Date(value)) : "-";
+
+const statusColorMap: Record<string, string> = {
+  delivered: "green",
+  pending: "gold",
+  cancelled: "red",
+};
+
+export default function PharmacistDeliveryHistoryPage() {
+  const router = useRouter();
+  const [messageApi, contextHolder] = message.useMessage();
+  const {
+    deliveries,
+    deliveriesLoading,
+    deliverySearch,
+    setDeliverySearch,
+    deliveryStatus,
+    setDeliveryStatus,
+    deliverySummary,
+    fetchDeliveries,
+  } = usePharmacistDeliveryHistory();
+
+  const deliveryColumns: ColumnsType<DeliveryHistory> = [
+    { title: "เลขใบเสร็จ", dataIndex: "receiptId", width: 110 },
+    { title: "ผู้ป่วย", dataIndex: "patientName" },
+    { title: "เภสัชกร", dataIndex: "pharmacistName" },
+    {
+      title: "สถานะ",
+      dataIndex: "status",
+      render: (value: string | null) => (
+        <Tag color={statusColorMap[(value || "").toLowerCase()] || "blue"}>
+          {value || "-"}
+        </Tag>
+      ),
+    },
+    {
+      title: "Tracking",
+      dataIndex: "tracking",
+      render: (value: string | null) => value || "-",
+    },
+    {
+      title: "ยอดรวม",
+      dataIndex: "total",
+      render: (value: number | null) => formatCurrency(value),
+    },
+    {
+      title: "วันที่",
+      dataIndex: "createdAt",
+      render: (value: string | null) => formatDateTime(value),
+    },
+  ];
+
+  const handleFilter = async () => {
+    const result = await fetchDeliveries();
+    if (!result.ok) {
+      messageApi.error(result.message);
+    }
+  };
+
+  return (
+    <main className="staff-shell">
+      {contextHolder}
+
+      <section className="staff-page-header">
+        <Typography.Text className="staff-kicker">STAFF / DELIVERY HISTORY</Typography.Text>
+        <Typography.Title level={2} style={{ marginTop: 8, marginBottom: 8 }}>
+          ประวัติการส่งยา
+        </Typography.Title>
+        <Typography.Paragraph className="staff-section-muted" style={{ maxWidth: 760, marginBottom: 0 }}>
+          หน้านี้แสดงรายการส่งยาจาก receipts และ receipt_details แยกจากหน้าจัดการยา เพื่อให้ตารางติดตามงานไม่ปนกับ CRUD
+        </Typography.Paragraph>
+      </section>
+
+      <Row gutter={[16, 16]} className="staff-stats-grid">
+        <Col xs={24} md={8}>
+          <Card className="staff-stat-card" variant="borderless">
+            <Typography.Text className="staff-section-muted">จำนวนรายการ</Typography.Text>
+            <Typography.Title level={3} style={{ margin: "8px 0 4px" }}>
+              {deliverySummary.totalRows.toLocaleString("th-TH")}
+            </Typography.Title>
+          </Card>
+        </Col>
+        <Col xs={24} md={8}>
+          <Card className="staff-stat-card" variant="borderless">
+            <Typography.Text className="staff-section-muted">มูลค่ารวม</Typography.Text>
+            <Typography.Title level={3} style={{ margin: "8px 0 4px" }}>
+              {formatCurrency(deliverySummary.totalValue)}
+            </Typography.Title>
+          </Card>
+        </Col>
+        <Col xs={24} md={8}>
+          <Card className="staff-stat-card" variant="borderless">
+            <Typography.Text className="staff-section-muted">ทางลัด</Typography.Text>
+            <Button type="link" style={{ paddingLeft: 0 }} onClick={() => router.push("/staff/pharmacist")}>
+              กลับไปหน้า CRUD ยา
+            </Button>
+          </Card>
+        </Col>
+      </Row>
+
+      <Card className="staff-content-card" variant="borderless">
+        <div className="staff-toolbar">
+          <Input
+            value={deliverySearch}
+            onChange={(event) => setDeliverySearch(event.target.value)}
+            onPressEnter={() => void handleFilter()}
+            placeholder="ค้นหาผู้ป่วย, tracking หรือชื่อยา"
+            className="input"
+          />
+          <Select
+            value={deliveryStatus}
+            onChange={(value) => setDeliveryStatus(value)}
+            style={{ width: 180 }}
+            options={[
+              { label: "ทุกสถานะ", value: "all" },
+              { label: "pending", value: "pending" },
+              { label: "delivered", value: "delivered" },
+              { label: "cancelled", value: "cancelled" },
+            ]}
+          />
+          <Space>
+            <Button onClick={() => void handleFilter()}>กรองข้อมูล</Button>
+          </Space>
+        </div>
+
+        <Table
+          rowKey="receiptId"
+          loading={deliveriesLoading}
+          columns={deliveryColumns}
+          dataSource={deliveries}
+          expandable={{
+            expandedRowRender: (record) => (
+              <Table
+                rowKey="receiptDetailId"
+                size="small"
+                pagination={false}
+                dataSource={record.items}
+                columns={[
+                  { title: "รายการ", dataIndex: "itemName" },
+                  { title: "จำนวน", dataIndex: "quantity", width: 100 },
+                  {
+                    title: "ราคาต่อหน่วย",
+                    dataIndex: "unitPrice",
+                    render: (value: number | null) => formatCurrency(value),
+                  },
+                  {
+                    title: "รวม",
+                    dataIndex: "totalPrice",
+                    render: (value: number | null) => formatCurrency(value),
+                  },
+                ]}
+              />
+            ),
+          }}
+          pagination={{ pageSize: 8 }}
+        />
+      </Card>
+    </main>
+  );
+}

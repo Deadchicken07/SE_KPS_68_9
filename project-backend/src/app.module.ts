@@ -10,9 +10,21 @@ import { QuestionnairesModule } from './questionnaires/questionnaires.module';
 import { QuestionsModule } from './questions/questions.module';
 import { ChoicesModule } from './choices/choices.module';
 import { AnswersModule } from './answers/answers.module';
+import { PharmacistModule } from './pharmacist/pharmacist.module';
 
 @Module({
-  imports: [UserModule, PrismaModule, AuthModule, LocationModule, QuestionnairesModule,MailModule, QuestionsModule, ChoicesModule, AnswersModule],
+  imports: [
+    UserModule,
+    PrismaModule,
+    AuthModule,
+    LocationModule,
+    QuestionnairesModule,
+    MailModule,
+    QuestionsModule,
+    ChoicesModule,
+    AnswersModule,
+    PharmacistModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

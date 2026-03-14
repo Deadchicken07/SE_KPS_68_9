@@ -28,7 +28,7 @@ const getRedirectPathByRoleId = (roleId: number | null) => {
     case 4:
       return "/staff/patient-history";
     case 5:
-      return "/staff/patient-history";
+      return "/staff/pharmacist";
     default:
       return "/user";
   }
