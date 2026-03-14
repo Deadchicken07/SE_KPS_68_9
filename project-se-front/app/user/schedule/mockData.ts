@@ -98,7 +98,7 @@ export function createMockSchedule(): AppointmentScheduleResponse {
         contact: "โทร 02-123-4567",
         status: "completed",
         avatarLabel: "มค",
-        avatarUrl: "/docterProfile/psy2.jfif",
+        avatarUrl: "/docterProfile/psy5.jpg",
         appointmentType: "onsite",
         paymentStatus: "Paid",
         meetLink: null,

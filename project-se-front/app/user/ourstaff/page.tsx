@@ -1,47 +1,6 @@
 'use client';
 
-const psychiatrists = [
-    {
-        id: 1,
-        name: 'รศ.นพ.สมชาย ใจดี',
-        role: 'จิตแพทย์',
-        specialty: 'จิตเวชเด็กและวัยรุ่น',
-        image: '/docterProfile/docter1.jpeg'
-    },
-    {
-        id: 2,
-        name: 'พญ.สมหยิง สนิมจัย',
-        role: 'จิตแพทย์',
-        specialty: 'ครอบครัว ความสัมพันธ์ ความรัก',
-        image: '/docterProfile/docter2.png'
-    },
-    {
-        id: 3,
-        name: 'นพ.ลอดช่อง กระด่องแมะ',
-        role: 'จิตแพทย์',
-        specialty: 'จิตเวชวัยรุ่น ผู้ใหญ่ ผู้สูงอายุ',
-        image: '/docterProfile/docter3.png'
-    },
-];
-
-const psychologists = [
-    {
-        id: 4,
-        name: 'ดร.สรรสร้าง ส่งสี',
-        role: 'นักจิตวิทยา',
-        specialty: 'บำบัดความคิดและพฤติกรรม',
-        image: '/docterProfile/psy1'
-    },
-    {
-        id: 5,
-        name: 'ดร.มั่นใจ คารมดี',
-        role: 'นักจิตวิทยา',
-        specialty: 'ปัญหาความสัมพันธ์',
-        image: '/docterProfile/psy2.jfif'
-    },
-];
-
-const allPersonnel = [...psychiatrists, ...psychologists];
+import { useStaff } from '@/hooks/useStaff';
 
 const roleColorMap: Record<string, { badge: string; accent: string }> = {
     'จิตแพทย์': { badge: '#e0e7ff', accent: '#4f46e5' },
@@ -49,6 +8,8 @@ const roleColorMap: Record<string, { badge: string; accent: string }> = {
 };
 
 const App = () => {
+    const { staffs: staffList, loading, error } = useStaff();
+
     return (
         <>
             <style>{`
@@ -179,6 +140,18 @@ const App = () => {
                     margin: 0;
                 }
 
+                .loading-container, .error-container {
+                    text-align: center;
+                    padding: 100px 20px;
+                    font-size: 18px;
+                    color: #1a5c4e;
+                    font-weight: 600;
+                }
+
+                .error-container {
+                    color: #ef4444;
+                }
+
                 @media (max-width: 640px) {
                     .staff-grid {
                         grid-template-columns: 1fr;
@@ -194,44 +167,64 @@ const App = () => {
                     <p>พร้อมดูแลคุณด้วยความใส่ใจ</p>
                 </div>
 
+                {/* Loading State */}
+                {loading && (
+                    <div className="loading-container">
+                        กำลังโหลดข้อมูลทีมงาน...
+                    </div>
+                )}
+
+                {/* Error State */}
+                {error && (
+                    <div className="error-container">
+                        {error}
+                    </div>
+                )}
+
                 {/* Staff Grid */}
-                <div className="staff-grid">
-                    {allPersonnel.map((person) => {
-                        const colors = roleColorMap[person.role] ?? { badge: '#f3f4f6', accent: '#6b7280' };
-                        return (
-                            <div className="staff-card" key={person.id}>
-                                <div className="staff-avatar-wrapper">
-                                    <div className="staff-avatar-ring">
-                                        <img
-                                            src={person.image}
-                                            alt={person.name}
-                                            className="staff-avatar"
-                                            onError={(e) => {
-                                                const target = e.currentTarget as HTMLImageElement;
-                                                target.style.display = 'none';
-                                                const fallback = target.nextElementSibling as HTMLElement;
-                                                if (fallback) fallback.style.display = 'flex';
-                                            }}
-                                        />
+                {!loading && !error && (
+                    <div className="staff-grid">
+                        {staffList.map((person) => {
+                            const colors = roleColorMap[person.role] ?? { badge: '#f3f4f6', accent: '#6b7280' };
+                            return (
+                                <div className="staff-card" key={person.id}>
+                                    <div className="staff-avatar-wrapper">
+                                        <div className="staff-avatar-ring">
+                                            <img
+                                                src={person.image || '/docterProfile/default.png'}
+                                                alt={person.name}
+                                                className="staff-avatar"
+                                                onError={(e) => {
+                                                    const target = e.currentTarget as HTMLImageElement;
+                                                    target.src = '/docterProfile/default.png';
+                                                }}
+                                            />
+                                        </div>
                                     </div>
+
+                                    <p className="staff-name">{person.name}</p>
+
+                                    <span
+                                        className="staff-role-badge"
+                                        style={{ background: colors.badge, color: colors.accent }}
+                                    >
+                                        {person.role}
+                                    </span>
+
+                                    <p className="staff-specialty">
+                                        {person.specialty}
+                                    </p>
                                 </div>
+                            );
+                        })}
+                    </div>
+                )}
 
-                                <p className="staff-name">{person.name}</p>
-
-                                <span
-                                    className="staff-role-badge"
-                                    style={{ background: colors.badge, color: colors.accent }}
-                                >
-                                    {person.role}
-                                </span>
-
-                                <p className="staff-specialty">
-                                    {person.specialty}
-                                </p>
-                            </div>
-                        );
-                    })}
-                </div>
+                {!loading && !error && staffList.length === 0 && (
+                    <div className="loading-container">
+                        ขณะนี้ยังไม่มีข้อมูลบุคลากรในระบบ
+                    </div>
+                )}
             </div>
         </>
     );

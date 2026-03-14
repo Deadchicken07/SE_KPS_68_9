@@ -24,6 +24,12 @@ export class AppointmentsController {
     return this.appointmentsService.getMySchedule(userId);
   }
 
+  @Get(':id')
+  getAppointment(@Req() req, @Param('id', ParseIntPipe) appointmentId: number) {
+    const userId = this.getUserIdFromRequest(req);
+    return this.appointmentsService.getAppointmentDetails(userId, appointmentId);
+  }
+
   @Patch(':id/reschedule')
   rescheduleAppointment(
     @Req() req,

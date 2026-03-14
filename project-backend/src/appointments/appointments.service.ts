@@ -163,6 +163,56 @@ export class AppointmentsService {
     };
   }
 
+  async getAppointmentDetails(userId: number, appointmentId: number) {
+    const appointment = await this.prisma.appointments.findUnique({
+      where: { id: appointmentId },
+      include: {
+        users_appointments_staff_idTousers: {
+          include: {
+            roles: true,
+          },
+        },
+      },
+    });
+
+    if (!appointment) {
+      throw new NotFoundException('Appointment not found');
+    }
+
+    if (appointment.user_id !== userId) {
+      throw new ForbiddenException('Appointment does not belong to this user');
+    }
+
+    const staff = appointment.users_appointments_staff_idTousers;
+    const role = staff?.roles;
+    let pricePerHour = 0;
+
+    if (role?.fee_id) {
+      const fee = await this.prisma.fees.findUnique({
+        where: { id: role.fee_id },
+      });
+      pricePerHour = fee?.price_per_hours ? Number(fee.price_per_hours) : 0;
+    }
+
+    const parsedRange = this.tryParseTimeRange(appointment.time_select);
+    let durationMinutes = 0;
+    if (parsedRange) {
+      durationMinutes = parsedRange.endMinutes - parsedRange.startMinutes;
+    }
+
+    const totalPrice = (durationMinutes / 60) * pricePerHour;
+
+    return {
+      id: appointment.id,
+      staffName: this.buildConsultantName(staff?.name, staff?.sur_name),
+      date: appointment.appointment_date ? this.dateToIsoDate(appointment.appointment_date) : null,
+      time: appointment.time_select,
+      duration: durationMinutes,
+      price: totalPrice,
+      status: appointment.status,
+    };
+  }
+
   async markAppointmentPaid(
     userId: number,
     appointmentId: number,

@@ -34,15 +34,48 @@ export class QuestionnairesService {
     });
   }
 
-  async findOne(id : number){
-    return this.prisma.questionnaires.findUnique({
-      where: {id}
+  async findOne(id : number , page = 1 , limit = 10){
+    const questionnaire = await this.prisma.questionnaires.findUnique({
+      where: {id},
+      include : {
+        questions : {
+          include : {
+            choices : {
+              orderBy : {
+                weight : 'asc'
+              }
+            }
+
+          },
+          orderBy : {
+            id : 'asc'
+          },
+          skip : (page - 1) * limit,
+          take : limit,
+        },
+        _count: {
+          select: {
+            questions : true 
+          }
+        }
+      }
     })
+
+    if (!questionnaire) throw new NotFoundException('Questionnaire not found')
+
+    return {
+      data : questionnaire,
+      meta : {
+        page,
+        limit,
+        total : questionnaire._count.questions
+      }
+    };
   }
 
   async update(id : number,data : UpdateQuestionnaireDto){
     const existing = await this.prisma.questionnaires.findUnique({
-      where: {id: id},
+      where: {id: id}
     });
 
     if (!existing){

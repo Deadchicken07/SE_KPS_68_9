@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import axios, { AxiosError } from 'axios';
 
-const API = "http://localhost:4000";
+const API = process.env.NEXT_PUBLIC_API_URL;
 
 interface Address {
   provinceId?: number;

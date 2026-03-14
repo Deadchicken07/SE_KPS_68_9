@@ -71,7 +71,6 @@ export class QuestionsService {
     const question = await this.prisma.questions.findUnique({
       where : { id: questionId}
     })  
-
     if (!question){
       throw new NotFoundException('Question not found');
     }else{

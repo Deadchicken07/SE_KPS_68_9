@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button, ConfigProvider, message, Spin } from 'antd';
 import locale from 'antd/locale/th_TH';
@@ -10,24 +10,75 @@ function PaymentContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    const staffName = searchParams.get('staffName') || '';
-    const date = searchParams.get('date') || '';
-    const time = searchParams.get('time') || '';
-    const duration = searchParams.get('duration') || '';
-    const price = searchParams.get('price') || '0';
-
     const [step, setStep] = useState<'payment' | 'success'>('payment');
     const [uploadedSlip, setUploadedSlip] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const [appointmentData, setAppointmentData] = useState<{
+        staffName: string;
+        date: string;
+        time: string;
+        duration: number;
+        price: number;
+    } | null>(null);
+    const [isLoadingData, setIsLoadingData] = useState(true);
+    const [fetchError, setFetchError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchAppointment = async () => {
+            const id = searchParams.get('id');
+            if (!id) {
+                setFetchError('ไม่พบรหัสการนัดหมาย');
+                setIsLoadingData(false);
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+                const res = await fetch(`${apiUrl}/appointments/${id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!res.ok) {
+                    throw new Error('ไม่สามารถโหลดข้อมูลการนัดหมายได้');
+                }
+
+                const data = await res.json();
+                setAppointmentData({
+                    staffName: data.staffName,
+                    date: data.date,
+                    time: data.time,
+                    duration: data.duration,
+                    price: data.price,
+                });
+            } catch (err: any) {
+                console.error('Fetch appointment error:', err);
+                setFetchError(err.message);
+            } finally {
+                setIsLoadingData(false);
+            }
+        };
+
+        fetchAppointment();
+    }, [searchParams]);
+
+    const staffName = appointmentData?.staffName || searchParams.get('staffName') || '';
+    const date = appointmentData?.date || searchParams.get('date') || '';
+    const time = appointmentData?.time || searchParams.get('time') || '';
+    const duration = appointmentData?.duration?.toString() || searchParams.get('duration') || '';
+    const price = appointmentData?.price?.toString() || searchParams.get('price') || '0';
+
     const handleConfirmPayment = async () => {
         if (!uploadedSlip) return alert('กรุณาแนบสลิปการโอนเงิน');
-        /*const appointmentId = searchParams.get('id');
-        
+        const appointmentId = searchParams.get('id');
+
         if (!appointmentId) {
             alert('ไม่พบข้อมูลรหัสการนัดหมาย');
             return;
-        }*/
+        }
 
         setIsSubmitting(true);
         try {
@@ -51,7 +102,7 @@ function PaymentContent() {
                 .getPublicUrl(filePath);
 
             // 3. Send URL to backend
-            /*const token = localStorage.getItem('token');
+            const token = localStorage.getItem('token');
             const response = await fetch(`http://localhost:4000/appointments/${appointmentId}/pay`, {
                 method: 'PATCH',
                 headers: {
@@ -63,9 +114,8 @@ function PaymentContent() {
 
             if (!response.ok) {
                 throw new Error('บันทึกข้อมูลการชำระเงินไม่สำเร็จ');
-            }*/
+            }
 
-            alert('Uploaded URL: ' + publicUrl);
             setStep('success');
         } catch (error: any) {
             console.error('Payment error:', error);
@@ -74,6 +124,24 @@ function PaymentContent() {
             setIsSubmitting(false);
         }
     };
+
+    if (isLoadingData) {
+        return (
+            <div className="appt-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <Spin tip="กำลังโหลดข้อมูลการนัดหมาย..." size="large" />
+            </div>
+        );
+    }
+
+    if (fetchError) {
+        return (
+            <div className="appt-page" style={{ textAlign: 'center', paddingTop: 100 }}>
+                <h2 style={{ color: '#ef4444' }}>เกิดข้อผิดพลาด</h2>
+                <p>{fetchError}</p>
+                <Button onClick={() => router.push('/user/appointments')}>กลับไปหน้าการนัดหมาย</Button>
+            </div>
+        );
+    }
 
     return (
         <div className="appt-page">
@@ -118,7 +186,11 @@ function PaymentContent() {
                             </div>
 
                             <div style={{ display: 'inline-block', marginBottom: 24 }}>
-                                <img src="/QRCode.jpg" alt="QR Code Payment" style={{ width: 300, height: 300, objectFit: 'contain', borderRadius: 8 }} />
+                                <img 
+                                    src={`https://promptpay.io/0928104747/${price}`} 
+                                    alt="QR Code Payment" 
+                                    style={{ width: 300, height: 300, objectFit: 'contain', borderRadius: 8 }} 
+                                />
                             </div>
 
                             <div style={{ textAlign: 'left', marginBottom: 32, background: '#fff', padding: 20, borderRadius: 12, border: '1px solid #e5e7eb', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>

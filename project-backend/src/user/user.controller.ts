@@ -15,11 +15,17 @@ export class UserController {
   findStaffs() {
     return this.userService.findStaffs();
   }
+  
+  @Get('staff/:id')
+  async findStaffById(@Param('id') id: string) {
+    return this.userService.findStaffById(+id);
+  }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.userService.findOne(+id);
   }
+  
   @Get('by-nation/:nationId')
   findByNation(
     @Param('nationId') nationId: string,
@@ -32,4 +38,5 @@ export class UserController {
   async checkEmail(@Body('email') email: string) {
     return this.userService.checkEmail(email);
   }
+  
 }

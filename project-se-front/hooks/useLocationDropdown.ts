@@ -19,7 +19,7 @@ export const useLocationDropdown = () => {
   );
   const [selectedZipCode, setSelectedZipCode] = useState<number | null>(null);
 
-  const API = "http://localhost:4000/location";
+  const API = process.env.NEXT_PUBLIC_API_URL;
 
   // โหลดจังหวัดครั้งเดียว
   useEffect(() => {
@@ -28,7 +28,7 @@ export const useLocationDropdown = () => {
 
   const fetchProvinces = async () => {
     try {
-      const res = await axios.get<LocationItem[]>(`${API}/provinces`);
+      const res = await axios.get<LocationItem[]>(`${API}/location/provinces`);
       setProvinces(res.data);
     } catch (error) {
       console.error("โหลดจังหวัดไม่สำเร็จ", error);
@@ -37,7 +37,7 @@ export const useLocationDropdown = () => {
 
   const fetchDistricts = async (provinceId: number) => {
     try {
-      const res = await axios.get<LocationItem[]>(`${API}/districts`, {
+      const res = await axios.get<LocationItem[]>(`${API}/location/districts`, {
         params: { provinceId },
       });
       setDistricts(res.data);
@@ -48,7 +48,7 @@ export const useLocationDropdown = () => {
 
   const fetchSubDistricts = async (districtId: number) => {
     try {
-      const res = await axios.get<LocationItem[]>(`${API}/sub-districts`, {
+      const res = await axios.get<LocationItem[]>(`${API}/location/sub-districts`, {
         params: { districtId },
       });
       setSubDistricts(res.data);
@@ -59,7 +59,7 @@ export const useLocationDropdown = () => {
 
   const fetchZipCodes = async (subDistrictId: number) => {
     try {
-      const res = await axios.get<LocationItem[]>(`${API}/zip-codes`, {
+      const res = await axios.get<LocationItem[]>(`${API}/location/zip-codes`, {
         params: { subDistrictId },
       });
       setZipCodes(res.data);
