@@ -21,6 +21,10 @@ export default function ClinicLayout() {
   const router = useRouter()
   const [isLogin, setIsLogin] = useState(false)
 
+  if (pathname.startsWith("/staff")) {
+    return null;
+  }
+
   const handleLogout = () => {
     router.push("/signin")
   }

@@ -1,6 +1,6 @@
-export interface NavLinks{
-    name : string;
-    href : string;
+export interface NavLinks {
+    name: string;
+    href: string;
 }
 
-export type Roles = "admin" | "psychologist" | "psychiatrist" | "medicine"
+export type Roles = "ADMIN" | "psychologist" | "psychiatrist" | "pharmacist"

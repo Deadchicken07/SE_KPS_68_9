@@ -13,6 +13,7 @@ if (role === "admin"){
     { name: "Dashboard", href: "/staff" },
     { name: "Users", href: "/staff/users" },
     { name: "Reports", href: "/staff/reports" },
+    { name: "Add Staff", href: "/staff/admin/add-staff" },
   ]
 }else{
     links = [
