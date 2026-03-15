@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function StaffPage() {
-  redirect("/home");
+  redirect("/staff/admin-home");
 }

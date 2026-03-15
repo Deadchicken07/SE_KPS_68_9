@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AppointmentsModule } from './appointments/appointments.module';
 import { UserModule } from './user/user.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
@@ -10,9 +11,22 @@ import { QuestionnairesModule } from './questionnaires/questionnaires.module';
 import { QuestionsModule } from './questions/questions.module';
 import { ChoicesModule } from './choices/choices.module';
 import { AnswersModule } from './answers/answers.module';
+import { StaffDashboardModule } from './staff-dashboard/staff-dashboard.module';
 
 @Module({
-  imports: [UserModule, PrismaModule, AuthModule, LocationModule, QuestionnairesModule,MailModule, QuestionsModule, ChoicesModule, AnswersModule],
+  imports: [
+    UserModule,
+    PrismaModule,
+    AuthModule,
+    LocationModule,
+    QuestionnairesModule,
+    MailModule,
+    QuestionsModule,
+    ChoicesModule,
+    AnswersModule,
+    AppointmentsModule,
+    StaffDashboardModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

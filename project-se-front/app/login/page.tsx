@@ -5,6 +5,42 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { notification, Form, Input, Button } from "antd";
 import { useLogin } from "@/hooks/useLogin";
 
+type LoginFormValues = {
+  email: string;
+  password: string;
+};
+
+type JwtPayload = {
+  role_id?: number;
+};
+
+function decodeJwtPayload(token: string): JwtPayload | null {
+  const segments = token.split(".");
+
+  if (segments.length < 2) {
+    return null;
+  }
+
+  try {
+    const normalized = segments[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(
+      normalized.length + ((4 - (normalized.length % 4)) % 4),
+      "=",
+    );
+    return JSON.parse(window.atob(padded)) as JwtPayload;
+  } catch {
+    return null;
+  }
+}
+
+function getRedirectPathForRole(roleId?: number): string {
+  if ([1, 3, 4, 5].includes(roleId ?? 0)) {
+    return "/staff/admin-home";
+  }
+
+  return "/user";
+}
+
 function LoginContent() {
   const [api, contextHolder] = notification.useNotification();
   const { login, loading, error } = useLogin();
@@ -26,10 +62,11 @@ function LoginContent() {
     }
   }, [registered, api, router]);
 
-  const handleFinish = async (values: any) => {
+  const handleFinish = async (values: LoginFormValues) => {
     try {
-      await login(values.email, values.password);
-      router.push("/user");
+      const token = await login(values.email, values.password);
+      const payload = decodeJwtPayload(token);
+      router.replace(getRedirectPathForRole(payload?.role_id));
     } catch {
       // managed by hook
     }

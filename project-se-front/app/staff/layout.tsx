@@ -9,7 +9,7 @@ export default function StaffLayout({
   return (
     <div style={{ display: "flex" }}>
       <SlideBar/>
-      <main>{children}</main>
+      <main style={{ flex: 1, minWidth: 0 }}>{children}</main>
     </div>
   )
 }
