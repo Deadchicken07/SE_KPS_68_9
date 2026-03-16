@@ -1,40 +1,83 @@
 "use client";
 
-import { useState } from "react";
-import { Layout, Dropdown, Modal } from "antd";
+import { useEffect, useState } from "react";
+import { Avatar, Dropdown, Layout, Modal, Space, Typography } from "antd";
+import axios from "axios";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { PhoneOutlined, HeartFilled } from "@ant-design/icons";
+import type { MenuProps } from "antd";
+import type { AuthMeResponse } from "@/types/auth.types";
 import { navigateToAppointmentsWithLoginGuard } from "@/utils/guardedNavigation";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 const { Header } = Layout;
+const API_URL = "http://localhost:4000";
 
 const links = [
-  { name: "หน้าเเรก", href: "/user" },
-  { name: "เเบบทดสอบ", href: "/user/exams" },
+  { name: "หน้าแรก", href: "/user" },
+  { name: "แบบทดสอบ", href: "/user/exams" },
   { name: "บริการของเรา", href: "/user/ourservices" },
   { name: "เกี่ยวกับเรา", href: "/user/ourstaff" },
   { name: "นัดหมายการปรึกษา", href: "/user/appointments" },
 ];
 
+const buildDisplayName = (me: AuthMeResponse | null) => {
+  const fullName = [me?.name, me?.sur_name].filter(Boolean).join(" ").trim();
+  return fullName || "Unknown user";
+};
+
+const buildAvatarLabel = (me: AuthMeResponse | null) => {
+  const fullName = buildDisplayName(me);
+  const parts = fullName.split(" ").filter(Boolean);
+
+  if (parts.length === 0 || fullName === "Unknown user") {
+    return "U";
+  }
+
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+};
+
 export default function ClinicLayout() {
   const pathname = usePathname();
   const router = useRouter();
   const [modalApi, modalContextHolder] = Modal.useModal();
-  const [isLogin, setIsLogin] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const { me, setMe } = useAuth();
 
-  const handleLogout = () => {
-    router.push("/signin");
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await axios.post(`${API_URL}/auth/logout`, {}, { withCredentials: true });
+    } catch {
+      // Redirect even if the session is already gone.
+    } finally {
+      localStorage.removeItem("access_token");
+      setMe(null);
+      router.push("/login");
+      router.refresh();
+    }
   };
 
-  const menuItems = [
+  const menuItems: MenuProps["items"] = [
     { key: "profile", label: <Link href="/profile">Profile</Link> },
-    { key: "logout", label: <span onClick={handleLogout}>Logout</span> },
+    { key: "logout", label: "Logout" },
   ];
+
+  const isLogin = mounted && !!me;
+  const displayName = buildDisplayName(me);
+  const avatarLabel = buildAvatarLabel(me);
 
   return (
     <Layout style={{ minHeight: "auto" }}>
       {modalContextHolder}
+
       <Header
         style={{
           backgroundColor: "#ffffff",
@@ -88,8 +131,58 @@ export default function ClinicLayout() {
 
             <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
               {isLogin ? (
-                <Dropdown menu={{ items: menuItems }}>
-                  <span style={{ cursor: "pointer" }}>Hello</span>
+                <Dropdown
+                  menu={{
+                    items: menuItems,
+                    onClick: ({ key }) => {
+                      if (key === "logout") {
+                        void handleLogout();
+                      }
+                    },
+                  }}
+                  trigger={["click"]}
+                  placement="bottomRight"
+                >
+                  <button
+                    type="button"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      padding: 0,
+                      border: "none",
+                      background: "transparent",
+                      color: "#173f35",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Avatar
+                      size={44}
+                      style={{
+                        backgroundColor: "#0f766e",
+                        color: "#ffffff",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {avatarLabel}
+                    </Avatar>
+
+                    <div style={{ minWidth: 0, textAlign: "left" }}>
+                      <Typography.Text
+                        strong
+                        style={{
+                          display: "block",
+                          maxWidth: 220,
+                          color: "#173f35",
+                        }}
+                        ellipsis
+                      >
+                        {displayName}
+                      </Typography.Text>
+                    </div>
+
+                    <Space style={{ color: "#0f766e", fontSize: 12 }}>▼</Space>
+                  </button>
                 </Dropdown>
               ) : (
                 <>

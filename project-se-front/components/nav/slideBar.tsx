@@ -1,32 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { AuthMeResponse } from "@/types/auth.types";
 import { mapRoleIdToRole, roleHome, roleLinks, type Roles } from "@/types/role.types";
-
-const API_URL = "http://localhost:4000";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 export default function SidebarNav() {
   const pathname = usePathname();
-  const [role, setRole] = useState<Roles | null>(null);
-
-  useEffect(() => {
-    const fetchMe = async () => {
-      try {
-        const response = await axios.get<AuthMeResponse>(`${API_URL}/auth/me`, {
-          withCredentials: true,
-        });
-        setRole(mapRoleIdToRole(response.data.role_id));
-      } catch {
-        setRole(null);
-      }
-    };
-
-    void fetchMe();
-  }, []);
+  const { me } = useAuth();
+  const role: Roles | null = useMemo(
+    () => mapRoleIdToRole(me?.role_id ?? null),
+    [me?.role_id],
+  );
 
   const links = role ? roleLinks[role] : [];
   const homePath = role ? roleHome[role] : "/login";
