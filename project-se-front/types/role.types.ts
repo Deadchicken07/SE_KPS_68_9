@@ -32,6 +32,7 @@ export const roleLinks: Record<Roles, NavLinks[]> = {
     { name: "Admin Report", href: "/staff/admin-report" },
     { name: "Patient History", href: "/staff/patient-history" },
     { name: "Pharmacist", href: "/staff/pharmacist" },
+    { name: "Medication Order", href: "/staff/pharmacist/order" },
     { name: "Delivery History", href: "/staff/pharmacist/delivery-history" },
   ],
   user: [{ name: "หน้าแรก", href: "/user" }],
@@ -39,6 +40,7 @@ export const roleLinks: Record<Roles, NavLinks[]> = {
   psychiatrist: [{ name: "Patient History", href: "/staff/patient-history" }],
   pharmacist: [
     { name: "Pharmacist", href: "/staff/pharmacist" },
+    { name: "Medication Order", href: "/staff/pharmacist/order" },
     { name: "Delivery History", href: "/staff/pharmacist/delivery-history" },
   ],
 };

@@ -3,12 +3,18 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, item_type_enum, receipt_status } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { CreateOrderDto } from './dto/create-order.dto';
 import { CreateMedicationDto } from './dto/create-medication.dto';
 import { DeliveryHistoryQueryDto } from './dto/delivery-history-query.dto';
 import { DeliveryHistoryResponseDto } from './dto/delivery-history-response.dto';
 import { MedicationResponseDto } from './dto/medication-response.dto';
+import {
+  OrderFormConsultationDto,
+  OrderFormResponseDto,
+} from './dto/order-form-response.dto';
+import { OrderResponseDto } from './dto/order-response.dto';
 import { PatientHistoryQueryDto } from './dto/patient-history-query.dto';
 import {
   PatientConsultationRecordDto,
@@ -87,6 +93,120 @@ export class PharmacistService {
     };
   }
 
+  async getOrderForm(): Promise<OrderFormResponseDto> {
+    await this.ensureReceiptsForConsultations();
+
+    const consultations = await this.prisma.consultations.findMany({
+        include: {
+          users_consultations_user_idTousers: {
+            select: {
+              user_id: true,
+              name: true,
+              sur_name: true,
+              phone: true,
+              medical_condition: true,
+              allergy_drug: true,
+              addresses: {
+                select: {
+                  detail: true,
+                  sub_districts: { select: { name: true } },
+                  districts: { select: { name: true } },
+                  provinces: { select: { name: true } },
+                  zip_codes: { select: { code: true } },
+                },
+              },
+            },
+          },
+          users_consultations_pharmacist_idTousers: {
+            select: {
+              user_id: true,
+              name: true,
+              sur_name: true,
+            },
+          },
+          prescription_items: {
+            orderBy: { id: 'asc' },
+            include: {
+              medications: {
+                select: {
+                  id: true,
+                  name: true,
+                  retail: true,
+                },
+              },
+            },
+          },
+          receipts: {
+            orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
+            select: {
+              id: true,
+              tracking: true,
+              status: true,
+            },
+          },
+        },
+        orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
+      });
+
+    return {
+      consultations: consultations
+        .filter((consultation) =>
+          this.isPendingReceipt(
+            consultation.receipts[0]?.tracking ?? null,
+            consultation.receipts[0]?.status ?? null,
+          ),
+        )
+        .map((consultation) => this.mapOrderFormConsultation(consultation)),
+    };
+  }
+
+  async createOrder(dto: CreateOrderDto): Promise<OrderResponseDto> {
+    await this.ensureReceiptForConsultation(dto.consultationId);
+
+    const existingReceipt = await this.prisma.receipts.findFirst({
+      where: { consultation_id: dto.consultationId },
+      orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
+      select: { id: true },
+    });
+
+    if (!existingReceipt) {
+      throw new NotFoundException('Receipt not found');
+    }
+
+    const updatedReceipt = await this.prisma.receipts.update({
+      where: { id: existingReceipt.id },
+      data: {
+        tracking: dto.tracking?.trim() || null,
+        status: this.resolveReceiptStatus(
+          dto.tracking?.trim() || null,
+          dto.status?.trim() || null,
+        ),
+      },
+      include: {
+        users: {
+          select: {
+            user_id: true,
+            name: true,
+            sur_name: true,
+          },
+        },
+        receipt_details: {
+          orderBy: { id: 'asc' },
+          include: {
+            medications: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return this.mapOrderReceipt(updatedReceipt);
+  }
+
   async findDeliveryHistory(
     query: DeliveryHistoryQueryDto,
   ): Promise<DeliveryHistoryResponseDto[]> {
@@ -95,12 +215,11 @@ export class PharmacistService {
 
     const receipts = await this.prisma.receipts.findMany({
       where: {
-        ...(status && status !== 'all' ? { status } : {}),
+        ...this.buildDeliveryHistoryStatusFilter(status),
         ...(search
           ? {
               OR: [
                 { tracking: { contains: search, mode: 'insensitive' } },
-                { status: { contains: search, mode: 'insensitive' } },
                 {
                   users: {
                     is: {
@@ -427,6 +546,50 @@ export class PharmacistService {
     return new Prisma.Decimal(parsed.toFixed(2));
   }
 
+  private parseRequiredDecimal(
+    value: number | string | null | undefined,
+    fieldName: string,
+  ) {
+    const parsed = this.parseDecimal(value, fieldName);
+
+    if (!parsed) {
+      throw new BadRequestException(`${fieldName} is required`);
+    }
+
+    return parsed;
+  }
+
+  private parsePositiveInteger(value: unknown, fieldName: string) {
+    const parsed = Number(value);
+
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+      throw new BadRequestException(`${fieldName} must be a positive integer`);
+    }
+
+    return parsed;
+  }
+
+  private parseItemType(value: string | null | undefined) {
+    const normalized = value?.trim().toLowerCase();
+
+    switch (normalized) {
+      case 'medicine':
+        return item_type_enum.medicine;
+      case 'service':
+        return item_type_enum.service;
+      case 'lab':
+        return item_type_enum.lab;
+      case 'fee':
+        return item_type_enum.fee;
+      case undefined:
+      case null:
+      case '':
+        return item_type_enum.medicine;
+      default:
+        throw new BadRequestException('itemType is invalid');
+    }
+  }
+
   private toNumber(value: Prisma.Decimal | number | null | undefined) {
     if (value === null || value === undefined) {
       return null;
@@ -438,6 +601,350 @@ export class PharmacistService {
   private buildFullName(firstName?: string | null, lastName?: string | null) {
     const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
     return fullName || '-';
+  }
+
+  private buildAddress(
+    address:
+      | {
+          detail?: string | null;
+          sub_districts?: { name?: string | null } | null;
+          districts?: { name?: string | null } | null;
+          provinces?: { name?: string | null } | null;
+          zip_codes?: { code?: string | null } | null;
+        }
+      | null
+      | undefined,
+  ) {
+    if (!address) {
+      return null;
+    }
+
+    const segments = [
+      address.detail,
+      address.sub_districts?.name,
+      address.districts?.name,
+      address.provinces?.name,
+      address.zip_codes?.code,
+    ]
+      .filter(Boolean)
+      .map((value) => value?.trim());
+
+    return segments.length > 0 ? segments.join(', ') : null;
+  }
+
+  private mapOrderFormConsultation(
+    consultation: Prisma.consultationsGetPayload<{
+      include: {
+        users_consultations_user_idTousers: {
+          select: {
+            user_id: true;
+            name: true;
+            sur_name: true;
+            phone: true;
+            medical_condition: true;
+            allergy_drug: true;
+            addresses: {
+              select: {
+                detail: true;
+                sub_districts: { select: { name: true } };
+                districts: { select: { name: true } };
+                provinces: { select: { name: true } };
+                zip_codes: { select: { code: true } };
+              };
+            };
+          };
+        };
+        users_consultations_pharmacist_idTousers: {
+          select: {
+            user_id: true;
+            name: true;
+            sur_name: true;
+          };
+        };
+        prescription_items: {
+          include: {
+            medications: {
+              select: {
+                id: true;
+                name: true;
+                retail: true;
+              };
+            };
+          };
+        };
+        receipts: {
+          select: {
+            id: true;
+            tracking: true;
+            status: true;
+          };
+        };
+      };
+    }>,
+  ): OrderFormConsultationDto {
+    const patient = consultation.users_consultations_user_idTousers;
+    const pharmacist = consultation.users_consultations_pharmacist_idTousers;
+
+    return {
+      consultationId: consultation.id,
+      patientId: patient?.user_id ?? consultation.user_id ?? null,
+      patientName: this.buildFullName(patient?.name, patient?.sur_name),
+      patientPhone: patient?.phone ?? null,
+      patientAddress: this.buildAddress(patient?.addresses),
+      medicalCondition: patient?.medical_condition ?? null,
+      allergyDrug: patient?.allergy_drug ?? null,
+      pharmacistId: pharmacist?.user_id ?? consultation.pharmacist_id ?? null,
+      pharmacistName: this.buildFullName(pharmacist?.name, pharmacist?.sur_name),
+      note: consultation.note ?? null,
+      createdAt: this.toIsoString(consultation.created_at),
+      latestReceiptStatus: consultation.receipts[0]?.status ?? null,
+      receiptCount: consultation.receipts.length,
+      suggestedItems: consultation.prescription_items
+        .filter((item) => item.medications?.id && item.medications?.name)
+        .map((item) => ({
+        medicationId: item.medications?.id ?? item.medication_id ?? null,
+        medicationName: item.medications?.name ?? '-',
+        quantity: item.quantity ?? 0,
+        unitPrice: this.toNumber(item.medications?.retail),
+        comment: item.comment ?? null,
+      })),
+    };
+  }
+
+  private async ensureReceiptsForConsultations() {
+    const consultations = await this.prisma.consultations.findMany({
+      where: {
+        prescription_items: {
+          some: {},
+        },
+      },
+      select: { id: true },
+    });
+
+    for (const consultation of consultations) {
+      await this.ensureReceiptForConsultation(consultation.id);
+    }
+  }
+
+  private async ensureReceiptForConsultation(consultationId: number) {
+    const existingReceipt = await this.prisma.receipts.findFirst({
+      where: { consultation_id: consultationId },
+      select: { id: true },
+    });
+
+    if (existingReceipt) {
+      return existingReceipt.id;
+    }
+
+    const consultation = await this.prisma.consultations.findUnique({
+      where: { id: consultationId },
+      include: {
+        users_consultations_user_idTousers: {
+          select: {
+            user_id: true,
+          },
+        },
+        prescription_items: {
+          orderBy: { id: 'asc' },
+          include: {
+            medications: {
+              select: {
+                id: true,
+                name: true,
+                retail: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!consultation) {
+      throw new NotFoundException('Consultation not found');
+    }
+
+    const prescriptionItems = consultation.prescription_items.filter(
+      (item) =>
+        item.medications?.id &&
+        item.medications?.name &&
+        item.medications?.retail !== null &&
+        item.quantity &&
+        item.quantity > 0,
+    );
+
+    if (prescriptionItems.length === 0) {
+      return null;
+    }
+
+    const normalizedItems = prescriptionItems.map((item, index) => {
+      const medication = item.medications;
+      const itemName = medication?.name?.trim() || '';
+      const quantity = this.parsePositiveInteger(
+        item.quantity,
+        `items[${index}].quantity`,
+      );
+      const unitPrice = this.parseRequiredDecimal(
+        this.toNumber(medication?.retail),
+        `items[${index}].unitPrice`,
+      );
+      const totalPrice = new Prisma.Decimal(unitPrice.mul(quantity).toFixed(2));
+
+      if (!itemName) {
+        throw new BadRequestException(`items[${index}].itemName is required`);
+      }
+
+      return {
+        medicationId: medication?.id ?? item.medication_id ?? null,
+        itemName,
+        itemType: 'medicine',
+        quantity,
+        unitPrice,
+        totalPrice,
+      };
+    });
+
+    const total = normalizedItems.reduce(
+      (sum, item) => sum.plus(item.totalPrice),
+      new Prisma.Decimal(0),
+    );
+
+    const receipt = await this.prisma.receipts.create({
+      data: {
+        consultation_id: consultation.id,
+        user_id:
+          consultation.users_consultations_user_idTousers?.user_id ??
+          consultation.user_id ??
+          null,
+        status: 'pending',
+        total,
+        receipt_details: {
+          create: normalizedItems.map((item) => ({
+            item_name: item.itemName,
+            item_type: this.parseItemType(item.itemType),
+            medicine_id: item.medicationId,
+            medicine_price: item.unitPrice,
+            quantity: item.quantity,
+            unit_price: item.unitPrice,
+            total_price: item.totalPrice,
+          })),
+        },
+      },
+      select: { id: true },
+    });
+
+    return receipt.id;
+  }
+
+  private mapOrderReceipt(
+    receipt: Prisma.receiptsGetPayload<{
+      include: {
+        users: {
+          select: {
+            user_id: true;
+            name: true;
+            sur_name: true;
+          };
+        };
+        receipt_details: {
+          include: {
+            medications: {
+              select: {
+                id: true;
+                name: true;
+              };
+            };
+          };
+        };
+      };
+    }>,
+  ): OrderResponseDto {
+    return {
+      receiptId: receipt.id,
+      consultationId: receipt.consultation_id ?? null,
+      patientId: receipt.users?.user_id ?? receipt.user_id ?? null,
+      patientName: this.buildFullName(receipt.users?.name, receipt.users?.sur_name),
+      tracking: receipt.tracking ?? null,
+      status: receipt.status ?? null,
+      total: this.toNumber(receipt.total),
+      createdAt: this.toIsoString(receipt.created_at),
+      items: receipt.receipt_details.map((item) => ({
+        receiptDetailId: item.id,
+        medicationId: item.medicine_id ?? null,
+        itemName: item.item_name ?? item.medications?.name ?? '-',
+        itemType: item.item_type ?? null,
+        quantity: item.quantity ?? 0,
+        unitPrice: this.toNumber(item.unit_price),
+        totalPrice: this.toNumber(item.total_price),
+      })),
+    };
+  }
+
+  private isPendingReceipt(
+    tracking: string | null | undefined,
+    status: string | null | undefined,
+  ) {
+    const normalizedStatus = status?.trim().toLowerCase() ?? null;
+
+    return (
+      !tracking &&
+      normalizedStatus !== 'picked_up' &&
+      normalizedStatus !== 'cancelled'
+    );
+  }
+
+  private resolveReceiptStatus(
+    tracking: string | null,
+    status: string | null,
+  ) {
+    if (tracking) {
+      return 'delivered';
+    }
+
+    const normalizedStatus = status?.trim().toLowerCase() ?? null;
+
+    if (normalizedStatus === 'picked_up') {
+      return 'picked_up';
+    }
+
+    if (normalizedStatus === 'cancelled') {
+      return 'cancelled';
+    }
+
+    return 'pending';
+  }
+
+  private buildDeliveryHistoryStatusFilter(status?: string | null) {
+    const normalizedStatus = status?.trim().toLowerCase() ?? 'all';
+
+    if (normalizedStatus === 'pending') {
+      return {
+        tracking: null,
+        NOT: {
+          status: {
+            in: [receipt_status.picked_up, receipt_status.cancelled],
+          },
+        },
+      };
+    }
+
+    if (normalizedStatus === 'delivered') {
+      return {
+        OR: [{ tracking: { not: null } }, { status: receipt_status.picked_up }],
+      };
+    }
+
+    if (normalizedStatus === 'cancelled') {
+      return {
+        status: receipt_status.cancelled,
+      };
+    }
+
+    return {
+      OR: [
+        { tracking: { not: null } },
+        { status: { in: [receipt_status.picked_up, receipt_status.cancelled] } },
+      ],
+    };
   }
 
   private toIsoString(value: Date | null | undefined) {

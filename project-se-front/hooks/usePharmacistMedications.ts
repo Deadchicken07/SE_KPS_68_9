@@ -12,7 +12,7 @@ export type MedicationFormValues = {
   price: number | null
 }
 
-const normalizeErrorMessage = (message: unknown) => {
+const normalizeErrorMessage = (message: unknown): string => {
   if (Array.isArray(message)) {
     return message
       .map((item) => normalizeErrorMessage(item))

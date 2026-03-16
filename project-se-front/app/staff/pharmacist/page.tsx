@@ -139,6 +139,7 @@ export default function PharmacistMedicationPage() {
       key: "actions",
       width: 150,
       fixed: "right",
+      align: "center",
       render: (_, record) => (
         <Space wrap>
           <Button type="primary" ghost onClick={() => handleOpenEdit(record)}>
