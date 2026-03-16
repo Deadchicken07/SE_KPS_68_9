@@ -66,7 +66,7 @@ export default function ClinicLayout() {
   };
 
   const menuItems: MenuProps["items"] = [
-    { key: "profile", label: <Link href="/profile">Profile</Link> },
+  
     { key: "logout", label: "Logout" },
   ];
 
