@@ -815,7 +815,7 @@ export class PharmacistService {
           consultation.users_consultations_user_idTousers?.user_id ??
           consultation.user_id ??
           null,
-        status: 'pending',
+        status: receipt_status.pending_delivery,
         total,
         receipt_details: {
           create: normalizedItems.map((item) => ({
@@ -887,6 +887,7 @@ export class PharmacistService {
 
     return (
       !tracking &&
+      normalizedStatus !== 'delivered' &&
       normalizedStatus !== 'picked_up' &&
       normalizedStatus !== 'cancelled'
     );
@@ -897,39 +898,54 @@ export class PharmacistService {
     status: string | null,
   ) {
     if (tracking) {
-      return 'delivered';
+      return receipt_status.delivered;
     }
 
     const normalizedStatus = status?.trim().toLowerCase() ?? null;
 
+    if (normalizedStatus === 'pending_pickup') {
+      return receipt_status.pending_pickup;
+    }
+
     if (normalizedStatus === 'picked_up') {
-      return 'picked_up';
+      return receipt_status.picked_up;
     }
 
     if (normalizedStatus === 'cancelled') {
-      return 'cancelled';
+      return receipt_status.cancelled;
     }
 
-    return 'pending';
+    if (normalizedStatus === 'delivered') {
+      return receipt_status.delivered;
+    }
+
+    return receipt_status.pending_delivery;
   }
 
   private buildDeliveryHistoryStatusFilter(status?: string | null) {
     const normalizedStatus = status?.trim().toLowerCase() ?? 'all';
 
-    if (normalizedStatus === 'pending') {
+    if (normalizedStatus === 'pending_delivery') {
       return {
-        tracking: null,
-        NOT: {
-          status: {
-            in: [receipt_status.picked_up, receipt_status.cancelled],
-          },
-        },
+        status: receipt_status.pending_delivery,
+      };
+    }
+
+    if (normalizedStatus === 'pending_pickup') {
+      return {
+        status: receipt_status.pending_pickup,
       };
     }
 
     if (normalizedStatus === 'delivered') {
       return {
-        OR: [{ tracking: { not: null } }, { status: receipt_status.picked_up }],
+        status: receipt_status.delivered,
+      };
+    }
+
+    if (normalizedStatus === 'picked_up') {
+      return {
+        status: receipt_status.picked_up,
       };
     }
 
@@ -940,10 +956,13 @@ export class PharmacistService {
     }
 
     return {
-      OR: [
-        { tracking: { not: null } },
-        { status: { in: [receipt_status.picked_up, receipt_status.cancelled] } },
-      ],
+      status: {
+        in: [
+          receipt_status.delivered,
+          receipt_status.picked_up,
+          receipt_status.cancelled,
+        ],
+      },
     };
   }
 

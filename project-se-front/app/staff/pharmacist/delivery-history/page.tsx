@@ -106,7 +106,7 @@ export default function PharmacistDeliveryHistoryPage() {
             onChange={(value) => setDeliveryStatus(value)}
             style={{ width: 180 }}
             options={[
-              { label: "ทุกสถานะ", value: "all" },
+              { label: "all", value: "all" },
               ...receiptStatusSelectOptions,
             ]}
           />

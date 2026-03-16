@@ -270,8 +270,9 @@ enum questionnaires_type_enum {
 }
 
 enum receipt_status {
-  pending
+  pending_delivery
   delivered
+  pending_pickup
   picked_up
   cancelled
 }

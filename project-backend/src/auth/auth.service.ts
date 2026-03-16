@@ -10,6 +10,10 @@ import { CreateDoctorDto, RegisterDto } from './dto/register.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { Prisma } from '@prisma/client';
 import { MailService } from '../mail/mail.service';
+import {
+  normalizeEmail,
+  normalizeOptionalText,
+} from '../common/utils/normalize-input';
 
 @Injectable()
 export class AuthService {
@@ -20,8 +24,10 @@ export class AuthService {
   ) {}
 
   async login(email: string, password: string) {
+    const normalizedEmail = normalizeEmail(email);
+
     const user = await this.prisma.users.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
     });
 
     if (!user) {
@@ -79,12 +85,22 @@ export class AuthService {
   async register(body: RegisterDto) {
     try {
       const hashedPassword = await bcrypt.hash(body.password, 10);
+      const normalizedEmail = normalizeEmail(body.email);
+      const normalizedName = body.name.trim();
+      const normalizedSurName = body.surName.trim();
+      const normalizedTitle = normalizeOptionalText(body.title);
+      const normalizedPhone = normalizeOptionalText(body.phone);
+      const normalizedNationId = normalizeOptionalText(body.nationId);
+      const normalizedMedicalCondition = normalizeOptionalText(
+        body.medicalCondition,
+      );
+      const normalizedAllergyDrug = normalizeOptionalText(body.allergyDrug);
 
       const result = await this.prisma.$transaction(
         async (prisma) => {
-          const existingUser = body.nationId
+          const existingUser = normalizedNationId
             ? await prisma.users.findUnique({
-                where: { nation_id: body.nationId },
+                where: { nation_id: normalizedNationId },
               })
             : null;
 
@@ -126,13 +142,13 @@ export class AuthService {
             return prisma.users.update({
               where: { user_id: existingUser.user_id },
               data: {
-                email: body.email,
-                name: body.name,
-                sur_name: body.surName,
-                title: body.title ?? null,
-                phone: body.phone ?? null,
-                medical_condition: body.medicalCondition ?? null,
-                allergy_drug: body.allergyDrug ?? null,
+                email: normalizedEmail,
+                name: normalizedName,
+                sur_name: normalizedSurName,
+                title: normalizedTitle,
+                phone: normalizedPhone,
+                medical_condition: normalizedMedicalCondition,
+                allergy_drug: normalizedAllergyDrug,
                 address_id: address.id,
                 address_id_nation: addressNationId,
                 password_hash: hashedPassword,
@@ -142,14 +158,14 @@ export class AuthService {
 
           return prisma.users.create({
             data: {
-              email: body.email,
-              name: body.name,
-              sur_name: body.surName,
-              title: body.title ?? null,
-              phone: body.phone ?? null,
-              nation_id: body.nationId ?? null,
-              medical_condition: body.medicalCondition ?? null,
-              allergy_drug: body.allergyDrug ?? null,
+              email: normalizedEmail,
+              name: normalizedName,
+              sur_name: normalizedSurName,
+              title: normalizedTitle,
+              phone: normalizedPhone,
+              nation_id: normalizedNationId,
+              medical_condition: normalizedMedicalCondition,
+              allergy_drug: normalizedAllergyDrug,
               address_id: address.id,
               address_id_nation: addressNationId,
               role_id: 2,
@@ -193,14 +209,14 @@ export class AuthService {
 
     await this.prisma.users.create({
       data: {
-        email: body.email,
-        name: body.name,
-        sur_name: body.surName,
-        degree: body.degree,
-        license: body.license,
-        info: body.info ?? null,
-        file_name: body.fileName ?? null,
-        status: body.status ?? 'ACTIVE',
+        email: normalizeEmail(body.email),
+        name: body.name.trim(),
+        sur_name: body.surName.trim(),
+        degree: body.degree.trim(),
+        license: body.license.trim(),
+        info: normalizeOptionalText(body.info),
+        file_name: normalizeOptionalText(body.fileName),
+        status: normalizeOptionalText(body.status) ?? 'ACTIVE',
         role_id: 2,
         created_by: adminId,
         password_hash: hashedPassword,
@@ -242,7 +258,7 @@ export class AuthService {
   }
 
   async resetPasswordByOtp(email: string, newPassword: string) {
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = normalizeEmail(email);
     this.mailService.consumeVerifiedEmail(normalizedEmail);
 
     const user = await this.prisma.users.findUnique({
