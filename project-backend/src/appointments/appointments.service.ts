@@ -205,7 +205,9 @@ export class AppointmentsService {
     return {
       id: appointment.id,
       staffName: this.buildConsultantName(staff?.name, staff?.sur_name),
-      date: appointment.appointment_date ? this.dateToIsoDate(appointment.appointment_date) : null,
+      date: appointment.appointment_date
+        ? this.dateToIsoDate(appointment.appointment_date)
+        : null,
       time: appointment.time_select,
       duration: durationMinutes,
       price: totalPrice,
