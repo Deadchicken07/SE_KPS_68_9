@@ -10,13 +10,13 @@ import {
   Empty,
   Form,
   Input,
+  Popconfirm,
   Row,
+  Select,
   Table,
   Tag,
   Typography,
   message,
-  Popconfirm,
-  Select,
 } from "antd";
 import { usePharmacistOrders } from "@/hooks/usePharmacistOrders";
 import {
@@ -50,6 +50,9 @@ const formatDateTime = (value: string | null) =>
 const buildDisplayName = (
   me: { name?: string | null; sur_name?: string | null } | null,
 ) => {
+const buildDisplayName = (
+  me: { name?: string | null; sur_name?: string | null } | null,
+) => {
   const fullName = [me?.name, me?.sur_name].filter(Boolean).join(" ").trim();
   return fullName || "-";
 };
@@ -60,9 +63,7 @@ const renderStatusTag = (status: string | null) => {
   }
 
   const typedStatus = status as ReceiptStatus;
-  const color = receiptStatusColorMap[typedStatus] ?? "default";
-
-  return <Tag color={color}>{status}</Tag>;
+  return <Tag color={receiptStatusColorMap[typedStatus] ?? "default"}>{status}</Tag>;
 };
 
 export default function PharmacistOrderPage() {
@@ -70,18 +71,16 @@ export default function PharmacistOrderPage() {
   const [form] = Form.useForm<OrderFormValues>();
   const [selectedConsultationId, setSelectedConsultationId] = useState<number | null>(null);
   const { me } = useAuth();
+  const { me } = useAuth();
   const { consultations, loading, saving, consultationOptions, createOrder } =
     usePharmacistOrders();
 
-  const displayConsultations = consultations;
-  const displayConsultationOptions = consultationOptions;
-
   const selectedConsultation = useMemo(
     () =>
-      displayConsultations.find(
+      consultations.find(
         (consultation) => consultation.consultationId === selectedConsultationId,
       ) ?? null,
-    [displayConsultations, selectedConsultationId],
+    [consultations, selectedConsultationId],
   );
 
   const currentStatus = (selectedConsultation?.latestReceiptStatus ??
@@ -107,18 +106,18 @@ export default function PharmacistOrderPage() {
 
     const nextConsultationId =
       selectedConsultationId &&
-      displayConsultations.some(
+      consultations.some(
         (consultation) => consultation.consultationId === selectedConsultationId,
       )
         ? selectedConsultationId
-        : displayConsultations[0].consultationId;
+        : consultations[0].consultationId;
 
     setSelectedConsultationId(nextConsultationId);
     form.setFieldsValue({
       consultationId: nextConsultationId,
       tracking: "",
     });
-  }, [displayConsultations, form, selectedConsultationId]);
+  }, [consultations, form, selectedConsultationId]);
 
   const handleConsultationChange = (consultationId: number) => {
     setSelectedConsultationId(consultationId);
@@ -164,15 +163,10 @@ export default function PharmacistOrderPage() {
           STAFF / PHARMACIST / DELIVERY
         </Typography.Text>
         <Typography.Title level={2} style={{ marginTop: 8, marginBottom: 8 }}>
-          รายการที่ยังต้องจัดส่งยา
+          รายการที่ยังต้องจัดการส่งยา
         </Typography.Title>
       </section>
 
-      {displayConsultations.length === 0 ? (
-        <Card className="staff-content-card" variant="borderless">
-          <Empty description="ไม่มีรายการที่ต้องจัดการในตอนนี้" />
-        </Card>
-      ) : (
       <Row gutter={[16, 16]} align="stretch">
         <Col xs={24} xl={8}>
           <Card className="staff-content-card" variant="borderless" loading={loading}>
@@ -185,23 +179,19 @@ export default function PharmacistOrderPage() {
                 <Select
                   showSearch
                   placeholder="เลือก consultation"
-                  options={displayConsultationOptions}
+                  options={consultationOptions}
                   onChange={handleConsultationChange}
                   optionFilterProp="label"
-                  disabled={displayConsultations.length === 0}
+                  disabled={consultations.length === 0}
                 />
               </Form.Item>
 
               {isPendingDelivery ? (
-                <Form.Item
-                  name="tracking"
-                  label="Tracking"
-                
-                >
+                <Form.Item name="tracking" label="Tracking">
                   <Input
                     placeholder="เช่น TH1234567890"
                     className="input"
-                    disabled={displayConsultations.length === 0}
+                    disabled={consultations.length === 0}
                   />
                 </Form.Item>
               ) : null}
@@ -216,7 +206,6 @@ export default function PharmacistOrderPage() {
                     label: "รูปแบบงาน",
                     children: isPendingPickup ? "รับยาที่คลินิก" : "จัดส่งออนไลน์",
                   },
-                 
                 ]}
               />
 
@@ -228,7 +217,7 @@ export default function PharmacistOrderPage() {
                     type="primary"
                     block
                     loading={saving}
-                    disabled={displayConsultations.length === 0}
+                    disabled={consultations.length === 0}
                     onClick={() => void handleSubmit("delivered")}
                   >
                     บันทึกการส่ง
@@ -240,7 +229,7 @@ export default function PharmacistOrderPage() {
                     type="primary"
                     block
                     loading={saving}
-                    disabled={displayConsultations.length === 0}
+                    disabled={consultations.length === 0}
                     onClick={() => void handleSubmit("picked_up")}
                   >
                     ยืนยันรับยาแล้ว
@@ -255,7 +244,7 @@ export default function PharmacistOrderPage() {
                   onConfirm={() => void handleSubmit("cancelled")}
                   disabled={!selectedConsultation}
                 >
-                  <Button  block disabled={displayConsultations.length === 0}>
+                  <Button block disabled={consultations.length === 0}>
                     ยกเลิกรายการ
                   </Button>
                 </Popconfirm>
@@ -266,7 +255,9 @@ export default function PharmacistOrderPage() {
 
         <Col xs={24} xl={16}>
           <Card className="staff-content-card" variant="borderless" loading={loading}>
-            {selectedConsultation ? (
+            {consultations.length === 0 ? (
+              <Empty description="ไม่มีรายการที่ต้องจัดการในตอนนี้" />
+            ) : selectedConsultation ? (
               <>
                 <Descriptions
                   title="ข้อมูลเคส"
@@ -392,7 +383,6 @@ export default function PharmacistOrderPage() {
           </Card>
         </Col>
       </Row>
-      )}
     </main>
   );
 }

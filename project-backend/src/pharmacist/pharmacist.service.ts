@@ -97,56 +97,56 @@ export class PharmacistService {
     await this.ensureReceiptsForConsultations();
 
     const consultations = await this.prisma.consultations.findMany({
-        include: {
-          users_consultations_user_idTousers: {
-            select: {
-              user_id: true,
-              name: true,
-              sur_name: true,
-              phone: true,
-              medical_condition: true,
-              allergy_drug: true,
-              addresses: {
-                select: {
-                  detail: true,
-                  sub_districts: { select: { name: true } },
-                  districts: { select: { name: true } },
-                  provinces: { select: { name: true } },
-                  zip_codes: { select: { code: true } },
-                },
+      include: {
+        users_consultations_user_idTousers: {
+          select: {
+            user_id: true,
+            name: true,
+            sur_name: true,
+            phone: true,
+            medical_condition: true,
+            allergy_drug: true,
+            addresses: {
+              select: {
+                detail: true,
+                sub_districts: { select: { name: true } },
+                districts: { select: { name: true } },
+                provinces: { select: { name: true } },
+                zip_codes: { select: { code: true } },
               },
-            },
-          },
-          users_consultations_pharmacist_idTousers: {
-            select: {
-              user_id: true,
-              name: true,
-              sur_name: true,
-            },
-          },
-          prescription_items: {
-            orderBy: { id: 'asc' },
-            include: {
-              medications: {
-                select: {
-                  id: true,
-                  name: true,
-                  retail: true,
-                },
-              },
-            },
-          },
-          receipts: {
-            orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
-            select: {
-              id: true,
-              tracking: true,
-              status: true,
             },
           },
         },
-        orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
-      });
+        users_consultations_pharmacist_idTousers: {
+          select: {
+            user_id: true,
+            name: true,
+            sur_name: true,
+          },
+        },
+        prescription_items: {
+          orderBy: { id: 'asc' },
+          include: {
+            medications: {
+              select: {
+                id: true,
+                name: true,
+                retail: true,
+              },
+            },
+          },
+        },
+        receipts: {
+          orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
+          select: {
+            id: true,
+            tracking: true,
+            status: true,
+          },
+        },
+      },
+      orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
+    });
 
     return {
       consultations: consultations
@@ -694,7 +694,10 @@ export class PharmacistService {
       medicalCondition: patient?.medical_condition ?? null,
       allergyDrug: patient?.allergy_drug ?? null,
       pharmacistId: pharmacist?.user_id ?? consultation.pharmacist_id ?? null,
-      pharmacistName: this.buildFullName(pharmacist?.name, pharmacist?.sur_name),
+      pharmacistName: this.buildFullName(
+        pharmacist?.name,
+        pharmacist?.sur_name,
+      ),
       note: consultation.note ?? null,
       createdAt: this.toIsoString(consultation.created_at),
       latestReceiptStatus: consultation.receipts[0]?.status ?? null,
@@ -702,12 +705,12 @@ export class PharmacistService {
       suggestedItems: consultation.prescription_items
         .filter((item) => item.medications?.id && item.medications?.name)
         .map((item) => ({
-        medicationId: item.medications?.id ?? item.medication_id ?? null,
-        medicationName: item.medications?.name ?? '-',
-        quantity: item.quantity ?? 0,
-        unitPrice: this.toNumber(item.medications?.retail),
-        comment: item.comment ?? null,
-      })),
+          medicationId: item.medications?.id ?? item.medication_id ?? null,
+          medicationName: item.medications?.name ?? '-',
+          quantity: item.quantity ?? 0,
+          unitPrice: this.toNumber(item.medications?.retail),
+          comment: item.comment ?? null,
+        })),
     };
   }
 
@@ -862,7 +865,10 @@ export class PharmacistService {
       receiptId: receipt.id,
       consultationId: receipt.consultation_id ?? null,
       patientId: receipt.users?.user_id ?? receipt.user_id ?? null,
-      patientName: this.buildFullName(receipt.users?.name, receipt.users?.sur_name),
+      patientName: this.buildFullName(
+        receipt.users?.name,
+        receipt.users?.sur_name,
+      ),
       tracking: receipt.tracking ?? null,
       status: receipt.status ?? null,
       total: this.toNumber(receipt.total),
@@ -893,10 +899,7 @@ export class PharmacistService {
     );
   }
 
-  private resolveReceiptStatus(
-    tracking: string | null,
-    status: string | null,
-  ) {
+  private resolveReceiptStatus(tracking: string | null, status: string | null) {
     if (tracking) {
       return receipt_status.delivered;
     }
