@@ -54,7 +54,7 @@ export default function LoginPage() {
   useEffect(() => {
     if (registered === "success") {
       api.success({
-        message: "สมัครสมาชิกสำเร็จ",
+        title: "สมัครสมาชิกสำเร็จ",
         description: "กรุณาเข้าสู่ระบบ",
         duration: 4,
       });
