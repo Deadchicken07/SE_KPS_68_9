@@ -317,8 +317,10 @@ function parseTimeRange(item: AppointmentItem): ParsedTimeRange | null {
     return null;
   }
 
-  const matchStart = startText.match(/^(\d{2}):(\d{2})$/);
-  const matchEnd = endText.match(/^(\d{2}):(\d{2})$/);
+  const normalizedStart = startText.replace(/\./g, ":").trim();
+  const normalizedEnd = endText.replace(/\./g, ":").trim();
+  const matchStart = normalizedStart.match(/^(\d{1,2}):(\d{2})$/);
+  const matchEnd = normalizedEnd.match(/^(\d{1,2}):(\d{2})$/);
 
   if (!matchStart || !matchEnd) {
     return null;
@@ -327,14 +329,22 @@ function parseTimeRange(item: AppointmentItem): ParsedTimeRange | null {
   const startMinutes = Number(matchStart[1]) * 60 + Number(matchStart[2]);
   const endMinutes = Number(matchEnd[1]) * 60 + Number(matchEnd[2]);
 
-  if (endMinutes <= startMinutes) {
+  if (
+    Number(matchStart[1]) > 23 ||
+    Number(matchEnd[1]) > 23 ||
+    Number(matchStart[2]) > 59 ||
+    Number(matchEnd[2]) > 59 ||
+    endMinutes <= startMinutes
+  ) {
     return null;
   }
 
   return {
     startMinutes,
     endMinutes,
-    label: `${startText} - ${endText}`,
+    label: `${String(Number(matchStart[1])).padStart(2, "0")}:${matchStart[2]} - ${String(
+      Number(matchEnd[1]),
+    ).padStart(2, "0")}:${matchEnd[2]}`,
   };
 }
 
@@ -744,7 +754,6 @@ export default function StaffAdminHomePage() {
             <article key={card.label} className={cx(PANEL_CLASS, "p-5")}>
               <span className="mb-2 block text-[0.78rem] font-bold text-[#68756c]">{card.label}</span>
               <strong className="block text-[1.95rem] leading-none">{card.value}</strong>
-              <small className="mt-2.5 block leading-6 text-[#6d776f]">{card.note}</small>
             </article>
           ))}
         </section>

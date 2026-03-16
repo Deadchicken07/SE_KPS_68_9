@@ -12,6 +12,7 @@ import { QuestionsModule } from './questions/questions.module';
 import { ChoicesModule } from './choices/choices.module';
 import { AnswersModule } from './answers/answers.module';
 import { StaffDashboardModule } from './staff-dashboard/staff-dashboard.module';
+import { PhamaHomeModule } from './phama-home/phama-home.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { StaffDashboardModule } from './staff-dashboard/staff-dashboard.module';
     AnswersModule,
     AppointmentsModule,
     StaffDashboardModule,
+    PhamaHomeModule,
   ],
   controllers: [AppController],
   providers: [AppService],

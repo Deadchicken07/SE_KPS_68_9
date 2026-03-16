@@ -8,6 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { StaffDashboardQueryDto } from './dto/staff-dashboard-query.dto';
 
 type DashboardStatus = 'pending' | 'confirmed' | 'completed';
+const CLINIC_TIME_ZONE = 'Asia/Bangkok';
 
 type TimeRange = {
   startMinutes: number;
@@ -388,7 +389,7 @@ export class StaffDashboardService {
     const trimmed = value?.trim();
 
     if (!trimmed) {
-      return this.toMonthKey(new Date());
+      return this.getClinicNowParts(new Date()).monthKey;
     }
 
     if (!/^\d{4}-\d{2}$/.test(trimmed)) {
@@ -423,7 +424,7 @@ export class StaffDashboardService {
       return trimmed;
     }
 
-    const today = this.toLocalDateKey(new Date());
+    const today = this.getClinicNowParts(new Date()).dateKey;
 
     if (today.startsWith(`${month}-`) && dayKeys.includes(today)) {
       return today;
@@ -674,18 +675,41 @@ export class StaffDashboardService {
       return null;
     }
 
-    const match = value
+    const normalized = value
       .trim()
-      .match(/^([01]\d|2[0-3]):([0-5]\d)\s*-\s*([01]\d|2[0-3]):([0-5]\d)$/);
+      .replace(/(?:–|—|−|~|ถึง)/g, '-')
+      .replace(/\./g, ':')
+      .replace(/\s+/g, ' ');
+    const match = normalized.match(
+      /^(\d{1,2})\s*:\s*([0-5]\d)\s*-\s*(\d{1,2})\s*:\s*([0-5]\d)$/,
+    );
 
     if (!match) {
       return null;
     }
 
-    const startText = `${match[1]}:${match[2]}`;
-    const endText = `${match[3]}:${match[4]}`;
-    const startMinutes = Number(match[1]) * 60 + Number(match[2]);
-    const endMinutes = Number(match[3]) * 60 + Number(match[4]);
+    const startHour = Number(match[1]);
+    const startMinute = Number(match[2]);
+    const endHour = Number(match[3]);
+    const endMinute = Number(match[4]);
+
+    if (
+      startHour > 23 ||
+      endHour > 23 ||
+      startMinute > 59 ||
+      endMinute > 59
+    ) {
+      return null;
+    }
+
+    const startText = `${String(startHour).padStart(2, '0')}:${String(
+      startMinute,
+    ).padStart(2, '0')}`;
+    const endText = `${String(endHour).padStart(2, '0')}:${String(
+      endMinute,
+    ).padStart(2, '0')}`;
+    const startMinutes = startHour * 60 + startMinute;
+    const endMinutes = endHour * 60 + endMinute;
 
     if (endMinutes <= startMinutes) {
       return null;
@@ -707,8 +731,8 @@ export class StaffDashboardService {
       return false;
     }
 
-    const now = new Date();
-    const today = this.toLocalDateKey(now);
+    const clinicNow = this.getClinicNowParts(new Date());
+    const today = clinicNow.dateKey;
 
     if (appointmentDate < today) {
       return true;
@@ -722,8 +746,7 @@ export class StaffDashboardService {
       return false;
     }
 
-    const nowMinutes = now.getHours() * 60 + now.getMinutes();
-    return timeRange.endMinutes <= nowMinutes;
+    return timeRange.endMinutes <= clinicNow.minutes;
   }
 
   private getSortValue(item: {
@@ -758,11 +781,36 @@ export class StaffDashboardService {
     ].join('-');
   }
 
-  private toLocalDateKey(value: Date): string {
-    return [
-      value.getFullYear(),
-      String(value.getMonth() + 1).padStart(2, '0'),
-      String(value.getDate()).padStart(2, '0'),
-    ].join('-');
+  private getClinicNowParts(value: Date): {
+    dateKey: string;
+    monthKey: string;
+    minutes: number;
+  } {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: CLINIC_TIME_ZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    });
+    const parts = formatter.formatToParts(value);
+    const partMap = Object.fromEntries(
+      parts
+        .filter((part) => part.type !== 'literal')
+        .map((part) => [part.type, part.value]),
+    ) as Record<string, string>;
+    const year = partMap.year;
+    const month = partMap.month;
+    const day = partMap.day;
+    const hour = Number(partMap.hour ?? '0');
+    const minute = Number(partMap.minute ?? '0');
+
+    return {
+      dateKey: `${year}-${month}-${day}`,
+      monthKey: `${year}-${month}`,
+      minutes: hour * 60 + minute,
+    };
   }
 }

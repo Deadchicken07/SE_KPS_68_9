@@ -34,7 +34,11 @@ function decodeJwtPayload(token: string): JwtPayload | null {
 }
 
 function getRedirectPathForRole(roleId?: number): string {
-  if ([1, 3, 4, 5].includes(roleId ?? 0)) {
+  if (roleId === 5) {
+    return "/staff/pharmacist_home";
+  }
+
+  if ([1, 3, 4].includes(roleId ?? 0)) {
     return "/staff/admin-home";
   }
 
