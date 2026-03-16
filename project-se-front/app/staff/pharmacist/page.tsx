@@ -142,10 +142,10 @@ export default function PharmacistMedicationPage() {
       align: "center",
       render: (_, record) => (
         <Space wrap>
-          <Button type="primary" ghost onClick={() => handleOpenEdit(record)}>
+          <Button type="primary" ghost  onClick={() => handleOpenEdit(record)}>
             แก้ไข
           </Button>
-          <Button danger onClick={() => handleDeleteMedication(record.id)}>
+          <Button  danger  onClick={() => handleDeleteMedication(record.id)}>
             ลบ
           </Button>
         </Space>
