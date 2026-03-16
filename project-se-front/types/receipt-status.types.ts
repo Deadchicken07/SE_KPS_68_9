@@ -9,9 +9,9 @@ export const receiptStatusOptions = [
 export type ReceiptStatus = (typeof receiptStatusOptions)[number];
 
 export const receiptStatusSelectOptions = [
-  { label: "pending_delivery", value: "pending_delivery" },
+  // { label: "pending_delivery", value: "pending_delivery" },
   { label: "delivered", value: "delivered" },
-  { label: "pending_pickup", value: "pending_pickup" },
+  // { label: "pending_pickup", value: "pending_pickup" },
   { label: "picked_up", value: "picked_up" },
   { label: "cancelled", value: "cancelled" },
 ] as const;
