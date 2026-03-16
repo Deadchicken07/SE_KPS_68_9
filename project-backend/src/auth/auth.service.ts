@@ -151,6 +151,7 @@ export class AuthService {
                 allergy_drug: normalizedAllergyDrug,
                 address_id: address.id,
                 address_id_nation: addressNationId,
+                role_id: 2,
                 password_hash: hashedPassword,
               },
             });
