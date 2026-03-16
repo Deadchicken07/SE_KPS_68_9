@@ -18,12 +18,12 @@ import {
   Typography,
   message,
 } from "antd";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { usePharmacistOrders } from "@/hooks/usePharmacistOrders";
 import {
   receiptStatusColorMap,
   type ReceiptStatus,
 } from "@/types/receipt-status.types";
-import { useAuth } from "@/components/providers/AuthProvider";
 
 type OrderFormValues = {
   consultationId?: number;
@@ -50,9 +50,6 @@ const formatDateTime = (value: string | null) =>
 const buildDisplayName = (
   me: { name?: string | null; sur_name?: string | null } | null,
 ) => {
-const buildDisplayName = (
-  me: { name?: string | null; sur_name?: string | null } | null,
-) => {
   const fullName = [me?.name, me?.sur_name].filter(Boolean).join(" ").trim();
   return fullName || "-";
 };
@@ -70,7 +67,6 @@ export default function PharmacistOrderPage() {
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm<OrderFormValues>();
   const [selectedConsultationId, setSelectedConsultationId] = useState<number | null>(null);
-  const { me } = useAuth();
   const { me } = useAuth();
   const { consultations, loading, saving, consultationOptions, createOrder } =
     usePharmacistOrders();
@@ -98,7 +94,7 @@ export default function PharmacistOrderPage() {
   );
 
   useEffect(() => {
-    if (displayConsultations.length === 0) {
+    if (consultations.length === 0) {
       setSelectedConsultationId(null);
       form.resetFields();
       return;
