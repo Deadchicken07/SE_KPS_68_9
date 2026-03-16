@@ -1,6 +1,5 @@
 "use client";
 
-import axios from "axios";
 import { useEffect, useMemo, useState } from "react";
 import {
   Button,
@@ -19,14 +18,12 @@ import {
   Popconfirm,
   Select,
 } from "antd";
-import type { AuthMeResponse } from "@/types/auth.types";
 import { usePharmacistOrders } from "@/hooks/usePharmacistOrders";
 import {
   receiptStatusColorMap,
   type ReceiptStatus,
 } from "@/types/receipt-status.types";
-
-const API_URL = "http://localhost:4000";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 type OrderFormValues = {
   consultationId?: number;
@@ -50,7 +47,9 @@ const formatCurrency = (value: number | null | undefined) =>
 const formatDateTime = (value: string | null) =>
   value ? dateFormatter.format(new Date(value)) : "-";
 
-const buildDisplayName = (me: AuthMeResponse | null) => {
+const buildDisplayName = (
+  me: { name?: string | null; sur_name?: string | null } | null,
+) => {
   const fullName = [me?.name, me?.sur_name].filter(Boolean).join(" ").trim();
   return fullName || "-";
 };
@@ -70,7 +69,7 @@ export default function PharmacistOrderPage() {
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm<OrderFormValues>();
   const [selectedConsultationId, setSelectedConsultationId] = useState<number | null>(null);
-  const [me, setMe] = useState<AuthMeResponse | null>(null);
+  const { me } = useAuth();
   const { consultations, loading, saving, consultationOptions, createOrder } =
     usePharmacistOrders();
 
@@ -98,21 +97,6 @@ export default function PharmacistOrderPage() {
       ),
     [selectedConsultation],
   );
-
-  useEffect(() => {
-    const fetchMe = async () => {
-      try {
-        const response = await axios.get<AuthMeResponse>(`${API_URL}/auth/me`, {
-          withCredentials: true,
-        });
-        setMe(response.data);
-      } catch {
-        setMe(null);
-      }
-    };
-
-    void fetchMe();
-  }, []);
 
   useEffect(() => {
     if (displayConsultations.length === 0) {
