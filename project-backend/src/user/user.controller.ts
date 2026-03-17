@@ -15,6 +15,11 @@ export class UserController {
   findStaffs() {
     return this.userService.findStaffs();
   }
+
+  @Get('all')
+  findUser() {
+    return this.userService.findAllUser();
+  }
   
   @Get('staff/:id')
   async findStaffById(@Param('id') id: string) {
