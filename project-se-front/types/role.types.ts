@@ -36,7 +36,11 @@ export const roleLinks: Record<Roles, NavLinks[]> = {
   ],
   user: [{ name: "หน้าแรก", href: "/user" }],
   psychologist: [{ name: "Patient History", href: "/staff/patient-history" }],
-  psychiatrist: [{ name: "Patient History", href: "/staff/patient-history" }],
+  psychiatrist: [
+    { name: "Patient History", href: "/staff/patient-history" },
+    { name: "การนัดหมาย", href: "/staff/appointments" },
+    { name: "การปรึกษา", href: "/staff/consult" },
+  ],
   pharmacist: [
     { name: "Pharmacist", href: "/staff/pharmacist" },
     { name: "Delivery History", href: "/staff/pharmacist/delivery-history" },
