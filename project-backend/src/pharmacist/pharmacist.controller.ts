@@ -9,6 +9,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { CreateOrderDto } from './dto/create-order.dto';
 import { CreateMedicationDto } from './dto/create-medication.dto';
 import { DeliveryHistoryQueryDto } from './dto/delivery-history-query.dto';
 import { PatientHistoryQueryDto } from './dto/patient-history-query.dto';
@@ -40,6 +41,16 @@ export class PharmacistController {
   @Delete('medications/:id')
   removeMedication(@Param('id', ParseIntPipe) id: number) {
     return this.pharmacistService.removeMedication(id);
+  }
+
+  @Get('order-form')
+  getOrderForm() {
+    return this.pharmacistService.getOrderForm();
+  }
+
+  @Post('orders')
+  createOrder(@Body() dto: CreateOrderDto) {
+    return this.pharmacistService.createOrder(dto);
   }
 
   @Get('delivery-history')

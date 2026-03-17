@@ -43,12 +43,15 @@ export default function LoginPage() {
   const passwordValue = Form.useWatch("password", form);
   const router = useRouter();
   const [registered, setRegistered] = useState<string | null>(null);
+  const [expired, setExpired] = useState<string | null>(null);
   const [redirectTarget, setRedirectTarget] = useState<string | null>(null);
   const isLoginDisabled = !emailValue?.trim() || !passwordValue?.trim();
 
   useEffect(() => {
-    setRegistered(new URLSearchParams(window.location.search).get("registered"));
-    setRedirectTarget(new URLSearchParams(window.location.search).get("redirect"));
+    const searchParams = new URLSearchParams(window.location.search);
+    setRegistered(searchParams.get("registered"));
+    setExpired(searchParams.get("expired"));
+    setRedirectTarget(searchParams.get("redirect"));
   }, []);
 
   useEffect(() => {
@@ -280,6 +283,15 @@ export default function LoginPage() {
                     >
                       เข้าสู่ระบบ
                     </Typography.Title>
+
+                    {expired === "1" ? (
+                      <Alert
+                        type="warning"
+                        showIcon
+                        title="session หมดอายุ กรุณาเข้าสู่ระบบใหม่"
+                        style={{ marginTop: 20, marginBottom: 0 }}
+                      />
+                    ) : null}
 
                     <Form
                       form={form}

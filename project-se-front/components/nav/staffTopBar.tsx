@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import axios from "axios";
 import { Avatar, Dropdown, Space, Typography } from "antd";
 import type { MenuProps } from "antd";
@@ -8,6 +7,7 @@ import { UserOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import type { AuthMeResponse } from "@/types/auth.types";
 import { mapRoleIdToRole, type Roles } from "@/types/role.types";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 const API_URL = "http://localhost:4000";
 
@@ -39,35 +39,18 @@ const buildAvatarLabel = (me: AuthMeResponse | null) => {
 
 export default function StaffTopBar() {
   const router = useRouter();
-  const [me, setMe] = useState<AuthMeResponse | null>(null);
-  const [loggingOut, setLoggingOut] = useState(false);
-
-  useEffect(() => {
-    const fetchMe = async () => {
-      try {
-        const response = await axios.get<AuthMeResponse>(`${API_URL}/auth/me`, {
-          withCredentials: true,
-        });
-        setMe(response.data);
-      } catch {
-        setMe(null);
-      }
-    };
-
-    void fetchMe();
-  }, []);
+  const { me, setMe } = useAuth();
 
   const handleLogout = async () => {
     try {
-      setLoggingOut(true);
       await axios.post(`${API_URL}/auth/logout`, {}, { withCredentials: true });
     } catch {
       // Redirect even if session cleanup already happened.
     } finally {
       localStorage.removeItem("access_token");
+      setMe(null);
       router.push("/login");
       router.refresh();
-      setLoggingOut(false);
     }
   };
 
@@ -80,7 +63,6 @@ export default function StaffTopBar() {
     {
       key: "logout",
       label: "Logout",
-      disabled: loggingOut,
     },
   ];
 

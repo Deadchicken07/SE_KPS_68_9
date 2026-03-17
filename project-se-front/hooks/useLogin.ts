@@ -3,6 +3,7 @@ import { useState } from 'react';
 import axios, { AxiosError } from 'axios';
 import { AuthMeResponse, LoginResponse } from '@/types/auth.types';
 import { ErrorResponse } from '@/types/api.types';
+import { useAuth } from '@/components/providers/AuthProvider';
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 
@@ -11,6 +12,7 @@ const API = process.env.NEXT_PUBLIC_API_URL;
 export const useLogin = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { setMe } = useAuth();
 
   const login = async (
     email: string,
@@ -33,6 +35,8 @@ export const useLogin = () => {
       const me = await axios.get<AuthMeResponse>(`${API}/auth/me`, {
         withCredentials: true,
       });
+
+      setMe(me.data);
 
       return me.data;
     } catch (err: unknown) {

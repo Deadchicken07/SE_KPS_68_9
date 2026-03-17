@@ -1,10 +1,24 @@
 "use client";
 
 import type { ColumnsType } from "antd/es/table";
-import { Button, Card, Col, Input, Row, Select, Space, Table, Tag, Typography, message } from "antd";
-import { useRouter } from "next/navigation";
+import {
+  Button,
+  Card,
+  Input,
+  Select,
+  Space,
+  Table,
+  Tag,
+  Typography,
+  message,
+} from "antd";
 import { usePharmacistDeliveryHistory } from "@/hooks/usePharmacistDeliveryHistory";
 import type { DeliveryHistory } from "@/types/pharmacist.types";
+import {
+  receiptStatusColorMap,
+  receiptStatusSelectOptions,
+  type ReceiptStatus,
+} from "@/types/receipt-status.types";
 
 const currencyFormatter = new Intl.NumberFormat("th-TH", {
   style: "currency",
@@ -23,14 +37,7 @@ const formatCurrency = (value: number | null) =>
 const formatDateTime = (value: string | null) =>
   value ? dateFormatter.format(new Date(value)) : "-";
 
-const statusColorMap: Record<string, string> = {
-  delivered: "green",
-  pending: "gold",
-  cancelled: "red",
-};
-
 export default function PharmacistDeliveryHistoryPage() {
-  const router = useRouter();
   const [messageApi, contextHolder] = message.useMessage();
   const {
     deliveries,
@@ -39,7 +46,6 @@ export default function PharmacistDeliveryHistoryPage() {
     setDeliverySearch,
     deliveryStatus,
     setDeliveryStatus,
-    deliverySummary,
     fetchDeliveries,
   } = usePharmacistDeliveryHistory();
 
@@ -50,11 +56,14 @@ export default function PharmacistDeliveryHistoryPage() {
     {
       title: "สถานะ",
       dataIndex: "status",
-      render: (value: string | null) => (
-        <Tag color={statusColorMap[(value || "").toLowerCase()] || "blue"}>
-          {value || "-"}
-        </Tag>
-      ),
+      render: (value: string | null) => {
+        const normalizedStatus = (value || "").toLowerCase() as ReceiptStatus;
+        return (
+          <Tag color={receiptStatusColorMap[normalizedStatus] || "blue"}>
+            {value || "-"}
+          </Tag>
+        );
+      },
     },
     {
       title: "Tracking",
@@ -85,14 +94,13 @@ export default function PharmacistDeliveryHistoryPage() {
       {contextHolder}
 
       <section className="staff-page-header">
-        <Typography.Text className="staff-kicker">STAFF / DELIVERY HISTORY</Typography.Text>
+        <Typography.Text className="staff-kicker">
+          STAFF / DELIVERY HISTORY
+        </Typography.Text>
         <Typography.Title level={2} style={{ marginTop: 8, marginBottom: 8 }}>
           ประวัติการส่งยา
         </Typography.Title>
-        
       </section>
-
-      
 
       <Card className="staff-content-card" variant="borderless">
         <div className="staff-toolbar">
@@ -108,10 +116,8 @@ export default function PharmacistDeliveryHistoryPage() {
             onChange={(value) => setDeliveryStatus(value)}
             style={{ width: 180 }}
             options={[
-              { label: "ทุกสถานะ", value: "all" },
-              { label: "pending", value: "pending" },
-              { label: "delivered", value: "delivered" },
-              { label: "cancelled", value: "cancelled" },
+              { label: "all", value: "all" },
+              ...receiptStatusSelectOptions,
             ]}
           />
           <Space>

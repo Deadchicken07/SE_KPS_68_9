@@ -2,6 +2,8 @@
 
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+
 type ModalApi = {
   confirm: (config: {
     title: string;
@@ -18,15 +20,21 @@ type ModalApi = {
   }) => void;
 };
 
-export function navigateToAppointmentsWithLoginGuard(
+export async function navigateToAppointmentsWithLoginGuard(
   router: AppRouterInstance,
   modalApi: ModalApi,
 ) {
-  const accessToken = window.localStorage.getItem("access_token");
+  try {
+    const response = await fetch(`${API_URL}/auth/me`, {
+      credentials: "include",
+    });
 
-  if (accessToken) {
-    router.push("/user/appointments");
-    return;
+    if (response.ok) {
+      router.push("/user/appointments");
+      return;
+    }
+  } catch {
+    // fall through to login modal
   }
 
   modalApi.confirm({
