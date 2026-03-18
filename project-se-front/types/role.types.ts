@@ -1,15 +1,19 @@
-export interface NavLinks{
-    name : string;
-    href : string;
+export interface NavLinks {
+  name: string;
+  href: string;
 }
 
-export type Roles = "ADMIN" | "psychologist" | "psychiatrist" | "medicine"
-
+export type Roles =
+  | "admin"
+  | "user"
+  | "psychologist"
+  | "psychiatrist"
+  | "pharmacist";
 
 export const mapRoleIdToRole = (roleId: number | null): Roles | null => {
   switch (roleId) {
     case 1:
-      return "ADMIN";
+      return "admin";
     case 2:
       return "user";
     case 3:
