@@ -27,7 +27,10 @@ export class AppointmentsController {
   @Get(':id')
   getAppointment(@Req() req, @Param('id', ParseIntPipe) appointmentId: number) {
     const userId = this.getUserIdFromRequest(req);
-    return this.appointmentsService.getAppointmentDetails(userId, appointmentId);
+    return this.appointmentsService.getAppointmentDetails(
+      userId,
+      appointmentId,
+    );
   }
 
   @Patch(':id/reschedule')
@@ -56,6 +59,11 @@ export class AppointmentsController {
       appointmentId,
       body.slipUrl,
     );
+  }
+
+  @Get()
+  findAllByStaff(staffId : number){
+    return this.appointmentsService.findAllByStaff(staffId)
   }
 
   private getUserIdFromRequest(req): number {

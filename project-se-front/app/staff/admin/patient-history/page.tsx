@@ -1,77 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { message } from "antd";
 import styles from "./page.module.css";
-
-type PatientScenario = "normal" | "empty";
-
-type ConsultationRecord = {
-  id: number;
-  created_at: string;
-  note: string;
-};
-
-type PatientProfile = {
-  label: string;
-  full_name: string;
-  user_id: number;
-  gender: string;
-  birth_date: string;
-  phone: string;
-  blood_group: string;
-  chronic_disease: string;
-  drug_allergy: string;
-  emergency_contact: string;
-  records: ConsultationRecord[];
-};
-
-const patients: Record<PatientScenario, PatientProfile> = {
-  normal: {
-    label: "คนที่มีประวัติการรักษาปกติ",
-    full_name: "ศิริพร ใจดี",
-    user_id: 712,
-    gender: "หญิง",
-    birth_date: "1998-04-12",
-    phone: "089-123-4567",
-    blood_group: "A",
-    chronic_disease: "ภูมิแพ้",
-    drug_allergy: "ไม่มี",
-    emergency_contact: "สมชาย ใจดี (บิดา) 081-555-1212",
-    records: [
-      {
-        id: 23091,
-        created_at: "2026-03-01 09:40",
-        note: "ติดตามอาการหลังรับยา ไข้ลดลงแล้วและอาการดีขึ้น",
-      },
-      {
-        id: 23032,
-        created_at: "2026-02-27 14:15",
-        note: "มีอาการไอแห้งตอนกลางคืน แนะนำติดตามผลภายใน 48 ชั่วโมง",
-      },
-      {
-        id: 22988,
-        created_at: "2026-02-23 08:22",
-        note: "ประเมินอาการเบื้องต้นและให้คำแนะนำการพักผ่อน",
-      },
-    ],
-  },
-  empty: {
-    label: "คนที่ไม่เคยมีประวัติการรักษา",
-    full_name: "มณีรัตน์ บุญยืน",
-    user_id: 993,
-    gender: "หญิง",
-    birth_date: "2001-12-22",
-    phone: "095-311-4420",
-    blood_group: "O",
-    chronic_disease: "ไม่มี",
-    drug_allergy: "ไม่ทราบ",
-    emergency_contact: "กิตติ บุญยืน (พี่ชาย) 080-228-6610",
-    records: [],
-  },
-};
+import { usePharmacistPatientHistory } from "@/hooks/usePharmacistPatientHistory";
 
 const formatDateTime = (value: string) => {
-  const date = new Date(value.replace(" ", "T"));
+  const date = new Date(value);
   const formattedDate = date.toLocaleDateString("th-TH", { dateStyle: "medium" });
   const formattedTime = date.toLocaleTimeString("th-TH", {
     hour: "2-digit",
@@ -80,21 +15,27 @@ const formatDateTime = (value: string) => {
   return `${formattedDate} | ${formattedTime}`;
 };
 
-const formatBirthDate = (value: string) =>
-  new Date(`${value}T00:00:00`).toLocaleDateString("th-TH", { dateStyle: "long" });
-
 export default function PatientHistoryPage() {
-  const [selectedScenario, setSelectedScenario] = useState<PatientScenario>("normal");
+  const [messageApi, contextHolder] = message.useMessage();
   const [showScrollTop, setShowScrollTop] = useState(false);
-
-  const patient = patients[selectedScenario];
+  const {
+    patients,
+    loading,
+    search,
+    setSearch,
+    selectedPatient,
+    selectedPatientId,
+    setSelectedPatientId,
+    fetchPatients,
+  } = usePharmacistPatientHistory();
 
   const latestRecord = useMemo(() => {
-    if (patient.records.length === 0) {
+    if (!selectedPatient || selectedPatient.records.length === 0) {
       return null;
     }
-    return patient.records[0];
-  }, [patient.records]);
+
+    return selectedPatient.records[0];
+  }, [selectedPatient]);
 
   useEffect(() => {
     const updateButtonVisibility = () => {
@@ -112,99 +53,186 @@ export default function PatientHistoryPage() {
     };
   }, []);
 
+  const handleSearch = async () => {
+    const result = await fetchPatients();
+    if (!result.ok) {
+      messageApi.error(result.message);
+    }
+  };
+
   return (
     <main className={styles.page}>
+      {contextHolder}
+
       <section className={styles.hero}>
         <h1>ประวัติผู้ป่วย</h1>
-        <p>ข้อมูลนี้แสดงเฉพาะข้อมูลประวัติของคุณ ({patient.full_name}) เท่านั้น</p>
+        <p>
+          {selectedPatient
+            ? `ข้อมูลนี้แสดงเฉพาะประวัติของ ${selectedPatient.patientName}`
+            : "เลือกผู้ป่วยเพื่อดูประวัติจากข้อมูลจริงในระบบ"}
+        </p>
 
         <div className={styles.controlsPanel}>
           <div className={styles.controlGroup}>
-            <label htmlFor="patient-select">เลือกผู้ป่วยจำลอง</label>
+            <label htmlFor="patient-search">ค้นหาผู้ป่วย</label>
+            <input
+              id="patient-search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  void handleSearch();
+                }
+              }}
+              placeholder="ชื่อหรือเบอร์โทร"
+            />
+          </div>
+
+          <div className={styles.controlGroup}>
+            <label htmlFor="patient-select">เลือกผู้ป่วย</label>
             <select
               id="patient-select"
-              value={selectedScenario}
-              onChange={(event) => setSelectedScenario(event.target.value as PatientScenario)}
+              value={selectedPatientId ?? ""}
+              onChange={(event) => setSelectedPatientId(Number(event.target.value))}
+              disabled={loading || patients.length === 0}
             >
-              <option value="normal">{patients.normal.label}</option>
-              <option value="empty">{patients.empty.label}</option>
+              {patients.length === 0 ? (
+                <option value="">ไม่พบข้อมูลผู้ป่วย</option>
+              ) : (
+                patients.map((patient) => (
+                  <option key={patient.patientId} value={patient.patientId}>
+                    {patient.patientName}
+                  </option>
+                ))
+              )}
             </select>
           </div>
         </div>
       </section>
 
       <section className={styles.contentSection}>
-        <>
+        {!selectedPatient ? (
           <article className={styles.infoCard}>
-            <h2>ข้อมูลส่วนตัว</h2>
-            <div className={styles.grid}>
-              <div className={styles.field}>
-                <span>ชื่อ-นามสกุล</span>
-                <strong>{patient.full_name}</strong>
-              </div>
-              <div className={styles.field}>
-                <span>รหัสผู้ป่วย</span>
-                <strong>{patient.user_id}</strong>
-              </div>
-              <div className={styles.field}>
-                <span>เพศ</span>
-                <strong>{patient.gender}</strong>
-              </div>
-              <div className={styles.field}>
-                <span>วันเกิด</span>
-                <strong>{formatBirthDate(patient.birth_date)}</strong>
-              </div>
-              <div className={styles.field}>
-                <span>เบอร์โทร</span>
-                <strong>{patient.phone}</strong>
-              </div>
-            </div>
+            <p className={styles.emptyText}>ยังไม่มีข้อมูลประวัติผู้ป่วย</p>
           </article>
-
-          <article className={styles.infoCard}>
-            <h2>ข้อมูลสุขภาพพื้นฐาน</h2>
-            <div className={styles.grid}>
-              <div className={styles.field}>
-                <span>หมู่เลือด</span>
-                <strong>{patient.blood_group}</strong>
-              </div>
-              <div className={styles.field}>
-                <span>โรคประจำตัว</span>
-                <strong>{patient.chronic_disease}</strong>
-              </div>
-              <div className={styles.field}>
-                <span>ประวัติแพ้ยา</span>
-                <strong>{patient.drug_allergy}</strong>
-              </div>
-              <div className={styles.field}>
-                <span>ผู้ติดต่อฉุกเฉิน</span>
-                <strong>{patient.emergency_contact}</strong>
-              </div>
-            </div>
-          </article>
-
-          <article className={styles.infoCard}>
-            <h2>สรุปการเข้ารับบริการล่าสุด</h2>
-            {!latestRecord ? (
-              <p className={styles.emptyText}>ยังไม่มีประวัติการเข้ารับบริการ</p>
-            ) : (
+        ) : (
+          <>
+            <article className={styles.infoCard}>
+              <h2>ข้อมูลส่วนตัว</h2>
               <div className={styles.grid}>
                 <div className={styles.field}>
-                  <span>วันที่อ้างอิง</span>
-                  <strong>{formatDateTime(latestRecord.created_at)}</strong>
+                  <span>ชื่อ-นามสกุล</span>
+                  <strong>{selectedPatient.patientName}</strong>
                 </div>
                 <div className={styles.field}>
-                  <span>รหัสอ้างอิงเคสล่าสุด</span>
-                  <strong>#{latestRecord.id}</strong>
+                  <span>รหัสผู้ป่วย</span>
+                  <strong>{selectedPatient.patientId}</strong>
                 </div>
-                <div className={`${styles.field} ${styles.full}`}>
-                  <span>หมายเหตุย่อ</span>
-                  <strong>{latestRecord.note}</strong>
+                <div className={styles.field}>
+                  <span>เบอร์โทร</span>
+                  <strong>{selectedPatient.phone || "-"}</strong>
+                </div>
+                <div className={styles.field}>
+                  <span>จำนวนประวัติ</span>
+                  <strong>{selectedPatient.recordCount}</strong>
                 </div>
               </div>
-            )}
-          </article>
-        </>
+            </article>
+
+            <article className={styles.infoCard}>
+              <h2>ข้อมูลสุขภาพพื้นฐาน</h2>
+              <div className={styles.grid}>
+                <div className={styles.field}>
+                  <span>โรคประจำตัว</span>
+                  <strong>{selectedPatient.medicalCondition || "-"}</strong>
+                </div>
+                <div className={styles.field}>
+                  <span>ประวัติแพ้ยา</span>
+                  <strong>{selectedPatient.allergyDrug || "-"}</strong>
+                </div>
+                <div className={styles.field}>
+                  <span>วันที่พบล่าสุด</span>
+                  <strong>
+                    {selectedPatient.latestConsultedAt
+                      ? formatDateTime(selectedPatient.latestConsultedAt)
+                      : "-"}
+                  </strong>
+                </div>
+                <div className={styles.field}>
+                  <span>หมายเหตุล่าสุด</span>
+                  <strong>{selectedPatient.latestNote || "-"}</strong>
+                </div>
+              </div>
+            </article>
+
+            <article className={styles.infoCard}>
+              <h2>สรุปการเข้ารับบริการล่าสุด</h2>
+              {!latestRecord ? (
+                <p className={styles.emptyText}>ยังไม่มีประวัติการเข้ารับบริการ</p>
+              ) : (
+                <div className={styles.grid}>
+                  <div className={styles.field}>
+                    <span>วันเวลาบันทึกล่าสุด</span>
+                    <strong>{latestRecord.createdAt ? formatDateTime(latestRecord.createdAt) : "-"}</strong>
+                  </div>
+                  <div className={styles.field}>
+                    <span>รหัส consultation</span>
+                    <strong>#{latestRecord.consultationId}</strong>
+                  </div>
+                  <div className={`${styles.field} ${styles.full}`}>
+                    <span>หมายเหตุ</span>
+                    <strong>{latestRecord.note || "-"}</strong>
+                  </div>
+                </div>
+              )}
+            </article>
+
+            {selectedPatient.records.map((record) => (
+              <article className={styles.infoCard} key={record.consultationId}>
+                <h2>ประวัติ Consultation #{record.consultationId}</h2>
+                <div className={styles.grid}>
+                  <div className={styles.field}>
+                    <span>วันที่บันทึก</span>
+                    <strong>{record.createdAt ? formatDateTime(record.createdAt) : "-"}</strong>
+                  </div>
+                  <div className={styles.field}>
+                    <span>เภสัชกร</span>
+                    <strong>{record.pharmacistName}</strong>
+                  </div>
+                  <div className={`${styles.field} ${styles.full}`}>
+                    <span>รายการยา</span>
+                    <strong>
+                      {record.medicines.length === 0
+                        ? "-"
+                        : record.medicines
+                            .map((medicine) =>
+                              `${medicine.name} x ${medicine.quantity}${medicine.comment ? ` (${medicine.comment})` : ""}`,
+                            )
+                            .join(", ")}
+                    </strong>
+                  </div>
+                  <div className={`${styles.field} ${styles.full}`}>
+                    <span>ใบเสร็จ / Tracking</span>
+                    <strong>
+                      {record.receipts.length === 0
+                        ? "-"
+                        : record.receipts
+                            .map(
+                              (receipt) =>
+                                `#${receipt.receiptId} ${receipt.status || "-"} ${receipt.tracking || "-"}`,
+                            )
+                            .join(", ")}
+                    </strong>
+                  </div>
+                  <div className={`${styles.field} ${styles.full}`}>
+                    <span>หมายเหตุ</span>
+                    <strong>{record.note || "-"}</strong>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </>
+        )}
       </section>
 
       {showScrollTop && (

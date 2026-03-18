@@ -1,7 +1,9 @@
 ﻿"use client";
 
-import { useState, useEffect } from "react";
+import {  useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Alert, Button, Card, Flex, Layout, notification, Typography } from "antd";
+import { ArrowLeftOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { useNationCheck } from "@/hooks/useNationCheck";
 import { useRegister } from "@/hooks/useRegister";
@@ -11,6 +13,8 @@ import type { FormErrors, RegisterForm } from "@/types/Register.types";
 import RegisterStep1Nation from "@/components/register/RegisterStep1Nation";
 import RegisterStep2Form from "@/components/register/RegisterStep2Form";
 import RegisterStep3Otp from "@/components/register/RegisterStep3Otp";
+
+
 
 const titles = ["เด็กชาย", "เด็กหญิง", "นาย", "นาง", "นางสาว"];
 
@@ -36,7 +40,7 @@ export default function RegisterPage() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [otp, setOtp] = useState("");
-
+ const [api, contextHolder] = notification.useNotification();
   const [form, setForm] = useState<RegisterForm>({
     nationId: "",
     email: "",
@@ -213,7 +217,10 @@ export default function RegisterPage() {
       return;
     }
 
-    const otpSent = await sendOtp(form.email);   if (otpSent) {      setStep(3);    }
+    const otpSent = await sendOtp(form.email);
+    if (otpSent) {
+      setStep(3);
+    }
   };
 
   const registerUser = async () => {
@@ -245,73 +252,147 @@ export default function RegisterPage() {
         detail: form.detailNation,
         zipCodeId: nation.selectedZipCode!,
       },
-    });    if (!registered) {    setRegistering(false); }  };
+    });
+    if (!registered) {
+      setRegistering(false);
+    }
+  };
 
   return (
-    <main className="auth-shell flex items-center justify-center px-4 py-8 sm:px-8 sm:py-12">
-      <div className="auth-orb top-[-120px] left-[-120px] h-[260px] w-[260px] bg-[#2f6e5d]/30" />
-      <div className="auth-orb alt bottom-[-140px] right-[-120px] h-[320px] w-[320px] bg-[#4e987f]/30" />
-
-      <section
-        className={`auth-card w-full p-6 sm:p-10 ${
-          step === 1 ? "max-w-3xl" : "max-w-5xl"
-        }`}
+     <>
+     {contextHolder}
+    <Layout
+      className="auth-shell"
+      style={{
+        minHeight: "100dvh",
+        padding: "32px 16px",
+        boxSizing: "border-box",
+        background:
+          "radial-gradient(circle at 15% 20%, rgba(14, 91, 80, 0.16), transparent 46%), radial-gradient(circle at 85% 78%, rgba(192, 144, 87, 0.14), transparent 46%), linear-gradient(135deg, #f8f3ed 0%, #efe6da 52%, #e8dccd 100%)",
+      }}
+    >
+      <Button
+        type="text"
+        icon={<ArrowLeftOutlined />}
+        onClick={() => router.push("/user")}
+        style={{
+          position: "absolute",
+          top: 18,
+          left: 18,
+          zIndex: 3,
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 8,
+          height: 40,
+          paddingInline: 14,
+          borderRadius: 999,
+          background: "rgba(255,255,255,0.74)",
+          color: "#0f766e",
+          boxShadow: "0 12px 30px rgba(15, 118, 110, 0.12)",
+        }}
       >
-        <div className="mb-8 flex items-center justify-between gap-3">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#3f7f6d]/75">Create account</p>
-            <h2 className="mt-2 text-3xl font-semibold text-[#1d493d]">สมัครสมาชิก</h2>
-          </div>
-          <button
-            onClick={() => router.push("/login")}
-            className="rounded-xl border border-[#2f6e5d]/25 px-4 py-2 text-sm font-medium text-[#2f6e5d] hover:bg-[#2f6e5d]/5"
-          >
-            กลับหน้าเข้าสู่ระบบ
-          </button>
-        </div>
+        กลับหน้าหลัก
+      </Button>
+      <div
+        className="auth-orb"
+        style={{
+          top: -120,
+          left: -120,
+          width: 260,
+          height: 260,
+          background: "rgba(14, 91, 80, 0.20)",
+        }}
+      />
+      <div
+        className="auth-orb"
+        style={{
+          right: -120,
+          bottom: -140,
+          width: 320,
+          height: 320,
+          background: "rgba(192, 144, 87, 0.20)",
+        }}
+      />
 
-        {step === 1 && (
-          <RegisterStep1Nation
-            form={form}
-            errors={errors}
-            setForm={setForm}
-            handleNationCheck={handleNationCheck}
-            nationLoading={nationLoading}
-          />
-        )}
+      <Flex
+        align="center"
+        justify="center"
+        style={{ minHeight: "calc(100dvh - 64px)", width: "100%", padding: "16px 0" }}
+      >
+        <Card
+          variant="borderless"
+          className="auth-card"
+          styles={{ body: { padding: 32 } }}
+          style={{ width: "100%", maxWidth: 960, borderRadius: 30 }}
+        >
+          <Flex justify="space-between" align="flex-start" gap={16} wrap style={{ marginBottom: 28 }}>
+            <div style={{ flex: "1 1 320px" }}>
+              <Typography.Text
+                style={{
+                  fontSize: 12,
+                  fontWeight: 500,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.16em",
+                  color: "rgba(14, 91, 80, 0.75)",
+                }}
+              >
+                Create account
+              </Typography.Text>
+              <Typography.Title
+                level={2}
+                style={{ marginTop: 8, marginBottom: 0, color: "#0f172a" }}
+              >
+                สมัครสมาชิก
+              </Typography.Title>
+            </div>
 
-        {step === 2 && (
-          <RegisterStep2Form
-            form={form}
-            errors={errors}
-            setForm={setForm}
-            titles={titles}
-            handleSubmit={handleSubmit}
-            sendOtpLoading={sendOtpLoading}
-            registerLoading={registerLoading}
-            successMessage={successMessage}
-            current={current}
-            nation={nation}
-          />
-        )}
+          </Flex>
 
-        {step === 3 && (
-          <RegisterStep3Otp
-            otp={otp}
-            setOtp={setOtp}
-            verifyOtp={verifyOtp}
-            verifyOtpLoading={verifyOtpLoading}
-            sendOtp={sendOtp}
-            sendOtpLoading={sendOtpLoading}
-            cooldown={cooldown}
-            otpError={otpError || undefined}
-            registering={registering}
-            registerUser={registerUser}
-            email={form.email}
-          />
-        )}
-      </section>
-    </main>
+          {otpError && <Alert style={{ marginBottom: 24 }} type="error" title={otpError} showIcon />}
+
+          {step === 1 && (
+            <RegisterStep1Nation
+              form={form}
+              errors={errors}
+              setForm={setForm}
+              handleNationCheck={handleNationCheck}
+              nationLoading={nationLoading}
+            />
+          )}
+
+          {step === 2 && (
+            <RegisterStep2Form
+              form={form}
+              errors={errors}
+              setForm={setForm}
+              titles={titles}
+              handleSubmit={handleSubmit}
+              sendOtpLoading={sendOtpLoading}
+              registerLoading={registerLoading}
+              successMessage={successMessage}
+              current={current}
+              nation={nation}
+            />
+          )}
+
+          {step === 3 && (
+            <RegisterStep3Otp
+              otp={otp}
+              setOtp={setOtp}
+              verifyOtp={verifyOtp}
+              verifyOtpLoading={verifyOtpLoading}
+              sendOtp={sendOtp}
+              sendOtpLoading={sendOtpLoading}
+              cooldown={cooldown}
+              otpError={otpError || undefined}
+              registering={registering}
+              registerUser={registerUser}
+              email={form.email}
+            />
+          )}
+        </Card>
+      </Flex>
+    </Layout>
+    </>
   );
 }
-

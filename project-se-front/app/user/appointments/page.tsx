@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Modal, Button, Input, DatePicker, ConfigProvider } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
@@ -8,6 +8,8 @@ import Badge from '@/components/ui/Badge';
 import 'dayjs/locale/th';
 import buddhistEra from 'dayjs/plugin/buddhistEra';
 import locale from 'antd/locale/th_TH';
+
+const API_BASE_URL = 'http://localhost:4000';
 
 dayjs.extend(buddhistEra);
 dayjs.locale('th');
@@ -143,7 +145,53 @@ function TimeSlotGrid({
 
 export default function AppointmentsPage() {
     const router = useRouter();
+    const [modalApi, modalContextHolder] = Modal.useModal();
+    const [isAuthChecking, setIsAuthChecking] = useState(true);
     const [mode, setMode] = useState<'staff' | 'time'>('staff');
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const checkAuth = async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/me`, {
+                    credentials: 'include',
+                });
+
+                if (!response.ok) {
+                    throw new Error('Unauthorized');
+                }
+
+                if (isMounted) {
+                    setIsAuthChecking(false);
+                }
+            } catch {
+                if (!isMounted) {
+                    return;
+                }
+
+                modalApi.confirm({
+                    title: 'กรุณาเข้าสู่ระบบก่อน',
+                    content: 'คุณต้องเข้าสู่ระบบก่อนจึงจะเข้าใช้งานหน้านัดหมายได้',
+                    okText: 'เข้าสู่ระบบ',
+                    cancelText: 'กลับหน้าหลัก',
+                    centered: true,
+                    onOk: () => {
+                        router.replace('/login?redirect=/user/appointments');
+                    },
+                    onCancel: () => {
+                        router.replace('/user');
+                    },
+                });
+            }
+        };
+
+        void checkAuth();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [modalApi, router]);
 
     const [selectedDuration, setSelectedDuration] = useState<number>(30);
 
@@ -214,8 +262,13 @@ export default function AppointmentsPage() {
     const disabledDate = (d: Dayjs) =>
         d.isBefore(dayjs().startOf('day')) || d.day() === 0 || d.day() === 6;
 
+    if (isAuthChecking) {
+        return null;
+    }
+
     return (
         <ConfigProvider locale={locale}>
+            {modalContextHolder}
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&display=swap');
 

@@ -33,7 +33,12 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   getMe(@Req() req) {
-    return req.user;
+    return this.authService.getMe(req.user.sub);
+  }
+  @Post('logout')
+  logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('_pgsmcmsss');
+    return { message: 'logout success' };
   }
   @Post('register')
   async register(@Body() body: RegisterDto) {

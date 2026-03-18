@@ -11,8 +11,12 @@ import { QuestionnairesModule } from './questionnaires/questionnaires.module';
 import { QuestionsModule } from './questions/questions.module';
 import { ChoicesModule } from './choices/choices.module';
 import { AnswersModule } from './answers/answers.module';
+import { ResponsesModule } from './responses/responses.module';
+import { PharmacistModule } from './pharmacist/pharmacist.module';
+import { ConsultationsModule } from './consultations/consultations.module';
 
 @Module({
+  imports: [UserModule, PrismaModule, AuthModule, LocationModule, QuestionnairesModule, QuestionsModule, ChoicesModule, AnswersModule, ResponsesModule,MailModule,PharmacistModule, ConsultationsModule],
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     UserModule,

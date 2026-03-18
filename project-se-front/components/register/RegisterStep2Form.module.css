@@ -1,0 +1,108 @@
+.registerStep2 :global(.select-input.ant-select) {
+  width: 100%;
+}
+
+.registerStep2 :global(.select-input.ant-select .ant-select-selector) {
+  height: 52px !important;
+  padding: 0 16px !important;
+  border: 1px solid rgb(229 231 235) !important;
+  border-radius: 0.75rem !important;
+  background: rgb(249 250 251) !important;
+  color: #000 !important;
+  box-shadow: none !important;
+  display: flex !important;
+  align-items: center !important;
+  transition: all 0.2s ease !important;
+}
+
+.registerStep2
+  :global(.select-input.ant-select:not(.ant-select-disabled):hover .ant-select-selector),
+.registerStep2 :global(.select-input.ant-select.ant-select-open .ant-select-selector),
+.registerStep2 :global(.select-input.ant-select.ant-select-focused .ant-select-selector) {
+  border-color: #3f7f6d !important;
+}
+
+.registerStep2 :global(.select-input.ant-select:focus .ant-select-selector),
+.registerStep2 :global(.select-input.ant-select:focus-within .ant-select-selector),
+.registerStep2 :global(.select-input.ant-select.ant-select-open .ant-select-selector),
+.registerStep2 :global(.select-input.ant-select.ant-select-focused .ant-select-selector) {
+  background: white !important;
+  box-shadow: 0 0 0 2px rgb(63 127 109 / 0.3) !important;
+  outline: none !important;
+}
+
+.registerStep2 :global(.select-input.ant-select .ant-select-selection-wrap) {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.registerStep2 :global(.select-input.ant-select .ant-select-selection-item),
+.registerStep2 :global(.select-input.ant-select .ant-select-selection-placeholder) {
+  display: flex !important;
+  align-items: center !important;
+  line-height: 1.2 !important;
+}
+
+.registerStep2 :global(.select-input.ant-select .ant-select-selection-search),
+.registerStep2 :global(.select-input.ant-select .ant-select-selection-search-input) {
+  height: 50px !important;
+}
+
+.registerStep2 :global(.select-input.ant-select .ant-select-arrow),
+.registerStep2 :global(.select-input.ant-select .ant-select-clear) {
+  inset-block-start: 50% !important;
+  transform: translateY(-50%) !important;
+}
+
+.registerStep2 :global(.select-input.ant-select .ant-select-selection-search-input:focus),
+.registerStep2 :global(.select-input.ant-select .ant-select-selection-search-input:focus-visible) {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.registerStep2 :global(.select-input.ant-select.ant-select-focused),
+.registerStep2 :global(.select-input.ant-select.ant-select-open),
+.registerStep2 :global(.select-input.ant-select:focus),
+.registerStep2 :global(.select-input.ant-select:focus-within) {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.registerStep2 :global(.select-input.ant-select.ant-select-focused .ant-select-selector::after),
+.registerStep2 :global(.select-input.ant-select.ant-select-open .ant-select-selector::after),
+.registerStep2 :global(.select-input.ant-select:focus .ant-select-selector::after),
+.registerStep2 :global(.select-input.ant-select:focus-within .ant-select-selector::after) {
+  box-shadow: 0 0 0 2px rgb(63 127 109 / 0.3) !important;
+  border-color: #3f7f6d !important;
+  outline: none !important;
+}
+
+.registerStep2 :global(.select-input.ant-select.ant-select-status-error .ant-select-selector) {
+  border-color: rgb(239 68 68) !important;
+}
+
+.registerStep2
+  :global(.select-input.ant-select.ant-select-status-error.ant-select-focused .ant-select-selector) {
+  box-shadow: 0 0 0 2px rgb(254 202 202) !important;
+}
+
+.registerStep2 :global(.ant-checkbox-wrapper:hover .ant-checkbox-inner),
+.registerStep2 :global(.ant-checkbox:hover .ant-checkbox-inner),
+.registerStep2 :global(.ant-checkbox-input:focus-visible + .ant-checkbox-inner) {
+  border-color: #3f7f6d !important;
+}
+
+.registerStep2 :global(.ant-checkbox-checked .ant-checkbox-inner) {
+  background-color: #3f7f6d !important;
+  border-color: #3f7f6d !important;
+}
+
+.registerStep2 :global(.ant-checkbox-checked:hover .ant-checkbox-inner),
+.registerStep2 :global(.ant-checkbox-wrapper:hover .ant-checkbox-checked .ant-checkbox-inner) {
+  background-color: #2f6e5d !important;
+  border-color: #2f6e5d !important;
+}
+
+.registerStep2 :global(.ant-checkbox-input:focus-visible + .ant-checkbox-inner) {
+  box-shadow: 0 0 0 2px rgb(63 127 109 / 0.2) !important;
+}
