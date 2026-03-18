@@ -24,7 +24,7 @@ import { UpdateMedicationDto } from './dto/update-medication.dto';
 
 @Injectable()
 export class PharmacistService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async findMedications(search?: string): Promise<MedicationResponseDto[]> {
     const normalizedSearch = search?.trim();
@@ -32,11 +32,11 @@ export class PharmacistService {
     const medications = await this.prisma.medications.findMany({
       where: normalizedSearch
         ? {
-            name: {
-              contains: normalizedSearch,
-              mode: 'insensitive',
-            },
-          }
+          name: {
+            contains: normalizedSearch,
+            mode: 'insensitive',
+          },
+        }
         : undefined,
       orderBy: [{ name: 'asc' }, { id: 'asc' }],
     });
@@ -218,44 +218,44 @@ export class PharmacistService {
         ...this.buildDeliveryHistoryStatusFilter(status),
         ...(search
           ? {
-              OR: [
-                { tracking: { contains: search, mode: 'insensitive' } },
-                {
-                  users: {
-                    is: {
-                      OR: [
-                        { name: { contains: search, mode: 'insensitive' } },
-                        { sur_name: { contains: search, mode: 'insensitive' } },
-                      ],
-                    },
+            OR: [
+              { tracking: { contains: search, mode: 'insensitive' } },
+              {
+                users: {
+                  is: {
+                    OR: [
+                      { name: { contains: search, mode: 'insensitive' } },
+                      { sur_name: { contains: search, mode: 'insensitive' } },
+                    ],
                   },
                 },
-                {
-                  receipt_details: {
-                    some: {
-                      OR: [
-                        {
-                          item_name: {
-                            contains: search,
-                            mode: 'insensitive',
-                          },
+              },
+              {
+                receipt_details: {
+                  some: {
+                    OR: [
+                      {
+                        item_name: {
+                          contains: search,
+                          mode: 'insensitive',
                         },
-                        {
-                          medications: {
-                            is: {
-                              name: {
-                                contains: search,
-                                mode: 'insensitive',
-                              },
+                      },
+                      {
+                        medications: {
+                          is: {
+                            name: {
+                              contains: search,
+                              mode: 'insensitive',
                             },
                           },
                         },
-                      ],
-                    },
+                      },
+                    ],
                   },
                 },
-              ],
-            }
+              },
+            ],
+          }
           : {}),
       },
       include: {
@@ -330,16 +330,16 @@ export class PharmacistService {
     const consultations = await this.prisma.consultations.findMany({
       where: search
         ? {
-            users_consultations_user_idTousers: {
-              is: {
-                OR: [
-                  { name: { contains: search, mode: 'insensitive' } },
-                  { sur_name: { contains: search, mode: 'insensitive' } },
-                  { phone: { contains: search, mode: 'insensitive' } },
-                ],
-              },
+          users_consultations_user_idTousers: {
+            is: {
+              OR: [
+                { name: { contains: search, mode: 'insensitive' } },
+                { sur_name: { contains: search, mode: 'insensitive' } },
+                { phone: { contains: search, mode: 'insensitive' } },
+              ],
             },
-          }
+          },
+        }
         : undefined,
       include: {
         users_consultations_user_idTousers: {
@@ -606,12 +606,12 @@ export class PharmacistService {
   private buildAddress(
     address:
       | {
-          detail?: string | null;
-          sub_districts?: { name?: string | null } | null;
-          districts?: { name?: string | null } | null;
-          provinces?: { name?: string | null } | null;
-          zip_codes?: { code?: string | null } | null;
-        }
+        detail?: string | null;
+        sub_districts?: { name?: string | null } | null;
+        districts?: { name?: string | null } | null;
+        provinces?: { name?: string | null } | null;
+        zip_codes?: { code?: string | null } | null;
+      }
       | null
       | undefined,
   ) {
