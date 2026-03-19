@@ -28,15 +28,17 @@ export class AuthController {
       secure: false,
     });
 
-    return {
-      message: 'login success',
-      access_token: result.access_token,
-    };
+    return { message: 'login success' };
   }
   @UseGuards(JwtAuthGuard)
   @Get('me')
   getMe(@Req() req) {
-    return req.user;
+    return this.authService.getMe(req.user.sub);
+  }
+  @Post('logout')
+  logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('_pgsmcmsss');
+    return { message: 'logout success' };
   }
   @Post('register')
   async register(@Body() body: RegisterDto) {

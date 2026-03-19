@@ -2,6 +2,7 @@
 
 import { CSSProperties, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 const WEEKDAY_LABELS = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
@@ -534,6 +535,7 @@ function getKpiCards(summary: DashboardSummary, selectedDate: string, selectedDa
 
 export default function StaffAdminHomePage() {
   const router = useRouter();
+  const { me, loading: authLoading } = useAuth();
   const [hasAccess, setHasAccess] = useState(false);
   const [month, setMonth] = useState(getCurrentMonthKey);
   const [selectedDate, setSelectedDate] = useState(getDefaultSelectedDate);
@@ -547,7 +549,11 @@ export default function StaffAdminHomePage() {
   const [isSelectedAppointmentsCollapsed, setIsSelectedAppointmentsCollapsed] = useState(false);
 
   useEffect(() => {
-    const roleId = getRoleIdFromToken(getTokenFromStorage());
+    if (authLoading) {
+      return;
+    }
+
+    const roleId = me?.role_id ?? null;
 
     if (!roleId) {
       router.replace("/login");
@@ -559,13 +565,13 @@ export default function StaffAdminHomePage() {
       return;
     }
 
-    if (![1, 3, 4].includes(roleId)) {
+    if (roleId !== 1) {
       router.replace("/user");
       return;
     }
 
     setHasAccess(true);
-  }, [router]);
+  }, [authLoading, me?.role_id, router]);
 
   useEffect(() => {
     if (!hasAccess) {
@@ -589,12 +595,10 @@ export default function StaffAdminHomePage() {
       }
 
       try {
-        const token = getTokenFromStorage();
         const response = await fetch(
           `${API_BASE_URL}/staff-dashboard/clinic-schedule?${query.toString()}`,
           {
             credentials: "include",
-            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
           },
         );
 
