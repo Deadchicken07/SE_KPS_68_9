@@ -165,6 +165,11 @@ type MonthWeekOption = {
   rangeLabel: string;
 };
 
+type JwtPayload = {
+  role_id?: number;
+  exp?: number;
+};
+
 const EMPTY_SUMMARY: DashboardSummary = {
   totalAppointments: 0,
   uniquePatients: 0,
@@ -206,6 +211,42 @@ function getTokenFromStorage() {
   }
 
   return window.localStorage.getItem("access_token");
+}
+
+function getRoleIdFromToken(token: string | null) {
+  if (!token || typeof window === "undefined") {
+    return null;
+  }
+
+  const segments = token.split(".");
+
+  if (segments.length < 2) {
+    return null;
+  }
+
+  try {
+    const normalized = segments[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(
+      normalized.length + ((4 - (normalized.length % 4)) % 4),
+      "=",
+    );
+    const payload = JSON.parse(window.atob(padded)) as JwtPayload;
+    const expiresAt = Number(payload?.exp);
+    const roleId = Number(payload?.role_id);
+
+    if (Number.isInteger(expiresAt) && expiresAt > 0 && Date.now() >= expiresAt * 1000) {
+      window.localStorage.removeItem("access_token");
+      return null;
+    }
+
+    if (!Number.isInteger(roleId) || roleId <= 0) {
+      return null;
+    }
+
+    return roleId;
+  } catch {
+    return null;
+  }
 }
 
 function formatMonthLabel(monthKey: string) {
@@ -493,6 +534,7 @@ function getKpiCards(summary: DashboardSummary, selectedDate: string, selectedDa
 
 export default function StaffAdminHomePage() {
   const router = useRouter();
+  const [hasAccess, setHasAccess] = useState(false);
   const [month, setMonth] = useState(getCurrentMonthKey);
   const [selectedDate, setSelectedDate] = useState(getDefaultSelectedDate);
   const [staffFilter, setStaffFilter] = useState("");
@@ -505,6 +547,31 @@ export default function StaffAdminHomePage() {
   const [isSelectedAppointmentsCollapsed, setIsSelectedAppointmentsCollapsed] = useState(false);
 
   useEffect(() => {
+    const roleId = getRoleIdFromToken(getTokenFromStorage());
+
+    if (!roleId) {
+      router.replace("/login");
+      return;
+    }
+
+    if (roleId === 5) {
+      router.replace("/staff/pharmacist_home");
+      return;
+    }
+
+    if (![1, 3, 4].includes(roleId)) {
+      router.replace("/user");
+      return;
+    }
+
+    setHasAccess(true);
+  }, [router]);
+
+  useEffect(() => {
+    if (!hasAccess) {
+      return;
+    }
+
     let ignore = false;
 
     async function loadDashboard() {
@@ -555,10 +622,10 @@ export default function StaffAdminHomePage() {
           setError("กรุณาเข้าสู่ระบบด้วยบัญชีบุคลากรเพื่อดูตารางงาน");
           setData(null);
         } else if (caught instanceof Error) {
-          setError(caught.message || "เชื่อมต่อ backend ไม่สำเร็จ กรุณาตรวจสอบว่าเซิร์ฟเวอร์เปิดอยู่");
+          setError(caught.message || "เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ กรุณาตรวจสอบว่าเซิร์ฟเวอร์เปิดอยู่");
           setData(null);
         } else {
-          setError("เชื่อมต่อ backend ไม่สำเร็จ กรุณาตรวจสอบว่าเซิร์ฟเวอร์เปิดอยู่");
+          setError("เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ กรุณาตรวจสอบว่าเซิร์ฟเวอร์เปิดอยู่");
           setData(null);
         }
       } finally {
@@ -573,7 +640,7 @@ export default function StaffAdminHomePage() {
     return () => {
       ignore = true;
     };
-  }, [month, selectedDate, staffFilter, reloadKey]);
+  }, [hasAccess, month, selectedDate, staffFilter, reloadKey]);
 
   const summary = data?.summary ?? EMPTY_SUMMARY;
   const weekStats = data?.weekStats ?? [];
@@ -636,6 +703,10 @@ export default function StaffAdminHomePage() {
     setSelectedDate(`${nextMonth}-01`);
   }
 
+  if (!hasAccess) {
+    return null;
+  }
+
   return (
     <main
       className="min-h-screen px-4 pb-10 pt-6 text-[#18312c] sm:px-6 lg:px-7 lg:pb-14 lg:pt-8"
@@ -649,13 +720,13 @@ export default function StaffAdminHomePage() {
           <div className="flex flex-wrap items-start justify-between gap-5">
             <div className="max-w-[760px]">
               <span className="inline-flex rounded-full bg-white/15 px-3.5 py-2 text-[0.82rem] font-extrabold uppercase tracking-[0.08em] text-[#f8e7be]">
-                Clinic Schedule
+                ตารางงานคลินิก
               </span>
               <h1 className="mt-4 text-[clamp(2rem,3vw,3.1rem)] font-semibold leading-[1.08]">
                 ตารางงานทั้งคลินิกแบบรายสัปดาห์
               </h1>
               <p className="mt-3 leading-7 text-[rgba(255,253,248,0.82)]">
-                มุมมองรายสัปดาห์แบบ timeline ตามเวลาในแต่ละวัน กดที่บล็อกนัดหมายเพื่อดูข้อมูลในรายการเดิมด้านล่างได้ทันที
+                มุมมองรายสัปดาห์ตามช่วงเวลาในแต่ละวัน กดที่บล็อกนัดหมายเพื่อดูรายละเอียดในรายการด้านล่างได้ทันที
               </p>
             </div>
 
@@ -669,7 +740,7 @@ export default function StaffAdminHomePage() {
                 </strong>
               </div>
               <div className="min-w-[170px] rounded-[20px] border border-white/15 bg-white/10 px-4 py-3.5 backdrop-blur-[10px]">
-                <span className="block text-[0.82rem] text-[rgba(255,253,248,0.7)]">บุคลากร</span>
+                <span className="block text-[0.82rem] text-[rgba(255,253,248,0.7)]">ตัวกรองบุคลากร</span>
                 <strong className="mt-2 block text-[1.1rem] leading-[1.4]">
                   {selectedStaff?.name ?? "ทั้งคลินิก"}
                 </strong>
@@ -705,7 +776,7 @@ export default function StaffAdminHomePage() {
           </div>
           <div className="grid gap-2">
             <label className="text-[0.88rem] font-bold text-[#33554d]" htmlFor="staffFilter">
-              บุคลากร
+              เลือกบุคลากร
             </label>
             <select
               id="staffFilter"
@@ -802,7 +873,7 @@ export default function StaffAdminHomePage() {
                   style={{ background: BOARD_HEADER_BACKGROUND }}
                 >
                   <div className="border-r border-[#62635b24] px-4 py-[14px] text-[0.72rem] font-extrabold tracking-[0.12em] text-[#716652]">
-                    DAY
+                    วัน
                   </div>
                   <div className="relative min-h-14">
                     {timeMarkers.map((minute) => (

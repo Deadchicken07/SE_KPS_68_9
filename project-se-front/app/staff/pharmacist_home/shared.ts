@@ -76,7 +76,7 @@ export const STATUS_META: Record<
   { label: string; tone: string; rank: number }
 > = {
   no_receipt: {
-    label: "ยังไม่มี receipt",
+    label: "ยังไม่มีใบเสร็จ",
     tone: "border-slate-200 bg-slate-100 text-slate-700",
     rank: 0,
   },
@@ -109,7 +109,7 @@ export const STATUS_META: Record<
 
 export const FILTER_OPTIONS: Array<{ value: StatusFilter; label: string }> = [
   { value: "to_dispense", label: "คิวที่ต้องจ่ายยา" },
-  { value: "no_receipt", label: "ยังไม่มี receipt" },
+  { value: "no_receipt", label: "ยังไม่มีใบเสร็จ" },
   { value: "pending_delivery", label: "รอจัดส่ง" },
 ];
 
@@ -188,7 +188,7 @@ export function consultationTotal(consultation: ConsultationRecord) {
 }
 
 export function medicationName(item: PrescriptionItemRecord) {
-  return item.medication?.name ?? `medication #${item.medication_id}`;
+  return item.medication?.name ?? `ยา #${item.medication_id}`;
 }
 
 export function medicationSummary(consultation: ConsultationRecord) {

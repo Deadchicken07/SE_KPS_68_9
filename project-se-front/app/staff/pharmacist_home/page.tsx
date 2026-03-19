@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   consultationTotal,
   displayStatus,
@@ -17,7 +18,50 @@ import {
   STATUS_META,
 } from "./shared";
 
+type JwtPayload = {
+  role_id?: number;
+  exp?: number;
+};
+
+function getRoleIdFromToken(token: string | null) {
+  if (!token || typeof window === "undefined") {
+    return null;
+  }
+
+  const segments = token.split(".");
+
+  if (segments.length < 2) {
+    return null;
+  }
+
+  try {
+    const normalized = segments[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(
+      normalized.length + ((4 - (normalized.length % 4)) % 4),
+      "=",
+    );
+    const payload = JSON.parse(window.atob(padded)) as JwtPayload;
+    const expiresAt = Number(payload?.exp);
+    const roleId = Number(payload?.role_id);
+
+    if (Number.isInteger(expiresAt) && expiresAt > 0 && Date.now() >= expiresAt * 1000) {
+      window.localStorage.removeItem("access_token");
+      return null;
+    }
+
+    if (!Number.isInteger(roleId) || roleId <= 0) {
+      return null;
+    }
+
+    return roleId;
+  } catch {
+    return null;
+  }
+}
+
 export default function PharmacistHomePage() {
+  const router = useRouter();
+  const [hasAccess, setHasAccess] = useState(false);
   const [data, setData] = useState<OrdersResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,6 +69,31 @@ export default function PharmacistHomePage() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   useEffect(() => {
+    const roleId = getRoleIdFromToken(getToken());
+
+    if (!roleId) {
+      router.replace("/login");
+      return;
+    }
+
+    if ([1, 3, 4].includes(roleId)) {
+      router.replace("/staff/admin-home");
+      return;
+    }
+
+    if (roleId !== 5) {
+      router.replace("/user");
+      return;
+    }
+
+    setHasAccess(true);
+  }, [router]);
+
+  useEffect(() => {
+    if (!hasAccess) {
+      return;
+    }
+
     let ignore = false;
 
     async function load() {
@@ -35,7 +104,7 @@ export default function PharmacistHomePage() {
 
       if (!accessToken) {
         setLoading(false);
-        setError("ไม่พบ access_token สำหรับเรียก API");
+        setError("ไม่พบโทเค็นเข้าสู่ระบบสำหรับเรียกข้อมูล");
         return;
       }
 
@@ -63,7 +132,7 @@ export default function PharmacistHomePage() {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [hasAccess]);
 
   const consultations = data?.consultations ?? [];
 
@@ -133,6 +202,10 @@ export default function PharmacistHomePage() {
   const selectedStatus = selected ? displayStatus(selected) : "no_receipt";
   const selectedReceipt = selected ? latestReceipt(selected) : null;
 
+  if (!hasAccess) {
+    return null;
+  }
+
   return (
     <main className="min-h-screen bg-slate-100 px-4 py-6 text-slate-900 sm:px-6">
       <div className="mx-auto max-w-7xl space-y-4">
@@ -140,14 +213,14 @@ export default function PharmacistHomePage() {
           <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
             <div className="space-y-1">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                PHAMA-HOME
+                งานเภสัชกรรม
               </p>
               <h1 className="text-2xl font-semibold text-slate-900">ดูคิวจ่ายยา</h1>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3">
               <StatCard label="คิวที่ต้องทำ" value={queueCount} />
-              <StatCard label="consultations" value={data?.totalConsultations ?? 0} />
+              <StatCard label="เคสทั้งหมด" value={data?.totalConsultations ?? 0} />
               <StatCard label="รายการยา" value={lineCount} />
             </div>
           </div>
@@ -156,7 +229,7 @@ export default function PharmacistHomePage() {
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="ค้นหาคนไข้ / consultation / ยา"
+              placeholder="ค้นหาผู้ป่วย / เลขเคส / ชื่อยา"
               className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none placeholder:text-slate-400 focus:border-slate-400"
             />
 
@@ -206,7 +279,7 @@ export default function PharmacistHomePage() {
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-sm font-semibold">Consultation {consultation.id}</p>
+                          <p className="text-sm font-semibold">เคส #{consultation.id}</p>
                           <p className={`mt-1 text-sm ${active ? "text-slate-100" : "text-slate-700"}`}>
                             {fullName(consultation.patient)}
                           </p>
@@ -224,7 +297,7 @@ export default function PharmacistHomePage() {
                       </div>
 
                       <div className={`mt-3 space-y-1 text-xs ${active ? "text-slate-200" : "text-slate-500"}`}>
-                        <p>แพทย์ {fullName(consultation.staff)}</p>
+                        <p>ผู้ให้คำปรึกษา {fullName(consultation.staff)}</p>
                         <p>{medicationSummary(consultation)}</p>
                         <p>รวม {formatMoney(consultationTotal(consultation))}</p>
                       </div>
@@ -242,7 +315,7 @@ export default function PharmacistHomePage() {
               <div className="space-y-5">
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div>
-                    <p className="text-sm font-medium text-slate-500">Consultation {selected.id}</p>
+                    <p className="text-sm font-medium text-slate-500">เคส #{selected.id}</p>
                     <h2 className="mt-1 text-2xl font-semibold text-slate-900">
                       {fullName(selected.patient)}
                     </h2>
@@ -259,10 +332,10 @@ export default function PharmacistHomePage() {
                 </div>
 
                 <dl className="grid max-w-2xl grid-cols-[96px_minmax(0,1fr)] gap-y-3 text-sm sm:grid-cols-[120px_minmax(0,1fr)] sm:gap-x-6">
-                  <dt className="font-medium text-slate-500">คนไข้</dt>
+                  <dt className="font-medium text-slate-500">ผู้ป่วย</dt>
                   <dd className="font-medium text-slate-900">{fullName(selected.patient)}</dd>
 
-                  <dt className="font-medium text-slate-500">แพทย์</dt>
+                  <dt className="font-medium text-slate-500">ผู้ให้คำปรึกษา</dt>
                   <dd className="font-medium text-slate-900">{fullName(selected.staff)}</dd>
 
                   <dt className="font-medium text-slate-500">เภสัชกร</dt>
@@ -284,7 +357,7 @@ export default function PharmacistHomePage() {
 
                 <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
                   <div className="border-b border-slate-200 px-5 py-4">
-                    <h3 className="text-lg font-semibold text-slate-900">รายการยาคร่าว ๆ</h3>
+                    <h3 className="text-lg font-semibold text-slate-900">สรุปรายการยา</h3>
                   </div>
 
                   {selected.prescription_items.length ? (
@@ -310,18 +383,18 @@ export default function PharmacistHomePage() {
                     </div>
                   ) : (
                     <div className="p-5">
-                      <EmptyState body="consultation นี้ไม่มีรายการยา" />
+                      <EmptyState body="เคสนี้ไม่มีรายการยา" />
                     </div>
                   )}
                 </section>
 
                 <div className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-5 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <p className="text-sm font-medium text-slate-900">receipt ล่าสุด</p>
+                    <p className="text-sm font-medium text-slate-900">ใบเสร็จล่าสุด</p>
                     <p className="mt-1 text-sm text-slate-600">
                       {selectedReceipt
                         ? `อัปเดตเมื่อ ${formatDateTime(selectedReceipt.created_at)}`
-                        : "คิวนี้ยังไม่มี receipt"}
+                        : "คิวนี้ยังไม่มีใบเสร็จ"}
                     </p>
                   </div>
 
@@ -336,7 +409,7 @@ export default function PharmacistHomePage() {
                 </div>
               </div>
             ) : (
-              <EmptyState body="เลือก consultation ทางซ้ายเพื่อดูรายละเอียด" />
+              <EmptyState body="เลือกเคสทางซ้ายเพื่อดูรายละเอียด" />
             )}
           </section>
         </section>
