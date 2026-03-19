@@ -69,7 +69,7 @@ export default function AddStaffPage() {
       <div className={styles.glassCard}>
         <div className={styles.header}>
           <h1 className={styles.title}>เพิ่มบุคลากรใหม่</h1>
-          <p className={styles.subtitle}>กรอกข้อมูลเพื่อสร้างบัญชีสำหรับ จิตแพทย์ หรือ นักจิตวิทยา</p>
+          <p className={styles.subtitle}>กรอกข้อมูลเพื่อสร้างบัญชีสำหรับ จิตแพทย์ นักจิตวิทยา หรือ เภสัชกร</p>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.formGrid}>
@@ -135,6 +135,7 @@ export default function AddStaffPage() {
             >
               <option value={4}>จิตแพทย์</option>
               <option value={3}>นักจิตวิทยา</option>
+              <option value={5}>เภสัชกร</option>
             </select>
           </div>
 

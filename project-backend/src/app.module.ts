@@ -16,7 +16,6 @@ import { PharmacistModule } from './pharmacist/pharmacist.module';
 import { ConsultationsModule } from './consultations/consultations.module';
 
 @Module({
-  imports: [UserModule, PrismaModule, AuthModule, LocationModule, QuestionnairesModule, QuestionsModule, ChoicesModule, AnswersModule, ResponsesModule,MailModule,PharmacistModule, ConsultationsModule],
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     UserModule,
@@ -28,8 +27,11 @@ import { ConsultationsModule } from './consultations/consultations.module';
     QuestionsModule,
     ChoicesModule,
     AnswersModule,
+    ResponsesModule,
+    PharmacistModule,
+    ConsultationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

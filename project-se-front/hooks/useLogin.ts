@@ -7,8 +7,6 @@ import { useAuth } from '@/components/providers/AuthProvider';
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 
-
-
 export const useLogin = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
