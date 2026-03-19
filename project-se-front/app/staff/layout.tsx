@@ -7,9 +7,9 @@ export default function StaffLayout({
     children : ReactNode
 }) {
   return (
-    <div style={{ display: "flex" }}>
+    <div className="flex min-h-screen bg-[#f4f1ea]">
       <SlideBar/>
-      <main>{children}</main>
+      <main className="min-w-0 flex-1 overflow-x-hidden">{children}</main>
     </div>
   )
 }
