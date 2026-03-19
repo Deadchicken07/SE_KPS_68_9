@@ -1,129 +1,17 @@
-const summaryCards = [
-  {
-    label: "นัดหมายวันนี้",
-    value: "8",
-    detail: "appointments ของจิตแพทย์ในวันนี้",
-  },
-  {
-    label: "คิวตรวจพร้อมเริ่ม",
-    value: "6",
-    detail: "สรุปจาก schedule และสถานะนัดหมาย",
-  },
-  {
-    label: "เคสรอปิด consultation",
-    value: "4",
-    detail: "เคสที่มี note แล้วแต่ยังไม่สรุปแผนรักษา",
-  },
-  {
-    label: "รายการยาที่ต้อง review",
-    value: "11",
-    detail: "จาก prescription_items และ medications",
-  },
-];
+import { getPsychiatristDashboard } from '@/lib/role-dashboard-api';
 
-const appointments = [
-  {
-    time: "09:00",
-    patient: "ธนา ศรีสุข",
-    id: "APT-240318-01",
-    type: "ติดตามอาการ",
-    status: "confirmed",
-    summary: "ติดตามอาการและประเมินการตอบสนองต่อยา",
-  },
-  {
-    time: "10:30",
-    patient: "พิมพ์ชนก จันทร์ดี",
-    id: "APT-240318-02",
-    type: "เคสใหม่",
-    status: "waiting",
-    summary: "เคสใหม่จากการส่งต่อ ต้องเปิด consultation ใหม่",
-  },
-  {
-    time: "14:00",
-    patient: "กิตติคุณ วัฒนะ",
-    id: "APT-240318-03",
-    type: "ทบทวนผลข้างเคียงยา",
-    status: "confirmed",
-    summary: "ติดตาม adverse effect หลังปรับยาเมื่อสัปดาห์ก่อน",
-  },
-];
+export const dynamic = 'force-dynamic';
 
-const consultations = [
-  {
-    id: "CON-8841",
-    userId: "USR-104",
-    status: "in_progress",
-    note: "มีประวัติหยุดยาเอง 2 ครั้ง ต้องยืนยันแผนติดตามและประเมินความเสี่ยงซ้ำ",
-  },
-  {
-    id: "CON-8847",
-    userId: "USR-233",
-    status: "pending_review",
-    note: "ต้องสรุป note และยืนยันขนาดยาก่อนออก prescription",
-  },
-  {
-    id: "CON-8850",
-    userId: "USR-311",
-    status: "awaiting_plan",
-    note: "มีผลประเมินการนอนผิดปกติ ควรกำหนดแนวทางรักษาต่อในการพบครั้งนี้",
-  },
-];
+export default async function PsychiatristHomePage() {
+  const {
+    summaryCards,
+    appointments,
+    consultations,
+    workSchedule,
+    recentAssessments,
+    medicationReview,
+  } = await getPsychiatristDashboard();
 
-const workSchedule = [
-  {
-    date: "19 มี.ค. 2026",
-    status: "working",
-    note: "ตรวจคนไข้ onsite ช่วงเช้า และ teleconsult ช่วงบ่าย",
-  },
-  {
-    date: "20 มี.ค. 2026",
-    status: "working",
-    note: "มีประชุมทีมสหวิชาชีพเวลา 13:00 น.",
-  },
-  {
-    date: "21 มี.ค. 2026",
-    status: "leave",
-    note: "วันลา ไม่เปิดรับนัดใหม่",
-  },
-];
-
-const recentAssessments = [
-  {
-    patient: "ธนา ศรีสุข",
-    questionnaire: "แบบประเมินภาวะซึมเศร้า",
-    submittedAt: "2026-03-18",
-    summary: "คะแนนลดลงเล็กน้อย แต่ยังมีปัญหาเรื่องการนอนและสมาธิ",
-  },
-  {
-    patient: "พิมพ์ชนก จันทร์ดี",
-    questionnaire: "แบบประเมินความวิตกกังวล",
-    submittedAt: "2026-03-18",
-    summary: "มีความกังวลสูงก่อนนอน ควรถามต่อเรื่อง trigger รายวัน",
-  },
-  {
-    patient: "กิตติคุณ วัฒนะ",
-    questionnaire: "แบบติดตามผลข้างเคียงยา",
-    submittedAt: "2026-03-17",
-    summary: "รายงานอาการง่วงและปากแห้งเพิ่มขึ้นหลังปรับยา",
-  },
-];
-
-const medicationReview = [
-  {
-    name: "Sertraline 50 mg",
-    quantity: 30,
-  },
-  {
-    name: "Quetiapine 25 mg",
-    quantity: 14,
-  },
-  {
-    name: "Clonazepam 0.5 mg",
-    quantity: 10,
-  },
-];
-
-export default function PsychiatristHomePage() {
   return (
     <div className="min-h-screen bg-[#f5f3ee] text-slate-900">
       <div className="mx-auto max-w-[1240px] px-6 py-8 lg:px-10">
@@ -153,11 +41,15 @@ export default function PsychiatristHomePage() {
                 <div className="mt-4 space-y-3">
                   <div className="rounded-2xl bg-white px-4 py-4 ring-1 ring-[#d7e7de]">
                     <p className="font-medium text-slate-900">เคสรอ medication review</p>
-                    <p className="mt-1 text-sm text-slate-500">11 รายการที่ต้องตรวจซ้ำ</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {summaryCards[3]?.value ?? '0'} รายการที่ต้องตรวจซ้ำ
+                    </p>
                   </div>
                   <div className="rounded-2xl bg-white px-4 py-4 ring-1 ring-[#d7e7de]">
                     <p className="font-medium text-slate-900">consultation ค้างสรุป</p>
-                    <p className="mt-1 text-sm text-slate-500">4 เคสที่ยังไม่ปิดแผนการรักษา</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {summaryCards[2]?.value ?? '0'} เคสที่ยังไม่ปิดแผนการรักษา
+                    </p>
                   </div>
                 </div>
               </div>
@@ -188,24 +80,32 @@ export default function PsychiatristHomePage() {
             </h2>
 
             <div className="mt-6 space-y-4">
-              {appointments.map((item) => (
-                <div
-                  key={item.id}
-                  className="grid gap-4 rounded-[28px] bg-[#f7faf8] p-5 ring-1 ring-slate-200 md:grid-cols-[90px_minmax(0,1fr)_auto]"
-                >
-                  <div className="text-lg font-semibold text-[#16463f]">{item.time}</div>
-                  <div className="space-y-2">
-                    <p className="text-xl font-semibold text-slate-900">{item.patient}</p>
-                    <p className="text-sm text-slate-500">
-                      {item.id} • {item.type}
-                    </p>
-                    <p className="text-sm leading-7 text-slate-600">{item.summary}</p>
+              {appointments.length ? (
+                appointments.map((item) => (
+                  <div
+                    key={item.id}
+                    className="grid gap-4 rounded-[28px] bg-[#f7faf8] p-5 ring-1 ring-slate-200 md:grid-cols-[90px_minmax(0,1fr)_auto]"
+                  >
+                    <div className="text-lg font-semibold text-[#16463f]">{item.time}</div>
+                    <div className="space-y-2">
+                      <p className="text-xl font-semibold text-slate-900">
+                        {item.patient}
+                      </p>
+                      <p className="text-sm text-slate-500">
+                        {item.id} • {item.type}
+                      </p>
+                      <p className="text-sm leading-7 text-slate-600">{item.summary}</p>
+                    </div>
+                    <div className="self-start rounded-full bg-white px-4 py-2 text-sm text-slate-700 ring-1 ring-slate-200">
+                      {item.status}
+                    </div>
                   </div>
-                  <div className="self-start rounded-full bg-white px-4 py-2 text-sm text-slate-700 ring-1 ring-slate-200">
-                    {item.status}
-                  </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="rounded-[24px] bg-[#f7faf8] p-5 text-sm text-slate-500 ring-1 ring-slate-200">
+                  ยังไม่มีนัดหมายของจิตแพทย์ในวันนี้
+                </p>
+              )}
             </div>
           </article>
 
@@ -216,21 +116,27 @@ export default function PsychiatristHomePage() {
               </p>
               <h2 className="mt-2 text-3xl font-semibold">เคสที่ยังต้องตัดสินใจ</h2>
               <div className="mt-6 space-y-4">
-                {consultations.map((item) => (
-                  <div
-                    key={item.id}
-                    className="rounded-[24px] bg-white/6 p-5 ring-1 ring-white/10"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <p className="text-lg font-semibold">{item.id}</p>
-                      <span className="rounded-full bg-white/10 px-3 py-1 text-xs uppercase tracking-[0.14em] text-white/80">
-                        {item.status}
-                      </span>
+                {consultations.length ? (
+                  consultations.map((item) => (
+                    <div
+                      key={item.id}
+                      className="rounded-[24px] bg-white/6 p-5 ring-1 ring-white/10"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-lg font-semibold">{item.id}</p>
+                        <span className="rounded-full bg-white/10 px-3 py-1 text-xs uppercase tracking-[0.14em] text-white/80">
+                          {item.status}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-sm text-white/60">{item.userId}</p>
+                      <p className="mt-3 text-sm leading-7 text-white/78">{item.note}</p>
                     </div>
-                    <p className="mt-2 text-sm text-white/60">{item.userId}</p>
-                    <p className="mt-3 text-sm leading-7 text-white/78">{item.note}</p>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="rounded-[24px] bg-white/6 p-5 text-sm text-white/70 ring-1 ring-white/10">
+                    ยังไม่มี consultation ที่ค้างตัดสินใจในตอนนี้
+                  </p>
+                )}
               </div>
             </article>
 
@@ -242,15 +148,21 @@ export default function PsychiatristHomePage() {
                 รายการยาที่ควรตรวจซ้ำ
               </h2>
               <div className="mt-6 space-y-4">
-                {medicationReview.map((item) => (
-                  <div
-                    key={item.name}
-                    className="rounded-[24px] bg-white px-5 py-5 ring-1 ring-[#eadfcf]"
-                  >
-                    <p className="text-lg font-semibold text-slate-900">{item.name}</p>
-                    <p className="mt-2 text-sm text-slate-600">จำนวน {item.quantity}</p>
-                  </div>
-                ))}
+                {medicationReview.length ? (
+                  medicationReview.map((item) => (
+                    <div
+                      key={`${item.name}-${item.quantity}`}
+                      className="rounded-[24px] bg-white px-5 py-5 ring-1 ring-[#eadfcf]"
+                    >
+                      <p className="text-lg font-semibold text-slate-900">{item.name}</p>
+                      <p className="mt-2 text-sm text-slate-600">จำนวน {item.quantity}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="rounded-[24px] bg-white px-5 py-5 text-sm text-slate-500 ring-1 ring-[#eadfcf]">
+                    ยังไม่มีรายการยาที่ต้องตรวจซ้ำในตอนนี้
+                  </p>
+                )}
               </div>
             </article>
           </div>
@@ -265,20 +177,26 @@ export default function PsychiatristHomePage() {
               ตารางทำงานของจิตแพทย์
             </h2>
             <div className="mt-6 space-y-4">
-              {workSchedule.map((item) => (
-                <div
-                  key={item.date}
-                  className="rounded-[24px] bg-[#f7faf8] p-5 ring-1 ring-slate-200"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-lg font-semibold text-slate-900">{item.date}</p>
-                    <span className="rounded-full bg-white px-3 py-1 text-xs uppercase tracking-[0.14em] text-slate-700 ring-1 ring-slate-200">
-                      {item.status}
-                    </span>
+              {workSchedule.length ? (
+                workSchedule.map((item) => (
+                  <div
+                    key={`${item.date}-${item.status}`}
+                    className="rounded-[24px] bg-[#f7faf8] p-5 ring-1 ring-slate-200"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-lg font-semibold text-slate-900">{item.date}</p>
+                      <span className="rounded-full bg-white px-3 py-1 text-xs uppercase tracking-[0.14em] text-slate-700 ring-1 ring-slate-200">
+                        {item.status}
+                      </span>
+                    </div>
+                    <p className="mt-3 text-sm leading-7 text-slate-600">{item.note}</p>
                   </div>
-                  <p className="mt-3 text-sm leading-7 text-slate-600">{item.note}</p>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="rounded-[24px] bg-[#f7faf8] p-5 text-sm text-slate-500 ring-1 ring-slate-200">
+                  ยังไม่มีข้อมูลตารางทำงานในช่วงนี้
+                </p>
+              )}
             </div>
           </article>
 
@@ -290,21 +208,29 @@ export default function PsychiatristHomePage() {
               ผลประเมินล่าสุดของผู้ป่วย
             </h2>
             <div className="mt-6 space-y-4">
-              {recentAssessments.map((item) => (
-                <div
-                  key={`${item.patient}-${item.questionnaire}`}
-                  className="rounded-[24px] bg-[#f7faf8] p-5 ring-1 ring-slate-200"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-lg font-semibold text-slate-900">{item.patient}</p>
-                    <span className="rounded-full bg-white px-3 py-1 text-xs text-slate-600 ring-1 ring-slate-200">
-                      {item.submittedAt}
-                    </span>
+              {recentAssessments.length ? (
+                recentAssessments.map((item) => (
+                  <div
+                    key={`${item.patient}-${item.questionnaire}-${item.submittedAt}`}
+                    className="rounded-[24px] bg-[#f7faf8] p-5 ring-1 ring-slate-200"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-lg font-semibold text-slate-900">
+                        {item.patient}
+                      </p>
+                      <span className="rounded-full bg-white px-3 py-1 text-xs text-slate-600 ring-1 ring-slate-200">
+                        {item.submittedAt}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm text-slate-500">{item.questionnaire}</p>
+                    <p className="mt-3 text-sm leading-7 text-slate-600">{item.summary}</p>
                   </div>
-                  <p className="mt-2 text-sm text-slate-500">{item.questionnaire}</p>
-                  <p className="mt-3 text-sm leading-7 text-slate-600">{item.summary}</p>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="rounded-[24px] bg-[#f7faf8] p-5 text-sm text-slate-500 ring-1 ring-slate-200">
+                  ยังไม่มีผลประเมินล่าสุดที่ผูกกับคิวตรวจวันนี้
+                </p>
+              )}
             </div>
           </article>
         </section>
