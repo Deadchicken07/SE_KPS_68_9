@@ -286,12 +286,12 @@ export class PsychiatristDashboardService {
           },
         },
       },
-      select: { id: true },
-      orderBy: { id: 'asc' },
+      select: { user_id: true },
+      orderBy: { user_id: 'asc' },
     });
 
     if (matchedStaff.length) {
-      return matchedStaff.map((item) => item.id);
+      return matchedStaff.map((item) => item.user_id);
     }
 
     const fallbackAppointment = await this.prisma.appointments.findFirst({

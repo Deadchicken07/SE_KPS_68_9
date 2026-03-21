@@ -1,0 +1,19 @@
+.browser-tabs .ant-tabs-nav{
+  margin:0 !important;
+}
+
+.browser-tabs .ant-tabs-tab{
+  background:#d9d9d9 !important;
+  border:none !important;
+  border-radius:14px 14px 0 0 !important;
+  padding:6px 18px !important;
+  margin-right:6px !important;
+}
+
+.browser-tabs .ant-tabs-tab-active{
+  background:white !important;
+}
+
+.browser-tabs .ant-tabs-ink-bar{
+  display:none !important;
+}

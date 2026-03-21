@@ -1,10 +1,18 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UserService } from './user/user.service';
-import { UserController } from './user/user.controller';
 import { UserModule } from './user/user.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { AuthModule } from './auth/auth.module';
+import { LocationModule } from './location/location.module';
+import { MailModule } from './mail/mail.module';
+import { QuestionnairesModule } from './questionnaires/questionnaires.module';
+import { QuestionsModule } from './questions/questions.module';
+import { ChoicesModule } from './choices/choices.module';
+import { AnswersModule } from './answers/answers.module';
+import { ResponsesModule } from './responses/responses.module';
+import { PharmacistModule } from './pharmacist/pharmacist.module';
+import { ConsultationsModule } from './consultations/consultations.module';
 import { PsychiatristDashboardModule } from './psychiatrist-dashboard/psychiatrist-dashboard.module';
 import { PsychologistDashboardModule } from './psychologist-dashboard/psychologist-dashboard.module';
 
@@ -12,10 +20,20 @@ import { PsychologistDashboardModule } from './psychologist-dashboard/psychologi
   imports: [
     UserModule,
     PrismaModule,
+    AuthModule,
+    LocationModule,
+    QuestionnairesModule,
+    QuestionsModule,
+    ChoicesModule,
+    AnswersModule,
+    ResponsesModule,
+    MailModule,
+    PharmacistModule,
+    ConsultationsModule,
     PsychiatristDashboardModule,
     PsychologistDashboardModule,
   ],
-  controllers: [AppController, UserController],
-  providers: [AppService, UserService],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}

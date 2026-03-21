@@ -1,40 +1,47 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-
-const links = [
-  { name: "Dashboard", href: "/staff" },
-  { name: "Users", href: "/staff/users" },
-  { name: "Reports", href: "/staff/reports" },
-]
+import { useMemo } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { mapRoleIdToRole, roleHome, roleLinks, type Roles } from "@/types/role.types";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 export default function SidebarNav() {
-  const pathname = usePathname()
+  const pathname = usePathname();
+  const { me } = useAuth();
+  const role: Roles | null = useMemo(
+    () => mapRoleIdToRole(me?.role_id ?? null),
+    [me?.role_id],
+  );
+
+  const links = role ? roleLinks[role] : [];
+  const homePath = role ? roleHome[role] : "/login";
 
   return (
-    <aside className="w-60 bg-gray-900 text-white min-h-screen p-6">
-      <h2 className="text-xl font-bold mb-6">Staff Panel</h2>
+    <aside className="min-h-screen w-60 bg-[#0f766e] p-6 text-white">
+      <Link href={homePath} className="mb-6 block text-xl font-bold">
+        Staff Panel
+      </Link>
 
       <div className="flex flex-col gap-4">
         {links.map((link) => {
-          const isActive = pathname === link.href
+          const isActive = pathname === link.href;
 
           return (
             <Link
               key={link.href}
               href={link.href}
-              className={`p-2 rounded ${
+              className={`rounded p-2 ${
                 isActive
-                  ? "bg-gray-700"
-                  : "hover:bg-gray-800"
+                  ? "bg-[#065f46] text-white"
+                  : "text-[#d1fae5] hover:bg-[#065f46] hover:text-white"
               }`}
             >
               {link.name}
             </Link>
-          )
+          );
         })}
       </div>
     </aside>
-  )
+  );
 }
