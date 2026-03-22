@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "antd";
 import OtpInput from "@/components/OtpInput";
 import { RegisterStep3Props } from "@/types/Register.types";
 
@@ -33,7 +34,7 @@ export default function RegisterStep3Otp({
 
   return (
     <div className="space-y-6 text-center">
-      <h3 className="text-xl font-semibold text-[#2F6E5D]">ยืนยัน OTP</h3>
+      <h3 className="text-xl font-semibold text-[#0e5b50]">ยืนยัน OTP</h3>
 
       <p className="text-gray-500 text-sm">
         กรุณากรอกรหัส OTP ที่ส่งไปยัง
@@ -45,27 +46,30 @@ export default function RegisterStep3Otp({
 
       {otpError && <p className="text-red-500 text-sm">{otpError}</p>}
 
-      <button
-        disabled={verifyOtpLoading || registering || otp.length !== 6}
+      <Button
+        type="primary"
+        size="large"
+        disabled={registering || otp.length !== 6}
+        loading={verifyOtpLoading}
         onClick={handleVerify}
         className="btn-primary"
       >
-        {verifyOtpLoading ? "กำลังตรวจสอบ..." : "ยืนยัน OTP"}
-      </button>
+        {verifyOtpLoading ? "กำลังตรวจสอบ OTP..." : "ยืนยัน OTP"}
+      </Button>
 
       <p
         onClick={handleResend}
         className={`text-sm ${
           cooldown > 0
             ? "text-gray-400"
-            : "text-blue-600 btn-primary-pointer hover:underline"
+            : "text-[#0e5b50] btn-primary-pointer hover:underline"
         }`}
       >
         {cooldown > 0
-          ? `ขอ OTP ใหม่ใน ${cooldown}s`
+          ? `ส่ง OTP ใหม่ใน ${cooldown}s`
           : sendOtpLoading
             ? "กำลังส่ง OTP..."
-            : "ขอ OTP ใหม่"}
+            : "ส่ง OTP ใหม่"}
       </p>
     </div>
   );

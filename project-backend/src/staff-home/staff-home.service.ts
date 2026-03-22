@@ -6,6 +6,7 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { StaffHomeQueryDto } from './dto/staff-home-query.dto';
+import { UpsertStaffScheduleDto } from './dto/upsert-staff-schedule.dto';
 
 type DashboardStatus = 'pending' | 'confirmed' | 'completed';
 const CLINIC_TIME_ZONE = 'Asia/Bangkok';
@@ -91,7 +92,7 @@ export class StaffHomeService {
       ...(staffId ? { staff_id: staffId } : {}),
     };
 
-    const [appointments, weekAppointments, staffRows] = await Promise.all([
+    const [appointments, weekAppointments, selectedDateClinicAppointments, staffRows] = await Promise.all([
       this.prisma.appointments.findMany({
         where: appointmentWhere,
         orderBy: [{ appointment_date: 'asc' }, { time_select: 'asc' }],
@@ -156,46 +157,75 @@ export class StaffHomeService {
           },
         },
       }),
-      this.prisma.users.findMany({
-        where: staffId
-          ? { user_id: staffId }
-          : {
-              OR: [
-                { role_id: { in: [3, 4] } },
-                {
-                  roles: {
-                    name: {
-                      in: [
-                        'psychiatrist',
-                        'psychologist',
-                        'จิตแพทย์',
-                        'นักจิตวิทยา',
-                      ],
-                    },
-                  },
-                },
-                {
-                  appointments_appointments_staff_idTousers: {
-                    some: {
-                      appointment_date: {
-                        gte: monthStart,
-                        lt: monthEndExclusive,
-                      },
-                    },
-                  },
-                },
-                {
-                  schedule: {
-                    some: {
-                      work_date: {
-                        gte: monthStart,
-                        lt: monthEndExclusive,
-                      },
-                    },
-                  },
-                },
-              ],
+      this.prisma.appointments.findMany({
+        where: {
+          appointment_date: selectedDateValue,
+        },
+        orderBy: [{ appointment_date: 'asc' }, { time_select: 'asc' }],
+        include: {
+          users_appointments_user_idTousers: {
+            select: {
+              user_id: true,
+              name: true,
+              sur_name: true,
+              email: true,
+              phone: true,
             },
+          },
+          users_appointments_staff_idTousers: {
+            select: {
+              user_id: true,
+              name: true,
+              sur_name: true,
+              info: true,
+              file_name: true,
+              roles: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+      this.prisma.users.findMany({
+        where: {
+          OR: [
+            { role_id: { in: [3, 4] } },
+            {
+              roles: {
+                name: {
+                  in: [
+                    'psychiatrist',
+                    'psychologist',
+                    'จิตแพทย์',
+                    'นักจิตวิทยา',
+                  ],
+                },
+              },
+            },
+            {
+              appointments_appointments_staff_idTousers: {
+                some: {
+                  appointment_date: {
+                    gte: monthStart,
+                    lt: monthEndExclusive,
+                  },
+                },
+              },
+            },
+            {
+              schedule: {
+                some: {
+                  work_date: {
+                    gte: monthStart,
+                    lt: monthEndExclusive,
+                  },
+                },
+              },
+            },
+          ],
+        },
         orderBy: [{ name: 'asc' }, { sur_name: 'asc' }],
         select: {
           user_id: true,
@@ -260,6 +290,7 @@ export class StaffHomeService {
 
     const appointmentItems = appointments.map(mapAppointmentRecord);
     const weekAppointmentItems = weekAppointments.map(mapAppointmentRecord);
+    const selectedDateClinicAppointmentItems = selectedDateClinicAppointments.map(mapAppointmentRecord);
     const dailyStats = this.buildDailyStats(dayKeys, appointmentItems);
     const weekStats = this.buildDailyStats(weekDayKeys, weekAppointmentItems);
 
@@ -304,7 +335,7 @@ export class StaffHomeService {
 
     const staffOverview = staffRows
       .map((staff) => {
-        const staffAppointments = appointmentItems
+        const staffAppointments = selectedDateClinicAppointmentItems
           .filter((item) => item.staffId === staff.user_id)
           .sort(
             (left, right) => this.getSortValue(left) - this.getSortValue(right),
@@ -382,6 +413,103 @@ export class StaffHomeService {
       selectedDateAppointments,
       upcomingAppointments,
       staffOverview,
+    };
+  }
+
+  async upsertStaffSchedule(input: UpsertStaffScheduleDto) {
+    const staffId = Number(input?.staffId);
+    const workDate = input?.workDate?.trim();
+    const status = input?.status;
+    const note = input?.note?.trim() || null;
+
+    if (!Number.isInteger(staffId) || staffId <= 0) {
+      throw new BadRequestException('staffId must be a positive integer');
+    }
+
+    if (!workDate || !/^\d{4}-\d{2}-\d{2}$/.test(workDate)) {
+      throw new BadRequestException('workDate must be in YYYY-MM-DD format');
+    }
+
+    if (workDate < this.getClinicNowParts(new Date()).dateKey) {
+      throw new BadRequestException('ไม่สามารถบันทึกตารางงานย้อนหลังได้');
+    }
+
+    if (status !== 'working' && status !== 'leave') {
+      throw new BadRequestException('status must be working or leave');
+    }
+
+    if (note && note.length > 255) {
+      throw new BadRequestException('note must not exceed 255 characters');
+    }
+
+    const workDateValue = this.toDateOnlyUtc(workDate);
+    const staff = await this.prisma.users.findUnique({
+      where: { user_id: staffId },
+      select: {
+        user_id: true,
+        name: true,
+        sur_name: true,
+        roles: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!staff) {
+      throw new BadRequestException('ไม่พบบุคลากรที่ต้องการบันทึกตารางงาน');
+    }
+
+    const existingSchedule = await this.prisma.schedule.findUnique({
+      where: {
+        staff_id_work_date: {
+          staff_id: staffId,
+          work_date: workDateValue,
+        },
+      },
+      select: { id: true },
+    });
+
+    const schedule = await this.prisma.schedule.upsert({
+      where: {
+        staff_id_work_date: {
+          staff_id: staffId,
+          work_date: workDateValue,
+        },
+      },
+      update: {
+        status: status as schedule_status,
+        note,
+      },
+      create: {
+        staff_id: staffId,
+        work_date: workDateValue,
+        status: status as schedule_status,
+        note,
+      },
+      select: {
+        id: true,
+        staff_id: true,
+        work_date: true,
+        status: true,
+        note: true,
+      },
+    });
+
+    return {
+      message: existingSchedule
+        ? 'อัปเดตตารางเข้างาน/ลาเรียบร้อยแล้ว'
+        : 'บันทึกตารางเข้างาน/ลาเรียบร้อยแล้ว',
+      schedule: {
+        id: schedule.id,
+        staffId: schedule.staff_id,
+        staffName: this.buildFullName(staff.name, staff.sur_name),
+        staffRoleLabel: this.toRoleLabel(staff.roles?.name),
+        workDate: this.dateToIsoDate(schedule.work_date),
+        status: schedule.status,
+        note: schedule.note,
+      },
     };
   }
 

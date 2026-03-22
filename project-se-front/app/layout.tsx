@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import AppThemeProvider from "@/components/ui/AppThemeProvider";
 import AxiosSessionGuard from "@/components/providers/AxiosSessionGuard";
-import ClinicLayout from "@/components/nav/navTop";
 import "./globals.css";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 
@@ -33,10 +32,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
-          <AppThemeProvider>
-            <ClinicLayout />
-            {children}
-          </AppThemeProvider>
+          <AppThemeProvider>{children}</AppThemeProvider>
           <AxiosSessionGuard />
         </AuthProvider>
       </body>

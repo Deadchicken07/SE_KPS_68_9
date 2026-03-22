@@ -1,20 +1,22 @@
 "use client";
 
 import axios from "axios";
-import { DownOutlined, UserOutlined } from "@ant-design/icons";
 import { Avatar, Dropdown, Space, Typography } from "antd";
 import type { MenuProps } from "antd";
+import { UserOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/components/providers/AuthProvider";
 import type { AuthMeResponse } from "@/types/auth.types";
+import { mapRoleIdToRole, type Roles } from "@/types/role.types";
+import { useAuth } from "@/components/providers/AuthProvider";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+const API_URL = "http://localhost:4000";
 
-const roleLabelMap: Record<number, string> = {
-  1: "ADMIN",
-  3: "PSYCHOLOGIST",
-  4: "PSYCHIATRIST",
-  5: "PHARMACIST",
+const roleLabelMap: Record<Roles, string> = {
+  admin: "ADMIN",
+  user: "USER",
+  psychologist: "PSYCHOLOGIST",
+  psychiatrist: "PSYCHIATRIST",
+  pharmacist: "PHARMACIST",
 };
 
 const buildDisplayName = (me: AuthMeResponse | null) => {
@@ -25,7 +27,6 @@ const buildDisplayName = (me: AuthMeResponse | null) => {
 const buildAvatarLabel = (me: AuthMeResponse | null) => {
   const fullName = buildDisplayName(me);
   const parts = fullName.split(" ").filter(Boolean);
-
   if (parts.length === 0 || fullName === "Unknown user") {
     return "U";
   }
@@ -44,7 +45,7 @@ export default function StaffTopBar() {
     try {
       await axios.post(`${API_URL}/auth/logout`, {}, { withCredentials: true });
     } catch {
-      // Keep logout usable even when the session is already cleared.
+      // Redirect even if session cleanup already happened.
     } finally {
       localStorage.removeItem("access_token");
       setMe(null);
@@ -53,16 +54,17 @@ export default function StaffTopBar() {
     }
   };
 
+  const role = mapRoleIdToRole(me?.role_id ?? null);
+  const displayName = buildDisplayName(me);
+  const avatarLabel = buildAvatarLabel(me);
+  const avatarSrc = me?.file_name || undefined;
+
   const menuItems: MenuProps["items"] = [
     {
       key: "logout",
       label: "Logout",
     },
   ];
-
-  const displayName = buildDisplayName(me);
-  const avatarLabel = buildAvatarLabel(me);
-  const roleLabel = roleLabelMap[me?.role_id ?? -1] ?? "STAFF";
 
   return (
     <div
@@ -97,7 +99,7 @@ export default function StaffTopBar() {
           level={4}
           style={{ margin: "4px 0 0", color: "#173f35" }}
         >
-          {roleLabel}
+          {role ? roleLabelMap[role] : "STAFF"}
         </Typography.Title>
       </div>
 
@@ -128,15 +130,15 @@ export default function StaffTopBar() {
         >
           <Avatar
             size={44}
-            src={me?.file_name || undefined}
-            icon={!me?.file_name ? <UserOutlined /> : undefined}
+            src={avatarSrc}
+            icon={!avatarSrc ? <UserOutlined /> : undefined}
             style={{
-              backgroundColor: me?.file_name ? "transparent" : "#0f766e",
+              backgroundColor: avatarSrc ? "transparent" : "#0f766e",
               color: "#ffffff",
               flexShrink: 0,
             }}
           >
-            {!me?.file_name ? avatarLabel : null}
+            {!avatarSrc ? avatarLabel : null}
           </Avatar>
 
           <div style={{ minWidth: 0, textAlign: "left" }}>
@@ -152,13 +154,11 @@ export default function StaffTopBar() {
               {displayName}
             </Typography.Text>
             <Typography.Text style={{ color: "#4d6b63", fontSize: 12 }}>
-              {roleLabel}
+              {role ? roleLabelMap[role] : "STAFF"}
             </Typography.Text>
           </div>
 
-          <Space style={{ color: "#0f766e", fontSize: 12 }}>
-            <DownOutlined />
-          </Space>
+          <Space style={{ color: "#0f766e", fontSize: 12 }}>▼</Space>
         </button>
       </Dropdown>
     </div>

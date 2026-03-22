@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, ParseEnumPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  ParseIntPipe,
+  ParseEnumPipe,
+  Query,
+} from '@nestjs/common';
 import { QuestionnairesService } from './questionnaires.service';
 import { CreateQuestionnaireDto } from './dto/create-questionnaire.dto';
 import { UpdateQuestionnaireDto } from './dto/update-questionnaire.dto';
@@ -9,36 +20,41 @@ export class QuestionnairesController {
   constructor(private readonly questionnairesService: QuestionnairesService) {}
 
   @Get()
-  findAll(){
+  findAll() {
     return this.questionnairesService.findAll();
   }
 
   @Get('status/:status')
-  findStatusAll(@Param('status') status: string){
-    return this.questionnairesService.findStatus(status as questionnaires_type_enum);
+  findStatusAll(@Param('status') status: string) {
+    return this.questionnairesService.findStatus(
+      status as questionnaires_type_enum,
+    );
   }
 
   @Get(':id')
-  findOne(@Param('id',ParseIntPipe) id: number){
-    return this.questionnairesService.findOne(id);
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '10',
+  ) {
+    return this.questionnairesService.findOne(id, +page, +limit);
   }
 
   @Patch(':id')
   update(
-    @Param('id',ParseIntPipe) id : number,
+    @Param('id', ParseIntPipe) id: number,
     @Body() body: UpdateQuestionnaireDto,
-  ){
-    return this.questionnairesService.update(id,body);
+  ) {
+    return this.questionnairesService.update(id, body);
   }
 
   @Post()
-  create(@Body() body:CreateQuestionnaireDto){
+  create(@Body() body: CreateQuestionnaireDto) {
     return this.questionnairesService.create(body);
   }
 
-
   @Delete(':id')
-  deleteOne(@Param('id',ParseIntPipe) id: number){
+  deleteOne(@Param('id', ParseIntPipe) id: number) {
     return this.questionnairesService.delete(id);
   }
 }

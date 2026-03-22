@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { Avatar, Dropdown, Layout, Modal, Space, Typography } from "antd";
@@ -65,11 +65,10 @@ export default function ClinicLayout() {
     }
   };
 
-  const menuItems: MenuProps["items"] = [{ key: "logout", label: "Logout" }];
-
-  if (pathname.startsWith("/staff")) {
-    return null;
-  }
+  const menuItems: MenuProps["items"] = [
+  
+    { key: "logout", label: "Logout" },
+  ];
 
   const isLogin = mounted && !!me;
   const displayName = buildDisplayName(me);

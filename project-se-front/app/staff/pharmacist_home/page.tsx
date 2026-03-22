@@ -259,6 +259,7 @@ export default function PharmacistHomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   useEffect(() => {
     if (authLoading) {
@@ -367,6 +368,7 @@ export default function PharmacistHomePage() {
   useEffect(() => {
     if (!filteredConsultations.length) {
       setSelectedId(null);
+      setIsDetailModalOpen(false);
       return;
     }
 
@@ -385,50 +387,53 @@ export default function PharmacistHomePage() {
   const selectedOwnerLabel = selected
     ? queueOwnerLabel(selected, me?.sub ?? null)
     : "-";
+
+  useEffect(() => {
+    if (!isDetailModalOpen) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsDetailModalOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isDetailModalOpen]);
+
   if (!hasAccess) {
     return null;
   }
 
   return (
-    <main className="min-h-screen bg-[#f3f5f7] px-4 py-6 text-slate-900 sm:px-6">
+    <main className="staff-shell text-slate-900">
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
-        <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-6 py-6">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-              <div className="max-w-2xl">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-                  PHARMACY DASHBOARD
-                </p>
-                <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900">
-                  คิวจ่ายยา
-                </h1>
-              </div>
-
-              <div className="grid gap-3">
-                <QuickInfoCard
-                  label="อัปเดตล่าสุด"
-                  value={formatDateTime(data?.generatedAt)}
-                />
-              </div>
-            </div>
-          </div>
+        <section className="mb-2">
+          <p className="staff-kicker">STAFF / PHARMACIST / DASHBOARD</p>
+          <h1 className="mt-4 text-[clamp(2rem,4vw,3.1rem)] font-semibold leading-tight tracking-tight text-slate-900">
+            รายการคิวจ่ายยา
+          </h1>
+          <p className="mt-3 text-sm text-slate-500">
+            อัปเดตล่าสุด {formatDateTime(data?.generatedAt)}
+          </p>
         </section>
 
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <MetricCard
             label="คิวคงค้าง"
             value={queueCount}
-            helper="รวมทุกเคสที่ยังต้องทำต่อ"
           />
           <MetricCard
             label="คิวของฉัน"
             value={myQueueCount}
-            helper="เคสที่คุณรับผิดชอบอยู่"
           />
           <MetricCard
             label="ยังไม่รับคิว"
             value={unassignedCount}
-            helper="ควรเปิดดูและรับคิวก่อน"
           />
         </section>
 
@@ -444,14 +449,14 @@ export default function PharmacistHomePage() {
           </div>
         ) : null}
 
-        <section className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
+        <section className="space-y-6">
           <aside className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-200 px-5 py-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h2 className="text-lg font-semibold text-slate-900">รายการคิว</h2>
+                  <h2 className="text-lg font-semibold text-slate-900">รายการคิวแบบกดดูรายละเอียด</h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    แสดงเฉพาะเคสที่ยังต้องดำเนินการ
+                    แสดงเฉพาะเคสที่ยังต้องดำเนินการ กดที่แต่ละแถวเพื่อเปิดรายละเอียด
                   </p>
                 </div>
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700">
@@ -460,75 +465,98 @@ export default function PharmacistHomePage() {
               </div>
             </div>
 
-            <div className="max-h-[780px] space-y-3 overflow-y-auto p-3">
+            <div className="max-h-[780px] overflow-y-auto p-3">
               {filteredConsultations.length ? (
-                filteredConsultations.map((consultation) => {
-                  const active = consultation.id === selected?.id;
-                  const status = displayStatus(consultation);
+                <div className="space-y-3">
+                  {filteredConsultations.map((consultation) => {
+                    const active = consultation.id === selected?.id;
+                    const status = displayStatus(consultation);
 
-                  return (
-                    <button
+                    return (
+                      <button
                       key={consultation.id}
                       type="button"
-                      onClick={() => setSelectedId(consultation.id)}
+                      onClick={() => {
+                        setSelectedId(consultation.id);
+                        setIsDetailModalOpen(true);
+                      }}
                       className={`w-full rounded-2xl border p-4 text-left transition ${
                         active
                           ? "border-slate-900 bg-slate-900 text-white shadow-lg shadow-slate-900/10"
                           : "border-slate-200 bg-white text-slate-900 hover:border-slate-300 hover:shadow-sm"
                       }`}
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className={`text-xs font-semibold uppercase tracking-[0.18em] ${
-                            active ? "text-slate-300" : "text-slate-500"
-                          }`}>
+                      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                        <div className="min-w-0 xl:w-[240px]">
+                          <p
+                            className={`text-xs font-semibold uppercase tracking-[0.18em] ${
+                              active ? "text-slate-300" : "text-slate-500"
+                            }`}
+                          >
                             Case #{consultation.id}
                           </p>
                           <p className="mt-2 truncate text-base font-semibold">
                             {fullName(consultation.patient)}
                           </p>
-                          <p className={`mt-1 truncate text-sm ${active ? "text-slate-300" : "text-slate-500"}`}>
-                            {textValue(consultation.patient?.phone || consultation.patient?.email)}
+                          <p
+                            className={`mt-1 truncate text-sm ${
+                              active ? "text-slate-300" : "text-slate-500"
+                            }`}
+                          >
+                            {textValue(
+                              consultation.patient?.phone || consultation.patient?.email,
+                            )}
                           </p>
                         </div>
 
-                        <span
-                          className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                            active
-                              ? "border-white/20 bg-white/10 text-white"
-                              : STATUS_META[status].tone
-                          }`}
-                        >
-                          {STATUS_META[status].label}
-                        </span>
+                        <div className="grid flex-1 gap-2 sm:grid-cols-2 2xl:grid-cols-4">
+                          <QueueMeta
+                            label="รูปแบบ"
+                            value={deliveryModeLabel(status)}
+                            active={active}
+                          />
+                          <QueueMeta
+                            label="ผู้รับคิว"
+                            value={queueOwnerLabel(consultation, me?.sub ?? null)}
+                            active={active}
+                          />
+                          <QueueMeta
+                            label="ผู้ให้คำปรึกษา"
+                            value={fullName(consultation.staff)}
+                            active={active}
+                          />
+                          <QueueMeta
+                            label="ยอดรวม"
+                            value={formatMoney(consultationTotal(consultation))}
+                            active={active}
+                          />
+                        </div>
+
+                        <div className="flex min-w-[220px] flex-col items-start gap-3 xl:items-end">
+                          <span
+                            className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                              active
+                                ? "border-white/20 bg-white/10 text-white"
+                                : STATUS_META[status].tone
+                            }`}
+                          >
+                            {STATUS_META[status].label}
+                          </span>
+
+                          <div
+                            className={`flex flex-wrap items-center gap-2 text-xs ${
+                              active ? "text-slate-200" : "text-slate-500"
+                            }`}
+                          >
+                            <span>{formatDateTime(consultation.created_at)}</span>
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                        <QueueMeta
-                          label="รูปแบบ"
-                          value={deliveryModeLabel(status)}
-                          active={active}
-                        />
-                        <QueueMeta
-                          label="ผู้รับคิว"
-                          value={queueOwnerLabel(consultation, me?.sub ?? null)}
-                          active={active}
-                        />
-                        <QueueMeta
-                          label="ผู้ให้คำปรึกษา"
-                          value={fullName(consultation.staff)}
-                          active={active}
-                        />
-                        <QueueMeta
-                          label="ยอดรวม"
-                          value={formatMoney(consultationTotal(consultation))}
-                          active={active}
-                        />
-                      </div>
-
-                    </button>
-                  );
-                })
+                      </button>
+                    );
+                  })}
+                </div>
               ) : (
                 <div className="p-3">
                   <EmptyState body="ไม่พบคิวที่ตรงกับคำค้นหาหรือสถานะปัจจุบัน" />
@@ -537,9 +565,19 @@ export default function PharmacistHomePage() {
             </div>
           </aside>
 
-          <section className="space-y-4">
+          <section
+            className={
+              isDetailModalOpen && selected
+                ? "fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm"
+                : "hidden"
+            }
+            onClick={() => setIsDetailModalOpen(false)}
+          >
             {selected ? (
-              <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+              <section
+                className="max-h-[92vh] w-full max-w-6xl overflow-y-auto rounded-[28px] border border-slate-200 bg-white shadow-2xl"
+                onClick={(event) => event.stopPropagation()}
+              >
                 <div className="border-b border-slate-200 px-6 py-6">
                   <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
                     <div className="max-w-3xl">
@@ -549,6 +587,9 @@ export default function PharmacistHomePage() {
                       <h2 className="mt-2 text-2xl font-semibold text-slate-900">
                         {fullName(selected.patient)}
                       </h2>
+                      <p className="mt-3 text-sm text-slate-500">
+                        รายละเอียดด้านขวานี้จะแสดงตามเคสที่คุณเลือกจากลิสต์ทางซ้าย
+                      </p>
                       <div className="mt-4 flex flex-wrap gap-2">
                         <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
                           {deliveryModeLabel(selectedStatus)}
@@ -575,10 +616,20 @@ export default function PharmacistHomePage() {
                       </div>
                       <button
                         type="button"
-                        disabled
-                        className="inline-flex items-center justify-center rounded-2xl bg-slate-300 px-5 py-3 text-sm font-medium text-slate-600 cursor-not-allowed"
+                        onClick={() => {
+                          setIsDetailModalOpen(false);
+                          router.push(`/staff/pharmacist/order?consultationId=${selected.id}`);
+                        }}
+                        className="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white hover:bg-slate-800"
                       >
                         ไปหน้าจ่ายยา
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsDetailModalOpen(false)}
+                        className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                      >
+                        ปิด
                       </button>
                     </div>
                   </div>
@@ -690,33 +741,15 @@ export default function PharmacistHomePage() {
 function MetricCard({
   label,
   value,
-  helper,
 }: {
   label: string;
   value: number;
-  helper?: string;
 }) {
   return (
-    <article className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+    <article className="rounded-3xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
       <p className="text-sm font-medium text-slate-500">{label}</p>
-      <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-900">{value}</p>
-      {helper ? <p className="mt-2 text-sm text-slate-500">{helper}</p> : null}
+      <p className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">{value}</p>
     </article>
-  );
-}
-
-function QuickInfoCard({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | number | null | undefined;
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{label}</p>
-      <p className="mt-2 text-sm font-medium leading-6 text-slate-900">{textValue(value)}</p>
-    </div>
   );
 }
 

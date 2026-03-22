@@ -205,7 +205,9 @@ export class AppointmentsService {
     return {
       id: appointment.id,
       staffName: this.buildConsultantName(staff?.name, staff?.sur_name),
-      date: appointment.appointment_date ? this.dateToIsoDate(appointment.appointment_date) : null,
+      date: appointment.appointment_date
+        ? this.dateToIsoDate(appointment.appointment_date)
+        : null,
       time: appointment.time_select,
       duration: durationMinutes,
       price: totalPrice,
@@ -498,5 +500,15 @@ export class AppointmentsService {
       String(value.getMonth() + 1).padStart(2, '0'),
       String(value.getDate()).padStart(2, '0'),
     ].join('-');
+  }
+
+  async findAllByStaff(staffId : number){
+    const appointment = await this.prisma.appointments.findMany({
+      where : {
+        staff_id : staffId ,
+      }
+    })
+
+    return appointment ;
   }
 }

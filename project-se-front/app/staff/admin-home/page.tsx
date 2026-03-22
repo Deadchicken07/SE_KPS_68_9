@@ -1,6 +1,6 @@
 "use client";
 
-import { CSSProperties, useEffect, useMemo, useState } from "react";
+import { type CSSProperties, type FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
 
@@ -43,6 +43,8 @@ const PANEL_CLASS =
   "rounded-[28px] border border-[#585c5124] bg-[#fffbf3] shadow-[0_18px_36px_rgba(51,56,48,0.08)]";
 const INPUT_CLASS =
   "min-h-[46px] w-full rounded-[14px] border border-[#3c524c29] bg-[#fffdf8] px-3.5 text-[#173630] outline-none transition focus:border-[#2d6a5c] focus:ring-4 focus:ring-[#2d6a5c1f]";
+const TEXTAREA_CLASS =
+  "min-h-[132px] w-full rounded-[14px] border border-[#3c524c29] bg-[#fffdf8] px-3.5 py-3 text-[#173630] leading-7 outline-none transition focus:border-[#2d6a5c] focus:ring-4 focus:ring-[#2d6a5c1f] resize-y";
 const PANEL_META_CLASS =
   "inline-flex items-center justify-center rounded-full bg-[#edf3ee] px-3.5 py-2.5 text-[0.84rem] font-extrabold text-[#33554d]";
 const EMPTY_CLASS =
@@ -137,6 +139,13 @@ type ClinicScheduleResponse = {
   staffOverview: StaffOverviewItem[];
 };
 
+type StaffScheduleFormState = {
+  staffId: string;
+  workDate: string;
+  status: "working" | "leave";
+  note: string;
+};
+
 type ParsedTimeRange = {
   startMinutes: number;
   endMinutes: number;
@@ -165,6 +174,15 @@ type MonthWeekOption = {
   anchorDate: string;
   rangeLabel: string;
 };
+
+function createStaffScheduleFormState(dateKey: string, staffId = ""): StaffScheduleFormState {
+  return {
+    staffId,
+    workDate: dateKey,
+    status: "working",
+    note: "",
+  };
+}
 
 type JwtPayload = {
   role_id?: number;
@@ -199,6 +217,11 @@ function getCurrentDateKey() {
     String(now.getMonth() + 1).padStart(2, "0"),
     String(now.getDate()).padStart(2, "0"),
   ].join("-");
+}
+
+function clampToTodayOrLater(dateKey: string) {
+  const today = getCurrentDateKey();
+  return dateKey && dateKey >= today ? dateKey : today;
 }
 
 function getDefaultSelectedDate() {
@@ -547,6 +570,12 @@ export default function StaffAdminHomePage() {
   const [authRequired, setAuthRequired] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [isSelectedAppointmentsCollapsed, setIsSelectedAppointmentsCollapsed] = useState(false);
+  const [isStaffWorkModalOpen, setIsStaffWorkModalOpen] = useState(false);
+  const [staffScheduleForm, setStaffScheduleForm] = useState<StaffScheduleFormState>(() =>
+    createStaffScheduleFormState(getDefaultSelectedDate()),
+  );
+  const [staffScheduleError, setStaffScheduleError] = useState<string | null>(null);
+  const [staffScheduleSubmitting, setStaffScheduleSubmitting] = useState(false);
 
   useEffect(() => {
     if (authLoading) {
@@ -653,6 +682,31 @@ export default function StaffAdminHomePage() {
   const staffOptions = data?.staffOptions ?? [];
   const staffOverview = data?.staffOverview ?? [];
   const upcomingAppointments = data?.upcomingAppointments ?? [];
+  const staffScheduleOptions = useMemo(() => {
+    const entries = new Map<number, { id: number; name: string; roleLabel: string }>();
+
+    staffOptions.forEach((staff) => {
+      entries.set(staff.id, {
+        id: staff.id,
+        name: staff.name,
+        roleLabel: staff.roleLabel,
+      });
+    });
+
+    staffOverview.forEach((staff) => {
+      if (!entries.has(staff.staffId)) {
+        entries.set(staff.staffId, {
+          id: staff.staffId,
+          name: staff.staffName,
+          roleLabel: staff.roleLabel,
+        });
+      }
+    });
+
+    return Array.from(entries.values()).sort((left, right) =>
+      left.name.localeCompare(right.name, "th"),
+    );
+  }, [staffOptions, staffOverview]);
 
   useEffect(() => {
     if (!selectedDateAppointments.length) {
@@ -690,8 +744,26 @@ export default function StaffAdminHomePage() {
     data?.weekRange?.start ??
     monthWeekOptions.find((option) => selectedDate >= option.start && selectedDate <= option.end)?.start ??
     null;
+  const todayDateKey = getCurrentDateKey();
 
   const kpiCards = getKpiCards(summary, selectedDate, selectedDayStats);
+
+  useEffect(() => {
+    if (!isStaffWorkModalOpen) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsStaffWorkModalOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isStaffWorkModalOpen]);
 
   function handleDateChange(dateKey: string) {
     setSelectedDate(dateKey);
@@ -705,6 +777,76 @@ export default function StaffAdminHomePage() {
 
     setMonth(nextMonth);
     setSelectedDate(`${nextMonth}-01`);
+  }
+
+  function openStaffWorkModal() {
+    setStaffScheduleError(null);
+    setStaffScheduleForm(
+      createStaffScheduleFormState(clampToTodayOrLater(selectedDate), staffFilter),
+    );
+    setIsStaffWorkModalOpen(true);
+  }
+
+  function closeStaffWorkModal() {
+    setIsStaffWorkModalOpen(false);
+    setStaffScheduleError(null);
+  }
+
+  async function handleStaffScheduleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setStaffScheduleError(null);
+
+    if (!staffScheduleForm.staffId) {
+      setStaffScheduleError("กรุณาเลือกบุคลากร");
+      return;
+    }
+
+    if (!staffScheduleForm.workDate) {
+      setStaffScheduleError("กรุณาเลือกวันที่");
+      return;
+    }
+
+    if (staffScheduleForm.workDate < todayDateKey) {
+      setStaffScheduleError("ไม่สามารถบันทึกตารางงานย้อนหลังได้");
+      return;
+    }
+
+    setStaffScheduleSubmitting(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/staff-home/schedule`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          staffId: Number(staffScheduleForm.staffId),
+          workDate: staffScheduleForm.workDate,
+          status: staffScheduleForm.status,
+          note: staffScheduleForm.note.trim() || null,
+        }),
+      });
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(parseErrorMessage(payload));
+      }
+
+      setMonth(staffScheduleForm.workDate.slice(0, 7));
+      setSelectedDate(staffScheduleForm.workDate);
+      setReloadKey((current) => current + 1);
+      closeStaffWorkModal();
+    } catch (caught) {
+      setStaffScheduleError(
+        caught instanceof Error
+          ? caught.message
+          : "บันทึกตารางเข้างาน/ลาไม่สำเร็จ",
+      );
+    } finally {
+      setStaffScheduleSubmitting(false);
+    }
   }
 
   if (!hasAccess) {
@@ -1119,7 +1261,16 @@ export default function StaffAdminHomePage() {
               <div>
                 <h2 className="text-[1.32rem] font-semibold text-[#173630]">ภาระงานของบุคลากร</h2>
               </div>
-              <span className={PANEL_META_CLASS}>{staffOverview.length} คน</span>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={openStaffWorkModal}
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[#178986] px-4 text-[0.9rem] font-extrabold text-white shadow-[0_10px_24px_rgba(23,137,134,0.18)] transition hover:bg-[#127370]"
+                >
+                  เพิ่ม
+                </button>
+                <span className={PANEL_META_CLASS}>{staffOverview.length} คน</span>
+              </div>
             </div>
 
             <div className="grid gap-3.5 px-[22px] pb-[22px]">
@@ -1212,6 +1363,148 @@ export default function StaffAdminHomePage() {
             </div>
           </article>
         </section>
+
+        {isStaffWorkModalOpen ? (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(25,36,32,0.46)] p-4 backdrop-blur-sm"
+            onClick={closeStaffWorkModal}
+          >
+            <section
+              className="w-full max-w-2xl rounded-[30px] border border-[#4b615a24] bg-[#fffaf2] shadow-[0_26px_70px_rgba(31,42,39,0.22)]"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="flex items-start justify-between gap-4 border-b border-[#4b615a1c] px-6 py-5">
+                <div>
+                  <span className="inline-flex rounded-full bg-[#edf3ee] px-3 py-1 text-[0.76rem] font-extrabold tracking-[0.12em] text-[#33554d]">
+                    STAFF WORKLOAD
+                  </span>
+                  <h3 className="mt-3 text-[1.5rem] font-semibold text-[#173630]">
+                    บันทึกเข้างาน / ลา
+                  </h3>
+                  <p className="mt-2 max-w-[38rem] text-[0.95rem] leading-7 text-[#5f6b62]">
+                    บันทึกสถานะการปฏิบัติงานรายวันของบุคลากร และอัปเดตข้อมูลล่าสุดของวันนั้นให้เป็นปัจจุบัน
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeStaffWorkModal}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#3c524c24] bg-white text-[1.2rem] text-[#33554d] transition hover:bg-[#f6f4ed]"
+                  aria-label="ปิด popup"
+                >
+                  ×
+                </button>
+              </div>
+
+              <form onSubmit={handleStaffScheduleSubmit}>
+                <div className="grid gap-4 px-6 py-6 md:grid-cols-2">
+                  <label className="block">
+                    <span className="mb-2 block text-[0.88rem] font-bold text-[#33554d]">
+                      บุคลากร
+                    </span>
+                    <select
+                      className={INPUT_CLASS}
+                      value={staffScheduleForm.staffId}
+                      onChange={(event) =>
+                        setStaffScheduleForm((current) => ({
+                          ...current,
+                          staffId: event.target.value,
+                        }))
+                      }
+                    >
+                      <option value="">เลือกบุคลากร</option>
+                      {staffScheduleOptions.map((staff) => (
+                        <option key={staff.id} value={staff.id}>
+                          {staff.name} • {staff.roleLabel}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-2 block text-[0.88rem] font-bold text-[#33554d]">
+                      วันที่
+                    </span>
+                    <input
+                      type="date"
+                      className={INPUT_CLASS}
+                      min={todayDateKey}
+                      value={staffScheduleForm.workDate}
+                      onChange={(event) =>
+                        setStaffScheduleForm((current) => ({
+                          ...current,
+                          workDate: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-2 block text-[0.88rem] font-bold text-[#33554d]">
+                      สถานะ
+                    </span>
+                    <select
+                      className={INPUT_CLASS}
+                      value={staffScheduleForm.status}
+                      onChange={(event) =>
+                        setStaffScheduleForm((current) => ({
+                          ...current,
+                          status: event.target.value as "working" | "leave",
+                        }))
+                      }
+                    >
+                      <option value="working">เข้างาน</option>
+                      <option value="leave">ลา</option>
+                    </select>
+                  </label>
+
+                  <label className="block md:col-span-2">
+                    <span className="mb-2 block text-[0.88rem] font-bold text-[#33554d]">
+                      หมายเหตุ
+                    </span>
+                    <textarea
+                      rows={4}
+                      maxLength={255}
+                      className={TEXTAREA_CLASS}
+                      placeholder="ระบุรายละเอียดเพิ่มเติม เช่น เวรเช้า ลาป่วย ติดประชุม หรือข้อมูลประกอบการบันทึก"
+                      value={staffScheduleForm.note}
+                      onChange={(event) =>
+                        setStaffScheduleForm((current) => ({
+                          ...current,
+                          note: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                </div>
+
+                {staffScheduleError ? (
+                  <div className="px-6 pb-2">
+                    <div className="rounded-[18px] border border-[#d77e7e45] bg-[#fff0ee] px-4 py-3 text-[0.92rem] text-[#9d4138]">
+                      {staffScheduleError}
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="flex flex-wrap justify-end gap-3 border-t border-[#4b615a1c] px-6 py-5">
+                  <button
+                    type="button"
+                    onClick={closeStaffWorkModal}
+                    className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-[#3c524c24] bg-white px-5 text-[0.95rem] font-bold text-[#33554d] transition hover:bg-[#f6f4ed]"
+                  >
+                    ยกเลิก
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={staffScheduleSubmitting}
+                    className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-[#178986] px-5 text-[0.95rem] font-bold text-white transition hover:bg-[#127370] disabled:cursor-not-allowed disabled:bg-[#b7c8c1]"
+                  >
+                    {staffScheduleSubmitting ? "กำลังบันทึก..." : "บันทึกตารางงาน"}
+                  </button>
+                </div>
+              </form>
+            </section>
+          </div>
+        ) : null}
       </div>
     </main>
   );

@@ -8,12 +8,12 @@ export default function StaffLayout({
     children : ReactNode
 }) {
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
+    <div style={{ display: "flex", minHeight: "100vh", width: "100%" }}>
       <SlideBar/>
-      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+      <main style={{ flex: 1, minWidth: 0, overflowX: "hidden" }}>
         <StaffTopBar />
-        <main style={{ flex: 1, minWidth: 0 }}>{children}</main>
-      </div>
+        {children}
+      </main>
     </div>
   )
 }
