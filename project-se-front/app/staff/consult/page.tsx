@@ -1,18 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { Card, Select, Input, Button, Typography, Spin, InputNumber, Divider } from "antd";
-import { SendOutlined, PlusOutlined, DeleteOutlined, MedicineBoxOutlined } from "@ant-design/icons";
+import {
+  Card,
+  Select,
+  Input,
+  Button,
+  Typography,
+  Spin,
+  InputNumber,
+  Divider,
+  message,
+} from "antd";
+import {
+  SendOutlined,
+  PlusOutlined,
+  DeleteOutlined,
+  MedicineBoxOutlined,
+} from "@ant-design/icons";
 import { useUser } from "@/hooks/useUsers";
+import { useConsultation } from "@/hooks/useConsultation";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { PrescriptionFormItem } from "@/types/consult.types";
 
 const { TextArea } = Input;
-
-type PrescriptionItem = {
-  id: number;
-  medication_id: number | null;
-  quantity: number | null;
-  comment: string;
-};
 
 const mockMedications = [
   { value: 1, label: "Amoxicillin 500mg" },
@@ -28,11 +39,16 @@ const mockMedications = [
 let nextId = 1;
 
 export default function ConsultPage() {
+  const [messageApi, contextHolder] = message.useMessage();
   const { user, loading } = useUser();
   const [selectedUser, setSelectedUser] = useState<number | null>(null);
   const [note, setNote] = useState("");
   const [sending, setSending] = useState(false);
-  const [prescriptions, setPrescriptions] = useState<PrescriptionItem[]>([]);
+  const [prescriptions, setPrescriptions] = useState<PrescriptionFormItem[]>(
+    [],
+  );
+  const { me } = useAuth();
+  const { createConsultation } = useConsultation();
 
   const userOptions = user.map((u) => ({
     value: u.user_id,
@@ -46,9 +62,13 @@ export default function ConsultPage() {
     ]);
   };
 
-  const updatePrescription = (id: number, field: keyof PrescriptionItem, value: unknown) => {
+  const updatePrescription = (
+    id: number,
+    field: keyof PrescriptionFormItem,
+    value: unknown,
+  ) => {
     setPrescriptions((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
+      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
     );
   };
 
@@ -57,22 +77,53 @@ export default function ConsultPage() {
   };
 
   const handleSend = async () => {
-    if (!selectedUser || !note.trim()) return;
+    if (!selectedUser || !note.trim() || !me) return;
     setSending(true);
-    console.log({ selectedUser, note, prescriptions });
+
+    const success = await createConsultation({
+      user_id: selectedUser,
+      staff_id: me.sub,
+      note,
+      prescription_item: prescriptions.map((p) => ({
+        medication_id: p.medication_id!,
+        quantity: p.quantity!,
+        comment: p.comment,
+      })),
+    });
+
     setSending(false);
     setNote("");
+    setSelectedUser(null);
     setPrescriptions([]);
+
+    if (success) {
+      messageApi.success("บันทึกการปรึกษาสำเร็จ");
+    } else {
+      messageApi.error("เกิดข้อผิดพลาด กรุณาลองใหม่");
+    }
   };
 
   return (
     <div style={{ display: "flex", justifyContent: "center", padding: 24 }}>
-      <div style={{ width: "80%", display: "flex", flexDirection: "column", gap: 16 }}>
+      {contextHolder}
+      <div
+        style={{
+          width: "80%",
+          display: "flex",
+          flexDirection: "column",
+          gap: 16,
+        }}
+      >
         <Card
           style={{ boxShadow: "0 4px 12px rgba(0,0,0,0.1)", borderRadius: 12 }}
-          styles={{ body: { display: "flex", flexDirection: "column", gap: 16 } }}
+          styles={{
+            body: { display: "flex", flexDirection: "column", gap: 16 },
+          }}
         >
-          <Typography.Title level={3} style={{ marginBottom: 0, color: "#0f172a" }}>
+          <Typography.Title
+            level={3}
+            style={{ marginBottom: 0, color: "#0f172a" }}
+          >
             บันทึกการปรึกษา
           </Typography.Title>
 
@@ -82,7 +133,9 @@ export default function ConsultPage() {
           <Select
             showSearch={{
               filterOption: (input, option) =>
-                String(option?.label ?? "").toLowerCase().includes(input.toLowerCase()),
+                String(option?.label ?? "")
+                  .toLowerCase()
+                  .includes(input.toLowerCase()),
             }}
             placeholder="ค้นหาหรือเลือกผู้ป่วย"
             style={{ width: "100%" }}
@@ -105,9 +158,14 @@ export default function ConsultPage() {
             onChange={(e) => setNote(e.target.value)}
           />
 
-          {/* Prescription Section */}
           <Divider style={{ margin: "4px 0" }} />
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <MedicineBoxOutlined style={{ color: "#0f766e", fontSize: 16 }} />
               <Typography.Text style={{ fontWeight: 500, color: "#374151" }}>
@@ -128,25 +186,47 @@ export default function ConsultPage() {
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {/* Header */}
               <div style={{ display: "flex", gap: 12, paddingInline: 4 }}>
-                <Typography.Text type="secondary" style={{ flex: 3, fontSize: 12 }}>ยา</Typography.Text>
-                <Typography.Text type="secondary" style={{ width: 100, fontSize: 12 }}>จำนวน</Typography.Text>
-                <Typography.Text type="secondary" style={{ flex: 2, fontSize: 12 }}>หมายเหตุ</Typography.Text>
+                <Typography.Text
+                  type="secondary"
+                  style={{ flex: 3, fontSize: 12 }}
+                >
+                  ยา
+                </Typography.Text>
+                <Typography.Text
+                  type="secondary"
+                  style={{ width: 100, fontSize: 12 }}
+                >
+                  จำนวน
+                </Typography.Text>
+                <Typography.Text
+                  type="secondary"
+                  style={{ flex: 2, fontSize: 12 }}
+                >
+                  หมายเหตุ
+                </Typography.Text>
                 <div style={{ width: 32 }} />
               </div>
 
               {prescriptions.map((item) => (
-                <div key={item.id} style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                <div
+                  key={item.id}
+                  style={{ display: "flex", gap: 12, alignItems: "center" }}
+                >
                   {/* ยา */}
                   <Select
                     showSearch={{
                       filterOption: (input, option) =>
-                        String(option?.label ?? "").toLowerCase().includes(input.toLowerCase()),
+                        String(option?.label ?? "")
+                          .toLowerCase()
+                          .includes(input.toLowerCase()),
                     }}
                     placeholder="ค้นหายา"
                     style={{ flex: 3 }}
                     options={mockMedications}
                     value={item.medication_id}
-                    onChange={(val) => updatePrescription(item.id, "medication_id", val)}
+                    onChange={(val) =>
+                      updatePrescription(item.id, "medication_id", val)
+                    }
                     notFoundContent="ไม่พบยา"
                   />
                   {/* จำนวน */}
@@ -155,14 +235,18 @@ export default function ConsultPage() {
                     placeholder="จำนวน"
                     style={{ width: 100 }}
                     value={item.quantity}
-                    onChange={(val) => updatePrescription(item.id, "quantity", val)}
+                    onChange={(val) =>
+                      updatePrescription(item.id, "quantity", val)
+                    }
                   />
                   {/* comment */}
                   <Input
                     placeholder="หมายเหตุ"
                     style={{ flex: 2 }}
                     value={item.comment}
-                    onChange={(e) => updatePrescription(item.id, "comment", e.target.value)}
+                    onChange={(e) =>
+                      updatePrescription(item.id, "comment", e.target.value)
+                    }
                   />
                   <Button
                     type="text"
@@ -176,7 +260,13 @@ export default function ConsultPage() {
             </div>
           )}
 
-          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              marginTop: 4,
+            }}
+          >
             <Button
               type="primary"
               size="large"

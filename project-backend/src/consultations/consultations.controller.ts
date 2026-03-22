@@ -11,4 +11,9 @@ export class ConsultationsController {
   findAll( @Param('id', ParseIntPipe) id: number) {
     return this.consultationsService.findAll(id);
   }
+
+  @Post()
+  create(@Body() body : CreateConsultationDto){
+    return this.consultationsService.create(body)
+  }
 }

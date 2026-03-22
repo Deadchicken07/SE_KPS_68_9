@@ -14,4 +14,17 @@ export class ConsultationsService {
       }
     })
   }
+
+  async create(dto : CreateConsultationDto){
+    return this.prisma.consultations.create({
+      data : {
+        user_id : dto.user_id,
+        staff_id : dto.staff_id,
+        note : dto.note,
+        prescription_items : {
+          create : dto.prescription_item ?? []
+        }
+      }
+    })
+  }
 }
