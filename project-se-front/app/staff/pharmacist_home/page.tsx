@@ -575,8 +575,8 @@ export default function PharmacistHomePage() {
                       </div>
                       <button
                         type="button"
-                        onClick={() => router.push(`/staff/pharmacist_home/dispense/${selected.id}`)}
-                        className="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
+                        disabled
+                        className="inline-flex items-center justify-center rounded-2xl bg-slate-300 px-5 py-3 text-sm font-medium text-slate-600 cursor-not-allowed"
                       >
                         ไปหน้าจ่ายยา
                       </button>

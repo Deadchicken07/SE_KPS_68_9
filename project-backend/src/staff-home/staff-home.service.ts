@@ -5,7 +5,7 @@ import {
   schedule_status,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { StaffDashboardQueryDto } from './dto/staff-dashboard-query.dto';
+import { StaffHomeQueryDto } from './dto/staff-home-query.dto';
 
 type DashboardStatus = 'pending' | 'confirmed' | 'completed';
 const CLINIC_TIME_ZONE = 'Asia/Bangkok';
@@ -17,7 +17,7 @@ type TimeRange = {
   endText: string;
 };
 
-type StaffDashboardAppointment = {
+type StaffHomeAppointment = {
   id: number;
   patientId: number | null;
   patientName: string;
@@ -41,7 +41,7 @@ type StaffDashboardAppointment = {
   displayStatusLabel: string;
 };
 
-type StaffDashboardDay = {
+type StaffHomeDay = {
   date: string;
   totalAppointments: number;
   paidAppointments: number;
@@ -52,7 +52,7 @@ type StaffDashboardDay = {
   staffCount: number;
 };
 
-type StaffDashboardStaffSummary = {
+type StaffHomeStaffSummary = {
   staffId: number;
   staffName: string;
   role: string | null;
@@ -70,10 +70,10 @@ type StaffDashboardStaffSummary = {
 };
 
 @Injectable()
-export class StaffDashboardService {
+export class StaffHomeService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getClinicSchedule(query: StaffDashboardQueryDto) {
+  async getClinicSchedule(query: StaffHomeQueryDto) {
     const month = this.normalizeMonth(query.month);
     const { monthStart, monthEndExclusive, dayKeys } =
       this.getMonthBounds(month);
@@ -255,7 +255,7 @@ export class StaffDashboardService {
         displayStatusLabel: this.toDisplayStatusLabel(
           this.toDisplayStatus(record.status ?? null, isPast),
         ),
-      } satisfies StaffDashboardAppointment;
+      } satisfies StaffHomeAppointment;
     };
 
     const appointmentItems = appointments.map(mapAppointmentRecord);
@@ -339,7 +339,7 @@ export class StaffDashboardService {
           nextAppointmentTime: nextAppointment?.timeSelect ?? null,
           scheduleStatus:
             staff.schedule[0]?.status ?? ('unassigned' as const),
-        } satisfies StaffDashboardStaffSummary;
+        } satisfies StaffHomeStaffSummary;
       })
       .sort((left, right) => {
         if (right.totalAppointments !== left.totalAppointments) {
@@ -502,11 +502,11 @@ export class StaffDashboardService {
 
   private buildDailyStats(
     dayKeys: string[],
-    appointmentItems: StaffDashboardAppointment[],
-  ): StaffDashboardDay[] {
+    appointmentItems: StaffHomeAppointment[],
+  ): StaffHomeDay[] {
     const dailyStatsMap = new Map<
       string,
-      StaffDashboardDay & {
+      StaffHomeDay & {
         patientIds: Set<number>;
         staffIds: Set<number>;
       }

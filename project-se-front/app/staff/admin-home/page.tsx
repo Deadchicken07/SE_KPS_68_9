@@ -596,7 +596,7 @@ export default function StaffAdminHomePage() {
 
       try {
         const response = await fetch(
-          `${API_BASE_URL}/staff-dashboard/clinic-schedule?${query.toString()}`,
+          `${API_BASE_URL}/staff-home/clinic-schedule?${query.toString()}`,
           {
             credentials: "include",
           },

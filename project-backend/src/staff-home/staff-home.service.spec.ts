@@ -1,11 +1,11 @@
 import { PrismaService } from '../prisma/prisma.service';
-import { StaffDashboardService } from './staff-dashboard.service';
+import { StaffHomeService } from './staff-home.service';
 
-describe('StaffDashboardService', () => {
-  let service: StaffDashboardService;
+describe('StaffHomeService', () => {
+  let service: StaffHomeService;
 
   beforeEach(() => {
-    service = new StaffDashboardService({} as PrismaService);
+    service = new StaffHomeService({} as PrismaService);
   });
 
   afterEach(() => {

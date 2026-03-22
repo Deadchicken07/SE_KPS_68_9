@@ -11,7 +11,7 @@ import { QuestionnairesModule } from './questionnaires/questionnaires.module';
 import { QuestionsModule } from './questions/questions.module';
 import { ChoicesModule } from './choices/choices.module';
 import { AnswersModule } from './answers/answers.module';
-import { StaffDashboardModule } from './staff-dashboard/staff-dashboard.module';
+import { StaffHomeModule } from './staff-home/staff-home.module';
 import { PhamaHomeModule } from './phama-home/phama-home.module';
 
 @Module({
@@ -26,7 +26,7 @@ import { PhamaHomeModule } from './phama-home/phama-home.module';
     ChoicesModule,
     AnswersModule,
     AppointmentsModule,
-    StaffDashboardModule,
+    StaffHomeModule,
     PhamaHomeModule,
   ],
   controllers: [AppController],

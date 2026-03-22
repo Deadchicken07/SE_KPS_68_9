@@ -7,20 +7,18 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { StaffDashboardQueryDto } from './dto/staff-dashboard-query.dto';
-import { StaffDashboardService } from './staff-dashboard.service';
+import { StaffHomeQueryDto } from './dto/staff-home-query.dto';
+import { StaffHomeService } from './staff-home.service';
 
-@Controller('staff-dashboard')
+@Controller('staff-home')
 @UseGuards(JwtAuthGuard)
-export class StaffDashboardController {
-  constructor(
-    private readonly staffDashboardService: StaffDashboardService,
-  ) {}
+export class StaffHomeController {
+  constructor(private readonly staffHomeService: StaffHomeService) {}
 
   @Get('clinic-schedule')
-  getClinicSchedule(@Req() req, @Query() query: StaffDashboardQueryDto) {
+  getClinicSchedule(@Req() req, @Query() query: StaffHomeQueryDto) {
     this.ensureStaffAccess(req);
-    return this.staffDashboardService.getClinicSchedule(query);
+    return this.staffHomeService.getClinicSchedule(query);
   }
 
   private ensureStaffAccess(req): void {
