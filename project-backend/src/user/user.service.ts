@@ -62,7 +62,7 @@ export class UserService {
       where: {
         roles: {
           name: {
-            in: ['จิตแพทย์', 'นักจิตวิทยา'],
+            in: ['psychiatrist', 'psychologist'],
           },
         },
       },
@@ -80,13 +80,19 @@ export class UserService {
       },
     });
 
-    return staffs.map((staff) => ({
-      id: staff.user_id,
-      name: `${staff.name} ${staff.sur_name}`,
-      role: staff.roles?.name || '',
-      specialty: staff.info || '',
-      image: staff.file_name || '',
-    }));
+    return staffs.map((staff) => {
+      let roleThai = staff.roles?.name || '';
+      if (roleThai === 'psychiatrist') roleThai = 'จิตแพทย์';
+      else if (roleThai === 'psychologist') roleThai = 'นักจิตวิทยา';
+      
+      return {
+        id: staff.user_id,
+        name: `${staff.name} ${staff.sur_name}`,
+        role: roleThai,
+        specialty: staff.info || '',
+        image: staff.file_name || '',
+      };
+    });
   }
   async findOne(userId: number): Promise<UserResponseDto> {
     const user = await this.prisma.users.findUnique({
@@ -212,7 +218,7 @@ export class UserService {
         user_id: staffId,
         roles: {
           name: {
-            in: ['จิตแพทย์', 'นักจิตวิทยา'],
+            in: ['psychiatrist', 'psychologist'],
           },
         },
       },
@@ -234,10 +240,14 @@ export class UserService {
       throw new NotFoundException('Staff not found');
     }
 
+    let roleThai = staff.roles?.name || '';
+    if (roleThai === 'psychiatrist') roleThai = 'จิตแพทย์';
+    else if (roleThai === 'psychologist') roleThai = 'นักจิตวิทยา';
+
     return {
       id: staff.user_id,
       name: `${staff.name} ${staff.sur_name}`,
-      role: staff.roles?.name || '',
+      role: roleThai,
       specialty: staff.info || '',
       image: staff.file_name || '',
     };

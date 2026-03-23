@@ -106,6 +106,112 @@ export class AppointmentsService {
     };
   }
 
+  async createAppointment(userId: number, body: any) {
+    const { staffId, date, timeSelect, duration, note } = body;
+    const dateValue = this.toDateOnlyUtc(this.normalizeDate(date));
+    const normalizedTime = this.normalizeTimeSelect(timeSelect);
+
+    await this.ensureNoConflicts({
+      appointmentId: 0,
+      userId,
+      staffId,
+      dateValue,
+      timeSelect: normalizedTime,
+    });
+
+    const appointment = await this.prisma.appointments.create({
+      data: {
+        user_id: userId,
+        staff_id: staffId,
+        appointment_date: dateValue,
+        time_select: normalizedTime,
+        status: 'Not_paying',
+        appointment_type: body.appointmentType === 'onsite' ? 'onsite' : 'online', 
+      }
+    });
+
+    return { 
+      message: 'Appointment created successfully',
+      appointmentId: appointment.id 
+    };
+  }
+
+  async getAvailableSlots(dateString: string) {
+    const trimmed = dateString?.trim();
+    if (!trimmed || !/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      throw new BadRequestException('date must be in YYYY-MM-DD format');
+    }
+    const dateValue = this.toDateOnlyUtc(trimmed);
+
+    // Every 30 minutes slots map
+    const allTimes = [
+      '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', 
+      '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'
+    ];
+
+    const staffs = await this.prisma.users.findMany({
+      where: {
+        roles: { name: { in: ['psychiatrist', 'psychologist'] } },
+      },
+      select: { user_id: true }
+    });
+
+    const staffIds = staffs.map(s => s.user_id);
+
+    const leaves = await this.prisma.schedule.findMany({
+      where: {
+        work_date: dateValue,
+        status: 'leave',
+        staff_id: { in: staffIds }
+      }
+    });
+    const staffOnLeave = new Set(leaves.map(l => l.staff_id));
+
+    const appointments = await this.prisma.appointments.findMany({
+      where: {
+        appointment_date: dateValue,
+        staff_id: { in: staffIds }
+      }
+    });
+
+    const result: Record<number, string[]> = {};
+    
+    for (const staffId of staffIds) {
+      if (staffOnLeave.has(staffId)) {
+        result[staffId] = [];
+        continue;
+      }
+
+      const bookedRanges = appointments
+        .filter(a => a.staff_id === staffId && a.time_select)
+        .map(a => this.tryParseTimeRange(a.time_select));
+
+      // filter
+      const available = allTimes.filter(t => {
+        const hh = parseInt(t.substring(0, 2), 10);
+        const mm = parseInt(t.substring(3, 5), 10);
+        const startMin = hh * 60 + mm;
+        
+        // check if this slot is covered by any booked range
+        const isBooked = bookedRanges.some(r => r && startMin >= r.startMinutes && startMin < r.endMinutes);
+        
+        // also reject past times if it's today
+        const now = new Date();
+        const today = this.toLocalDateKey(now);
+        if (today === trimmed) {
+          const nowMinutes = now.getHours() * 60 + now.getMinutes();
+          if (startMin <= nowMinutes) return false;
+        }
+
+        return !isBooked;
+      });
+
+      result[staffId] = available;
+    }
+
+    return result;
+  }
+
   async rescheduleAppointment(
     userId: number,
     appointmentId: number,

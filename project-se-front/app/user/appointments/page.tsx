@@ -14,50 +14,7 @@ const API_BASE_URL = 'http://localhost:4000';
 dayjs.extend(buddhistEra);
 dayjs.locale('th');
 
-// ─── Data ────────────────────────────────────────────────────────────────────
-
-const allStaff = [
-    {
-        id: 1,
-        name: 'รศ.นพ.สมชาย ใจดี',
-        role: 'จิตแพทย์',
-        specialty: 'จิตเวชเด็กและวัยรุ่น',
-        image: '/docterProfile/docter1.jpeg',
-        slots: ['09:00', '10:00', '11:00', '13:00', '14:00'],
-    },
-    {
-        id: 2,
-        name: 'พญ.สมหยิง สนิมจัย',
-        role: 'จิตแพทย์',
-        specialty: 'ครอบครัว ความสัมพันธ์ ความรัก',
-        image: '/docterProfile/docter2.png',
-        slots: ['09:00', '10:00', '13:00', '15:00', '16:00'],
-    },
-    {
-        id: 3,
-        name: 'นพ.ลอดช่อง กระด่องแมะ',
-        role: 'จิตแพทย์',
-        specialty: 'จิตเวชวัยรุ่น ผู้ใหญ่ ผู้สูงอายุ',
-        image: '/docterProfile/docter3.png',
-        slots: ['10:00', '11:00', '14:00', '15:00', '17:00'],
-    },
-    {
-        id: 4,
-        name: 'ดร.สรรสร้าง ส่งสี',
-        role: 'นักจิตวิทยา',
-        specialty: 'บำบัดความคิดและพฤติกรรม',
-        image: '/docterProfile/psy1',
-        slots: ['09:00', '11:00', '13:00', '15:00', '16:00'],
-    },
-    {
-        id: 5,
-        name: 'ดร.มั่นใจ คารมดี',
-        role: 'นักจิตวิทยา',
-        specialty: 'ปัญหาความสัมพันธ์',
-        image: '/docterProfile/psy5.jpg',
-        slots: ['10:00', '11:00', '14:00', '16:00', '17:00'],
-    },
-];
+import { useStaff } from '@/hooks/useStaff';
 
 const roleColor: Record<string, { badge: string; accent: string }> = {
     'จิตแพทย์': { badge: '#e0e7ff', accent: '#4f46e5' },
@@ -66,14 +23,23 @@ const roleColor: Record<string, { badge: string; accent: string }> = {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Staff = (typeof allStaff)[number];
+type Staff = {
+    id: number;
+    name: string;
+    role: string;
+    specialty: string;
+    image: string;
+    slots: string[];
+};
 
 interface Booking {
     staff: Staff;
     date: string;
+    displayDate: string;
     time: string;
     duration: number;
     price: number;
+    appointmentType: 'online' | 'onsite';
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -100,8 +66,7 @@ function StaffCard({
                     className="appt-avatar"
                     onError={(e) => {
                         const t = e.currentTarget as HTMLImageElement;
-                        t.src = '';
-                        t.style.background = '#e0e7ff';
+                        t.src = '/docterProfile/defaultPicture.png';
                     }}
                 />
             </div>
@@ -148,6 +113,34 @@ export default function AppointmentsPage() {
     const [modalApi, modalContextHolder] = Modal.useModal();
     const [isAuthChecking, setIsAuthChecking] = useState(true);
     const [mode, setMode] = useState<'staff' | 'time'>('staff');
+    
+    const { staffs: fetchedStaffs } = useStaff();
+    const [availableSlotsMap, setAvailableSlotsMap] = useState<Record<number, string[]>>({});
+
+    const fetchAvailableSlots = async (dateStr: string) => {
+        try {
+            const token = localStorage.getItem('token');
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || API_BASE_URL;
+            const res = await fetch(`${apiUrl}/appointments/available-slots?date=${dateStr}`, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {}
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setAvailableSlotsMap(data);
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const allStaff: Staff[] = fetchedStaffs.map(s => ({
+        id: s.id,
+        name: s.name,
+        role: s.role,
+        specialty: s.specialty || '',
+        image: s.image || '/docterProfile/defaultPicture.png',
+        slots: availableSlotsMap[s.id] || [],
+    }));
 
     useEffect(() => {
         let isMounted = true;
@@ -194,6 +187,7 @@ export default function AppointmentsPage() {
     }, [modalApi, router]);
 
     const [selectedDuration, setSelectedDuration] = useState<number>(30);
+    const [appointmentType, setAppointmentType] = useState<'online' | 'onsite'>('online');
 
     const calculatePrice = (role: string, duration: number) => {
         const basePrice30 = role === 'จิตแพทย์' ? 1000 : 500;
@@ -223,19 +217,65 @@ export default function AppointmentsPage() {
         setBooking(null);
     };
 
-    const handleConfirm = () => {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleConfirm = async () => {
         if (!booking) return;
-        const params = new URLSearchParams({
-            staffId: booking.staff.id.toString(),
-            staffName: booking.staff.name,
-            role: booking.staff.role,
-            date: booking.date,
-            time: booking.time,
-            duration: booking.duration.toString(),
-            price: booking.price.toString(),
-            note: note,
-        });
-        router.push(`/user/payment?${params.toString()}`);
+        setIsSubmitting(true);
+        try {
+            const token = localStorage.getItem('token');
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || API_BASE_URL;
+
+            const [hh, mm] = booking.time.split(':').map(Number);
+            const startMinutes = hh * 60 + mm;
+            const endMinutes = startMinutes + booking.duration;
+            const endH = Math.floor(endMinutes / 60).toString().padStart(2, '0');
+            const endM = (endMinutes % 60).toString().padStart(2, '0');
+            const timeRangeString = `${booking.time} - ${endH}:${endM}`;
+
+            const res = await fetch(`${apiUrl}/appointments`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    staffId: booking.staff.id,
+                    date: booking.date, 
+                    timeSelect: timeRangeString,
+                    duration: booking.duration,
+                    appointmentType: booking.appointmentType,
+                    note: note,
+                })
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.message || 'ไม่สามารถสร้างการนัดหมายได้');
+            }
+
+            const data = await res.json();
+
+            const params = new URLSearchParams({
+                id: data.appointmentId.toString(),
+                staffName: booking.staff.name,
+                role: booking.staff.role,
+                date: booking.displayDate,
+                time: booking.time,
+                duration: booking.duration.toString(),
+                price: booking.price.toString(),
+                note: note,
+            });
+            router.push(`/user/payment?${params.toString()}`);
+        } catch (err: any) {
+            modalApi.error({
+                title: 'เกิดข้อผิดพลาด',
+                content: err.message,
+                centered: true,
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     // reset by-staff flow when staff changes
@@ -244,6 +284,17 @@ export default function AppointmentsPage() {
         setSelectedDate(null);
         setSelectedTime(null);
         setSelectedDuration(30);
+        setAvailableSlotsMap({});
+    };
+
+    const handleSelectedDate = (d: Dayjs | null) => {
+        setSelectedDate(d);
+        setSelectedTime(null);
+        if (d) {
+            fetchAvailableSlots(d.format('YYYY-MM-DD'));
+        } else {
+            setAvailableSlotsMap({});
+        }
     };
 
     // reset by-time flow when date changes
@@ -252,6 +303,11 @@ export default function AppointmentsPage() {
         setTimeStaff(null);
         setTimeSlot(null);
         setSelectedDuration(30);
+        if (d) {
+            fetchAvailableSlots(d.format('YYYY-MM-DD'));
+        } else {
+            setAvailableSlotsMap({});
+        }
     };
 
     const handleTimeSlot = (t: string) => {
@@ -682,7 +738,7 @@ export default function AppointmentsPage() {
                                     <DatePicker
                                         disabledDate={disabledDate}
                                         value={selectedDate}
-                                        onChange={(d) => { setSelectedDate(d); setSelectedTime(null); }}
+                                        onChange={handleSelectedDate}
                                         placeholder="เลือกวันที่"
                                         style={{ width: 220, marginBottom: 20 }}
                                         size="large"
@@ -690,17 +746,40 @@ export default function AppointmentsPage() {
 
                                     {selectedDate && (
                                         <>
-                                            <h2 style={{ marginTop: 8 }}>เวลา</h2>
-                                            <TimeSlotGrid
-                                                slots={selectedStaff.slots}
-                                                selected={selectedTime}
-                                                onSelect={setSelectedTime}
-                                            />
+                                            <h2 style={{ marginTop: 8 }}>
+                                                เวลา <span style={{fontSize: 14, fontWeight: 'normal', color: '#6b7280'}}>(แสดงเฉพาะเวลาที่ว่าง)</span>
+                                            </h2>
+                                            {selectedStaff.slots.length > 0 ? (
+                                                <TimeSlotGrid
+                                                    slots={selectedStaff.slots}
+                                                    selected={selectedTime}
+                                                    onSelect={setSelectedTime}
+                                                />
+                                            ) : (
+                                                <p style={{ color: '#ef4444', marginTop: 10 }}>คุณหมอไม่ว่าง หรือ ไม่มีคิวว่างในวันที่เลือก</p>
+                                            )}
                                         </>
                                     )}
 
                                     {selectedDate && selectedTime && (
                                         <div style={{ marginTop: 28 }}>
+                                            <div style={{ marginBottom: 20 }}>
+                                                <h2>รูปแบบการเข้ารับคำปรึกษา</h2>
+                                                <div style={{ display: 'flex', gap: 12 }}>
+                                                    <button
+                                                        className={`appt-slot-btn${appointmentType === 'online' ? ' appt-slot-btn--active' : ''}`}
+                                                        onClick={() => setAppointmentType('online')}
+                                                    >
+                                                        ออนไลน์ (Online)
+                                                    </button>
+                                                    <button
+                                                        className={`appt-slot-btn${appointmentType === 'onsite' ? ' appt-slot-btn--active' : ''}`}
+                                                        onClick={() => setAppointmentType('onsite')}
+                                                    >
+                                                        ที่คลินิก (Onsite)
+                                                    </button>
+                                                </div>
+                                            </div>
                                             <div style={{ marginBottom: 20 }}>
                                                 <h2>ระยะเวลาเข้ารับคำปรึกษา</h2>
                                                 <div style={{ display: 'flex', gap: 12 }}>
@@ -741,10 +820,12 @@ export default function AppointmentsPage() {
                                                 onClick={() =>
                                                     openModal({
                                                         staff: selectedStaff,
-                                                        date: selectedDate.format('D MMMM BBBB'),
+                                                        date: selectedDate.format('YYYY-MM-DD'),
+                                                        displayDate: selectedDate.format('D MMMM BBBB'),
                                                         time: selectedTime,
                                                         duration: selectedDuration,
                                                         price: calculatePrice(selectedStaff.role, selectedDuration),
+                                                        appointmentType: appointmentType,
                                                     })
                                                 }
                                             >
@@ -779,6 +860,10 @@ export default function AppointmentsPage() {
                                         // Collect all unique available times
                                         const uniqueTimes = Array.from(new Set(allStaff.flatMap(s => s.slots))).sort((a, b) => a.localeCompare(b));
 
+                                        if (uniqueTimes.length === 0) {
+                                            return <p style={{ color: '#ef4444', marginTop: 10 }}>ไม่มีช่วงเวลาว่างในวันที่เลือก</p>;
+                                        }
+
                                         return (
                                             <TimeSlotGrid
                                                 slots={uniqueTimes}
@@ -790,7 +875,12 @@ export default function AppointmentsPage() {
 
                                     {timeSlot && (
                                         <div style={{ marginTop: 36 }}>
-                                            <h2 style={{ fontSize: 20, fontWeight: 700, color: '#1e1b4b', marginBottom: 20 }}>บุคลากรที่ว่างเวลา {timeSlot} น.</h2>
+                                            <h2 style={{ fontSize: 20, fontWeight: 700, color: '#1e1b4b', marginBottom: 20 }}>
+                                                บุคลากรที่ว่างเวลา {timeSlot} น.
+                                                <span style={{ fontSize: 16, color: '#0f766e', marginLeft: 12, fontWeight: 500 }}>
+                                                    (ว่าง {allStaff.filter(s => s.slots.includes(timeSlot)).length} ท่าน)
+                                                </span>
+                                            </h2>
                                             {(() => {
                                                 const availableStaff = allStaff.filter(s => s.slots.includes(timeSlot));
                                                 return (
@@ -851,10 +941,12 @@ export default function AppointmentsPage() {
                                                 onClick={() =>
                                                     openModal({
                                                         staff: timeStaff,
-                                                        date: timeDate.format('D MMMM BBBB'),
+                                                        date: timeDate.format('YYYY-MM-DD'),
+                                                        displayDate: timeDate.format('D MMMM BBBB'),
                                                         time: timeSlot,
                                                         duration: selectedDuration,
                                                         price: calculatePrice(timeStaff.role, selectedDuration),
+                                                        appointmentType: appointmentType,
                                                     })
                                                 }
                                             >
@@ -896,7 +988,7 @@ export default function AppointmentsPage() {
                             </div>
                             <div className="appt-summary-item">
                                 <span className="appt-summary-label">วันที่</span>
-                                <span className="appt-summary-value" style={{ fontSize: 15 }}>{booking.date}</span>
+                                <span className="appt-summary-value" style={{ fontSize: 15 }}>{booking.displayDate}</span>
                             </div>
                             <div className="appt-summary-item">
                                 <span className="appt-summary-label">เวลา</span>
@@ -923,6 +1015,7 @@ export default function AppointmentsPage() {
                             type="primary"
                             block
                             size="large"
+                            disabled={isSubmitting}
                             style={{
                                 background: 'linear-gradient(135deg, #0f766e 0%, #059669 100%)',
                                 border: 'none',
@@ -934,7 +1027,7 @@ export default function AppointmentsPage() {
                             }}
                             onClick={handleConfirm}
                         >
-                            ยืนยัน และดำเนินการชำระเงิน
+                            {isSubmitting ? 'กำลังดำเนินการ...' : 'ยืนยัน และดำเนินการชำระเงิน'}
                         </Button>
                     </>
                 ) : null}

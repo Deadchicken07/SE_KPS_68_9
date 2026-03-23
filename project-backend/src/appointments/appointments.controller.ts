@@ -1,10 +1,13 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
   Param,
   ParseIntPipe,
   Patch,
+  Post,
+  Query,
   Req,
   UnauthorizedException,
   UseGuards,
@@ -16,12 +19,26 @@ import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
 @Controller('appointments')
 @UseGuards(JwtAuthGuard)
 export class AppointmentsController {
-  constructor(private readonly appointmentsService: AppointmentsService) {}
+  constructor(private readonly appointmentsService: AppointmentsService) { }
+
+  @Get('available-slots')
+  async getAvailableSlots(@Query('date') date: string) {
+    if (!date) {
+      throw new BadRequestException('date query parameter is required');
+    }
+    return this.appointmentsService.getAvailableSlots(date);
+  }
 
   @Get('me')
   getMyAppointments(@Req() req) {
     const userId = this.getUserIdFromRequest(req);
     return this.appointmentsService.getMySchedule(userId);
+  }
+
+  @Post()
+  createAppointment(@Req() req, @Body() body: any) {
+    const userId = this.getUserIdFromRequest(req);
+    return this.appointmentsService.createAppointment(userId, body);
   }
 
   @Get(':id')
@@ -62,7 +79,7 @@ export class AppointmentsController {
   }
 
   @Get()
-  findAllByStaff(staffId : number){
+  findAllByStaff(staffId: number) {
     return this.appointmentsService.findAllByStaff(staffId)
   }
 
