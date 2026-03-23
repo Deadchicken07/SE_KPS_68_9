@@ -29,7 +29,10 @@ export const mapRoleIdToRole = (roleId: number | null): Roles | null => {
 
 export const roleLinks: Record<Roles, NavLinks[]> = {
   admin: [
-    { name: "Admin Report", href: "/staff/admin-report" },
+    { name: "Admin Report", href: "/staff/admin/admin-report" },
+    { name: "Add Staff", href: "/staff/admin/add-staff" },
+    { name: "Patient History", href: "/staff/admin/patient-history" },
+    { name: "Payment History", href: "/staff/admin/payment-verification" },
   ],
   user: [{ name: "หน้าแรก", href: "/user" }],
   psychologist: [{ name: "Patient History", href: "/staff/patient-history" }],
@@ -46,7 +49,7 @@ export const roleLinks: Record<Roles, NavLinks[]> = {
 };
 
 export const roleHome: Record<Roles, string> = {
-  admin: "/staff/admin-report",
+  admin: "/staff/admin/admin-report",
   user: "/user",
   psychologist: "/staff/patient-history",
   psychiatrist: "/staff/patient-history",

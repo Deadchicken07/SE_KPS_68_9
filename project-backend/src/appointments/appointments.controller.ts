@@ -13,6 +13,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 import { AppointmentsService } from './appointments.service';
 import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
 
@@ -27,6 +29,13 @@ export class AppointmentsController {
       throw new BadRequestException('date query parameter is required');
     }
     return this.appointmentsService.getAvailableSlots(date);
+  }
+
+  @Get('payments')
+  @UseGuards(RolesGuard)
+  @Roles(1) // Admin only
+  getAllPaidAppointments() {
+    return this.appointmentsService.getAllPaidAppointments();
   }
 
   @Get('me')

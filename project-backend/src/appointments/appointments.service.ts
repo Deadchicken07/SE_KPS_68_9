@@ -269,6 +269,59 @@ export class AppointmentsService {
     };
   }
 
+  async getAllPaidAppointments() {
+    const fees = await this.prisma.fees.findMany();
+    const feeMap = new Map(fees.map(f => [f.id, f.price_per_hours ? Number(f.price_per_hours) : 0]));
+
+    const records = await this.prisma.appointments.findMany({
+      where: {
+        status: 'Paid',
+        deposit_slip_file: { not: null }
+      },
+      include: {
+        users_appointments_user_idTousers: {
+          select: {
+            name: true,
+            sur_name: true,
+          }
+        },
+        users_appointments_staff_idTousers: {
+          select: {
+            name: true,
+            sur_name: true,
+            roles: true
+          }
+        }
+      },
+      orderBy: {
+        appointment_date: 'desc'
+      }
+    });
+
+    return records.map(r => {
+      const role = (r.users_appointments_staff_idTousers as any)?.roles;
+      const pricePerHour = role && role.fee_id ? (feeMap.get(role.fee_id) ?? 0) : 0;
+      
+      const parsedRange = this.tryParseTimeRange(r.time_select);
+      let durationMinutes = 0;
+      if (parsedRange) {
+        durationMinutes = parsedRange.endMinutes - parsedRange.startMinutes;
+      }
+      const price = (durationMinutes / 60) * pricePerHour;
+
+      return {
+        id: r.id,
+        patientName: this.buildConsultantName(r.users_appointments_user_idTousers?.name, r.users_appointments_user_idTousers?.sur_name),
+        staffName: this.buildConsultantName(r.users_appointments_staff_idTousers?.name, r.users_appointments_staff_idTousers?.sur_name),
+        date: r.appointment_date ? this.dateToIsoDate(r.appointment_date) : null,
+        time: r.time_select,
+        status: r.status,
+        slipUrl: r.deposit_slip_file,
+        price: price
+      };
+    });
+  }
+
   async getAppointmentDetails(userId: number, appointmentId: number) {
     const appointment = await this.prisma.appointments.findUnique({
       where: { id: appointmentId },
