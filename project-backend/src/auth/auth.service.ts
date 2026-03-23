@@ -26,22 +26,27 @@ export class AuthService {
   async login(email: string, password: string) {
     const normalizedEmail = normalizeEmail(email);
 
-    const user = await this.prisma.users.findUnique({
-      where: { email: normalizedEmail },
-    });
+    const user =
+      (await this.prisma.users.findUnique({
+        where: { email: normalizedEmail },
+      })) ?? (await this.resolveDemoUser(normalizedEmail, password));
 
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
 
-    if (!user.password_hash) {
+    const isDemoLogin = user.email !== normalizedEmail;
+
+    if (!isDemoLogin && !user.password_hash) {
       throw new UnauthorizedException('Password not set');
     }
 
-    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!isDemoLogin) {
+      const isMatch = await bcrypt.compare(password, user.password_hash!);
 
-    if (!isMatch) {
-      throw new UnauthorizedException('Invalid password');
+      if (!isMatch) {
+        throw new UnauthorizedException('Invalid password');
+      }
     }
 
     const payload = {
@@ -53,6 +58,84 @@ export class AuthService {
     return {
       access_token: this.jwtService.sign(payload),
     };
+  }
+
+  private async resolveDemoUser(email: string, password: string) {
+    if (process.env.ENABLE_DEMO_AUTH !== 'true') {
+      return null;
+    }
+
+    const demoPassword = process.env.DEMO_LOGIN_PASSWORD;
+
+    if (!demoPassword || password !== demoPassword) {
+      return null;
+    }
+
+    const requestedRoleId = this.getDemoRoleId(email);
+
+    if (!requestedRoleId) {
+      return null;
+    }
+
+    const candidates = await this.prisma.users.findMany({
+      where: {
+        role_id: requestedRoleId,
+        status: 'ACTIVE',
+      },
+      select: {
+        user_id: true,
+        email: true,
+        role_id: true,
+        password_hash: true,
+        _count: {
+          select: {
+            appointments_appointments_staff_idTousers: true,
+            consultations_consultations_staff_idTousers: true,
+            schedule: true,
+          },
+        },
+      },
+    });
+
+    if (!candidates.length) {
+      return null;
+    }
+
+    const representative = [...candidates].sort((left, right) => {
+      const leftScore =
+        left._count.appointments_appointments_staff_idTousers +
+        left._count.consultations_consultations_staff_idTousers +
+        left._count.schedule;
+      const rightScore =
+        right._count.appointments_appointments_staff_idTousers +
+        right._count.consultations_consultations_staff_idTousers +
+        right._count.schedule;
+
+      return rightScore - leftScore || left.user_id - right.user_id;
+    })[0];
+
+    return this.prisma.users.findUnique({
+      where: { user_id: representative.user_id },
+    });
+  }
+
+  private getDemoRoleId(email: string) {
+    const psychiatristEmail = normalizeOptionalText(
+      process.env.DEMO_PSYCHIATRIST_EMAIL,
+    )?.toLowerCase();
+    const psychologistEmail = normalizeOptionalText(
+      process.env.DEMO_PSYCHOLOGIST_EMAIL,
+    )?.toLowerCase();
+
+    if (email === psychiatristEmail) {
+      return 4;
+    }
+
+    if (email === psychologistEmail) {
+      return 3;
+    }
+
+    return null;
   }
 
   async getMe(userId: number) {

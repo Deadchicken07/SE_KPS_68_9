@@ -64,3 +64,28 @@ export const roleHome: Record<Roles, string> = {
   psychiatrist: "/staff/role-psychiatrist-psychologists/psychiatrist",
   pharmacist: "/staff/pharmacist_home",
 };
+
+export const canRoleAccessPath = (
+  role: Roles,
+  pathname: string | null | undefined,
+) => {
+  if (!pathname) {
+    return false;
+  }
+
+  if (pathname === roleHome[role]) {
+    return true;
+  }
+
+  if (pathname === "/staff") {
+    return true;
+  }
+
+  return roleLinks[role].some((link) => {
+    if (pathname === link.href) {
+      return true;
+    }
+
+    return pathname.startsWith(`${link.href}/`);
+  });
+};

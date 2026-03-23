@@ -1,0 +1,16 @@
+Falling back to mock data for /psychiatrist-dashboard TypeError: fetch failed
+    at async g (C:\Users\USER\Documents\dev\project-se-front\.next\server\chunks\ssr\[root-of-the-server]__98c3d7e4._.js:1:5258)
+    at async d (C:\Users\USER\Documents\dev\project-se-front\.next\server\chunks\ssr\[root-of-the-server]__98c3d7e4._.js:1:5740) {
+  [cause]: AggregateError: 
+      at ignore-listed frames {
+    code: 'ECONNREFUSED'
+  }
+}
+Falling back to mock data for /psychologist-dashboard TypeError: fetch failed
+    at async g (C:\Users\USER\Documents\dev\project-se-front\.next\server\chunks\ssr\[root-of-the-server]__98c3d7e4._.js:1:5258)
+    at async d (C:\Users\USER\Documents\dev\project-se-front\.next\server\chunks\ssr\[root-of-the-server]__cc4b6776._.js:1:5737) {
+  [cause]: AggregateError: 
+      at ignore-listed frames {
+    code: 'ECONNREFUSED'
+  }
+}

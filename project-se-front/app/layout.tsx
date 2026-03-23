@@ -1,20 +1,14 @@
+import type { CSSProperties } from "react";
 import type { Metadata } from "next";
-
-import { Geist, Geist_Mono } from "next/font/google";
 import AppThemeProvider from "@/components/ui/AppThemeProvider";
 import AxiosSessionGuard from "@/components/providers/AxiosSessionGuard";
 import "./globals.css";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const rootFontVariables = {
+  "--font-geist-sans": '"Noto Sans Thai", "Segoe UI", sans-serif',
+  "--font-geist-mono": '"Cascadia Code", "Fira Code", Consolas, monospace',
+} as CSSProperties;
 
 export const metadata: Metadata = {
   title: "JitDee.com",
@@ -28,9 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className="antialiased" style={rootFontVariables}>
         <AuthProvider>
           <AppThemeProvider>{children}</AppThemeProvider>
           <AxiosSessionGuard />

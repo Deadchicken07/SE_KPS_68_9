@@ -17,6 +17,7 @@ import {
 } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import { useLogin } from "@/hooks/useLogin";
+import { canRoleAccessPath, mapRoleIdToRole } from "@/types/role.types";
 
 const getRedirectPathByRoleId = (roleId: number | null) => {
   switch (roleId) {
@@ -33,6 +34,24 @@ const getRedirectPathByRoleId = (roleId: number | null) => {
     default:
       return "/user";
   }
+};
+
+const resolveRedirectPath = (
+  roleId: number | null,
+  redirectTarget: string | null,
+) => {
+  const fallbackPath = getRedirectPathByRoleId(roleId);
+  const role = mapRoleIdToRole(roleId);
+
+  if (!redirectTarget || !role) {
+    return fallbackPath;
+  }
+
+  if (!redirectTarget.startsWith("/")) {
+    return fallbackPath;
+  }
+
+  return canRoleAccessPath(role, redirectTarget) ? redirectTarget : fallbackPath;
 };
 
 export default function LoginPage() {
@@ -74,7 +93,7 @@ export default function LoginPage() {
   const handleFinish = async (values: { email: string; password: string }) => {
     try {
       const me = await login(values.email, values.password);
-      router.push(redirectTarget || getRedirectPathByRoleId(me.role_id));
+      router.push(resolveRedirectPath(me.role_id, redirectTarget));
     } catch {
       // handled by hook
     }

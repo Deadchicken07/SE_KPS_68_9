@@ -29,7 +29,7 @@ export class AuthController {
       secure: false,
     });
 
-    return { message: 'login success' };
+    return { message: 'login success', access_token: result.access_token };
   }
   @UseGuards(JwtAuthGuard)
   @Get('me')

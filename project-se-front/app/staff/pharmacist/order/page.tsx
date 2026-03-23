@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import {
   Button,
   Card,
@@ -64,7 +64,7 @@ const renderStatusTag = (status: string | null) => {
   return <Tag color={receiptStatusColorMap[typedStatus] ?? "default"}>{status}</Tag>;
 };
 
-export default function PharmacistOrderPage() {
+function PharmacistOrderPageContent() {
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm<OrderFormValues>();
   const [selectedConsultationId, setSelectedConsultationId] = useState<number | null>(null);
@@ -72,13 +72,22 @@ export default function PharmacistOrderPage() {
   const { me } = useAuth();
   const { consultations, loading, saving, consultationOptions, createOrder } =
     usePharmacistOrders();
+  const initialConsultationId = useMemo(() => {
+    const value = searchParams.get("consultationId");
+    if (!value) {
+      return null;
+    }
+
+    const parsedValue = Number(value);
+    return Number.isInteger(parsedValue) ? parsedValue : null;
+  }, [searchParams]);
 
   const selectedConsultation = useMemo(
     () =>
       consultations.find(
-        (consultation) => consultation.consultationId === activeConsultationId,
+        (consultation) => consultation.consultationId === selectedConsultationId,
       ) ?? null,
-    [activeConsultationId, consultations],
+    [consultations, selectedConsultationId],
   );
 
   const currentStatus = (selectedConsultation?.latestReceiptStatus ??
@@ -96,7 +105,8 @@ export default function PharmacistOrderPage() {
   );
 
   useEffect(() => {
-    if (activeConsultationId === null) {
+    if (!consultations.length) {
+      setSelectedConsultationId(null);
       form.resetFields();
       return;
     }
@@ -107,14 +117,23 @@ export default function PharmacistOrderPage() {
         (consultation) => consultation.consultationId === selectedConsultationId,
       )
         ? selectedConsultationId
+        : initialConsultationId &&
+            consultations.some(
+              (consultation) =>
+                consultation.consultationId === initialConsultationId,
+            )
+          ? initialConsultationId
         : consultations[0].consultationId;
 
-    setSelectedConsultationId(nextConsultationId);
+    if (selectedConsultationId !== nextConsultationId) {
+      setSelectedConsultationId(nextConsultationId);
+    }
+
     form.setFieldsValue({
-      consultationId: activeConsultationId,
+      consultationId: nextConsultationId,
       tracking: "",
     });
-  }, [consultations, form, selectedConsultationId]);
+  }, [consultations, form, initialConsultationId, selectedConsultationId]);
 
   const handleConsultationChange = (consultationId: number) => {
     setSelectedConsultationId(consultationId);
@@ -376,5 +395,29 @@ export default function PharmacistOrderPage() {
         </Col>
       </Row>
     </main>
+  );
+}
+
+export default function PharmacistOrderPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="staff-shell">
+          <section className="staff-page-header">
+            <Typography.Text className="staff-kicker">
+              STAFF / PHARMACIST / DELIVERY
+            </Typography.Text>
+            <Typography.Title
+              level={2}
+              style={{ marginTop: 8, marginBottom: 8 }}
+            >
+              Loading pharmacist order workspace...
+            </Typography.Title>
+          </section>
+        </main>
+      }
+    >
+      <PharmacistOrderPageContent />
+    </Suspense>
   );
 }
