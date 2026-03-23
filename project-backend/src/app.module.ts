@@ -14,6 +14,7 @@ import { AnswersModule } from './answers/answers.module';
 import { ResponsesModule } from './responses/responses.module';
 import { PharmacistModule } from './pharmacist/pharmacist.module';
 import { ConsultationsModule } from './consultations/consultations.module';
+import { AppointmentsModule } from './appointments/appointments.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { ConsultationsModule } from './consultations/consultations.module';
     ResponsesModule,
     PharmacistModule,
     ConsultationsModule,
+    AppointmentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

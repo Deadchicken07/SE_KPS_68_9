@@ -3,7 +3,6 @@
 import { CSSProperties, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import "./schedule-ui.css";
-import { createMockSchedule } from "./mockData";
 import Badge from "@/components/ui/Badge";
 
 type TabKey = "upcoming" | "past";
@@ -98,13 +97,7 @@ const defaultSchedule: AppointmentScheduleResponse = {
   past: [],
 };
 
-function getTokenFromStorage(): string | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
 
-  return window.localStorage.getItem("access_token");
-}
 
 function formatDate(dateKey: string | null): string {
   if (!dateKey) {
@@ -394,9 +387,31 @@ export default function AppointmentSchedulePage() {
       setLoading(true);
     }
 
-    // ใช้ mock data เสมอ (สำหรับ demo / development)
-    setSchedule(createMockSchedule());
-    setLoading(false);
+    try {
+      const response = await fetch(`${API_BASE_URL}/appointments/me`, {
+        credentials: "include"
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        setIsAuthRequired(true);
+        throw new Error("กรุณาเข้าสู่ระบบก่อนดูลายละเอียดนัดหมาย");
+      }
+
+      if (!response.ok) {
+        throw new Error(await parseErrorMessage(response));
+      }
+
+      const data = await response.json() as AppointmentScheduleApiResponse;
+      setSchedule({
+        upcoming: normalizeApiItems(data.upcoming),
+        past: normalizeApiItems(data.past),
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "ไม่สามารถโหลดข้อมูลนัดหมายได้";
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   const openRescheduleDialog = useCallback((item: AppointmentItem) => {
@@ -432,14 +447,8 @@ export default function AppointmentSchedulePage() {
     }
 
     const item = rescheduleForm;
-    const token = getTokenFromStorage();
 
-    if (!token) {
-      setIsAuthRequired(true);
-      setError("กรุณาเข้าสู่ระบบก่อนทำรายการ");
-      return;
-    }
-
+    setProcessingRescheduleId(item.appointmentId);
     const normalizedDate = item.appointmentDate.trim();
     const normalizedStart = item.startTime.trim();
     const normalizedEnd = item.endTime.trim();
@@ -462,9 +471,9 @@ export default function AppointmentSchedulePage() {
       const response = await fetch(`${API_BASE_URL}/appointments/${item.appointmentId}/reschedule`, {
         method: "PATCH",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           appointmentDate: normalizedDate,
           timeSelect: normalizedTime,
@@ -488,14 +497,6 @@ export default function AppointmentSchedulePage() {
 
   const handleReschedule = useCallback(
     async (item: AppointmentItem) => {
-      const token = getTokenFromStorage();
-
-      if (!token) {
-        setIsAuthRequired(true);
-        setError("กรุณาเข้าสู่ระบบก่อนทำรายการ");
-        return;
-      }
-
       openRescheduleDialog(item);
     },
     [openRescheduleDialog],
@@ -503,14 +504,6 @@ export default function AppointmentSchedulePage() {
 
   const handlePayAppointment = useCallback(
     async (item: AppointmentItem) => {
-      const token = getTokenFromStorage();
-
-      if (!token) {
-        setIsAuthRequired(true);
-        setError("กรุณาเข้าสู่ระบบก่อนทำรายการ");
-        return;
-      }
-
       openPaymentDialog(item);
     },
     [openPaymentDialog],
@@ -518,14 +511,6 @@ export default function AppointmentSchedulePage() {
 
   const handleConfirmMockPayment = useCallback(async () => {
     if (!paymentForm) {
-      return;
-    }
-
-    const token = getTokenFromStorage();
-
-    if (!token) {
-      setIsAuthRequired(true);
-      setError("กรุณาเข้าสู่ระบบก่อนทำรายการ");
       return;
     }
 
@@ -543,9 +528,7 @@ export default function AppointmentSchedulePage() {
     try {
       const response = await fetch(`${API_BASE_URL}/appointments/${paymentForm.appointmentId}/pay`, {
         method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include",
       });
 
       if (!response.ok) {
