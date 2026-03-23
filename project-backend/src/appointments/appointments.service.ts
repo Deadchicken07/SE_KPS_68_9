@@ -501,4 +501,14 @@ export class AppointmentsService {
       String(value.getDate()).padStart(2, '0'),
     ].join('-');
   }
+
+  async findAllByStaff(staffId : number){
+    const appointment = await this.prisma.appointments.findMany({
+      where : {
+        staff_id : staffId ,
+      }
+    })
+
+    return appointment ;
+  }
 }

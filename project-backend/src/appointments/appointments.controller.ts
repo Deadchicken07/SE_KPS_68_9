@@ -61,6 +61,11 @@ export class AppointmentsController {
     );
   }
 
+  @Get()
+  findAllByStaff(staffId : number){
+    return this.appointmentsService.findAllByStaff(staffId)
+  }
+
   private getUserIdFromRequest(req): number {
     const userId = Number(req?.user?.sub);
 
