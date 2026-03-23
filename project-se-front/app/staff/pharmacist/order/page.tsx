@@ -18,6 +18,7 @@ import {
   Typography,
   message,
 } from "antd";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { usePharmacistOrders } from "@/hooks/usePharmacistOrders";
 import {
@@ -67,26 +68,10 @@ export default function PharmacistOrderPage() {
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm<OrderFormValues>();
   const [selectedConsultationId, setSelectedConsultationId] = useState<number | null>(null);
+  const searchParams = useSearchParams();
   const { me } = useAuth();
   const { consultations, loading, saving, consultationOptions, createOrder } =
     usePharmacistOrders();
-
-  const activeConsultationId = useMemo(() => {
-    if (consultations.length === 0) {
-      return null;
-    }
-
-    if (
-      selectedConsultationId &&
-      consultations.some(
-        (consultation) => consultation.consultationId === selectedConsultationId,
-      )
-    ) {
-      return selectedConsultationId;
-    }
-
-    return consultations[0].consultationId;
-  }, [consultations, selectedConsultationId]);
 
   const selectedConsultation = useMemo(
     () =>
@@ -116,11 +101,20 @@ export default function PharmacistOrderPage() {
       return;
     }
 
+    const nextConsultationId =
+      selectedConsultationId &&
+      consultations.some(
+        (consultation) => consultation.consultationId === selectedConsultationId,
+      )
+        ? selectedConsultationId
+        : consultations[0].consultationId;
+
+    setSelectedConsultationId(nextConsultationId);
     form.setFieldsValue({
       consultationId: activeConsultationId,
       tracking: "",
     });
-  }, [activeConsultationId, form]);
+  }, [consultations, form, selectedConsultationId]);
 
   const handleConsultationChange = (consultationId: number) => {
     setSelectedConsultationId(consultationId);
@@ -267,11 +261,6 @@ export default function PharmacistOrderPage() {
                   column={2}
                   colon={false}
                   items={[
-                    {
-                      key: "consultationId",
-                      label: "Consultation",
-                      children: `#${selectedConsultation.consultationId}`,
-                    },
                     {
                       key: "patientName",
                       label: "ผู้ป่วย",

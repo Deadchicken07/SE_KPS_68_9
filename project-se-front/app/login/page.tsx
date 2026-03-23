@@ -21,7 +21,7 @@ import { useLogin } from "@/hooks/useLogin";
 const getRedirectPathByRoleId = (roleId: number | null) => {
   switch (roleId) {
     case 1:
-      return "/staff/admin-report";
+      return "/staff/admin-home";
     case 2:
       return "/user";
     case 3:
@@ -29,7 +29,7 @@ const getRedirectPathByRoleId = (roleId: number | null) => {
     case 4:
       return "/staff/role-psychiatrist-psychologists/psychiatrist";
     case 5:
-      return "/staff/pharmacist";
+      return "/staff/pharmacist_home";
     default:
       return "/user";
   }

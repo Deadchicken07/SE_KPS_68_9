@@ -18,7 +18,7 @@ export default function SidebarNav() {
   const homePath = role ? roleHome[role] : "/login";
 
   return (
-    <aside className="min-h-screen w-60 bg-[#0f766e] p-6 text-white">
+    <aside className="sticky top-0 h-screen w-60 shrink-0 overflow-y-auto bg-[#0f766e] p-6 text-white">
       <Link href={homePath} className="mb-6 block text-xl font-bold">
         Staff Panel
       </Link>

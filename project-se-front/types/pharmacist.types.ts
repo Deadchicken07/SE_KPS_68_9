@@ -1,3 +1,5 @@
+import type { ReceiptStatus } from "./receipt-status.types";
+
 export interface Medication {
   id: number;
   name: string;
@@ -82,6 +84,66 @@ export interface DeliveryHistory {
   total: number | null;
   createdAt: string | null;
   items: DeliveryHistoryItem[];
+}
+
+export type PharmacistHomeDisplayStatus = ReceiptStatus | "no_receipt";
+
+export interface PharmacistHomePerson {
+  user_id: number;
+  name: string;
+  sur_name: string;
+  email?: string | null;
+  phone?: string | null;
+  allergy_drug?: string | null;
+  info?: string | null;
+  role_name?: string | null;
+}
+
+export interface PharmacistHomeMedication {
+  id: number;
+  name: string;
+  price: number | null;
+  retail: number | null;
+}
+
+export interface PharmacistHomePrescriptionItem {
+  id: number;
+  consultation_id: number | null;
+  medication_id: number | null;
+  comment: string | null;
+  quantity: number | null;
+  medication: PharmacistHomeMedication | null;
+}
+
+export interface PharmacistHomeReceipt {
+  id: number;
+  consultation_id: number | null;
+  user_id: number | null;
+  created_at: string | null;
+  slip_file: string | null;
+  total: number | null;
+  tracking: string | null;
+  status: ReceiptStatus | null;
+}
+
+export interface PharmacistHomeConsultation {
+  id: number;
+  user_id: number | null;
+  staff_id: number | null;
+  pharmacist_id: number | null;
+  note: string | null;
+  created_at: string | null;
+  patient: PharmacistHomePerson | null;
+  staff: PharmacistHomePerson | null;
+  pharmacist: PharmacistHomePerson | null;
+  prescription_items: PharmacistHomePrescriptionItem[];
+  receipts: PharmacistHomeReceipt[];
+}
+
+export interface PharmacistHomeOrdersResponse {
+  generatedAt: string;
+  totalConsultations: number;
+  consultations: PharmacistHomeConsultation[];
 }
 
 export interface PatientConsultationRecord {

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AppointmentsModule } from './appointments/appointments.module';
 import { UserModule } from './user/user.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
@@ -15,6 +16,8 @@ import { PharmacistModule } from './pharmacist/pharmacist.module';
 import { ConsultationsModule } from './consultations/consultations.module';
 import { PsychiatristDashboardModule } from './psychiatrist-dashboard/psychiatrist-dashboard.module';
 import { PsychologistDashboardModule } from './psychologist-dashboard/psychologist-dashboard.module';
+import { StaffHomeModule } from './staff-home/staff-home.module';
+import { PhamaHomeModule } from './phama-home/phama-home.module';
 
 @Module({
   imports: [
@@ -28,10 +31,13 @@ import { PsychologistDashboardModule } from './psychologist-dashboard/psychologi
     AnswersModule,
     ResponsesModule,
     MailModule,
+    AppointmentsModule,
     PharmacistModule,
     ConsultationsModule,
     PsychiatristDashboardModule,
     PsychologistDashboardModule,
+    StaffHomeModule,
+    PhamaHomeModule,
   ],
   controllers: [AppController],
   providers: [AppService],
