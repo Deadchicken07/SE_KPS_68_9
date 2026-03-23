@@ -15,11 +15,11 @@ import {
   getCurrentDateKey,
   getCurrentMonthKey,
   getDefaultSelectedDate,
-  getKpiCards,
   getMonthWeekOptions,
+  getStaffAdminHomeKpiCards,
   getTimelineBounds,
   getTimelineEvents,
-  parseErrorMessage,
+  parseStaffAdminHomeErrorMessage,
 } from '@/utils/staffAdminHome'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
@@ -110,7 +110,7 @@ export const useStaffAdminHome = () => {
           if (response.status === 401 || response.status === 403) {
             throw new Error('__AUTH__')
           }
-          throw new Error(parseErrorMessage(payload))
+          throw new Error(parseStaffAdminHomeErrorMessage(payload))
         }
 
         if (!ignore) {
@@ -235,7 +235,11 @@ export const useStaffAdminHome = () => {
     )?.start ??
     null
   const todayDateKey = getCurrentDateKey()
-  const kpiCards = getKpiCards(summary, selectedDate, selectedDayStats)
+  const kpiCards = getStaffAdminHomeKpiCards(
+    summary,
+    selectedDate,
+    selectedDayStats,
+  )
 
   useEffect(() => {
     if (!isStaffWorkModalOpen) {
@@ -322,7 +326,7 @@ export const useStaffAdminHome = () => {
       const payload = await response.json().catch(() => null)
 
       if (!response.ok) {
-        throw new Error(parseErrorMessage(payload))
+        throw new Error(parseStaffAdminHomeErrorMessage(payload))
       }
 
       setMonth(staffScheduleForm.workDate.slice(0, 7))

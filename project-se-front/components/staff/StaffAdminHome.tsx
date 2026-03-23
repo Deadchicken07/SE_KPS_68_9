@@ -8,31 +8,113 @@ import type {
   StaffOverviewItem,
   StaffScheduleFormState,
 } from "@/types/staffAdminHome.types";
-import {
-  BOARD_BACKGROUND,
-  BOARD_HEADER_BACKGROUND,
-  EMPTY_CLASS,
-  HERO_BACKGROUND,
-  INPUT_CLASS,
-  PAGE_BACKGROUND,
-  PANEL_CLASS,
-  PANEL_META_CLASS,
-  TEXTAREA_CLASS,
-  TIMELINE_LANE_BACKGROUND,
-  TIMELINE_LANE_SELECTED_BACKGROUND,
-  WEEKDAY_LABELS,
-  cx,
-  formatCompactDateLabel,
-  formatDateLabel,
-  formatMonthLabel,
-  formatTimeLabel,
-  getDayTone,
-  getScheduleBadgeClasses,
-  getScheduleStatusLabel,
-  getStatusBadgeClasses,
-} from "@/utils/staffAdminHome";
 
 type StaffAdminHomeState = ReturnType<typeof useStaffAdminHome>;
+
+const DAY_TONES = [
+  { fill: "#d9f3ef", ink: "#0f4c49" },
+  { fill: "#ecf8f4", ink: "#115e59" },
+  { fill: "#dff4ee", ink: "#155e75" },
+  { fill: "#e8f6f1", ink: "#0f4c49" },
+  { fill: "#e5f1ef", ink: "#1f4d46" },
+  { fill: "#d7ede7", ink: "#134e4a" },
+  { fill: "#eef7f4", ink: "#234b44" },
+];
+
+const WEEKDAY_LABELS = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
+
+const PAGE_BACKGROUND =
+  "radial-gradient(circle at top left, rgba(63, 127, 109, 0.14), transparent 34%), radial-gradient(circle at bottom right, rgba(192, 144, 87, 0.12), transparent 28%), linear-gradient(180deg, #f7f1ea 0%, #f3ede4 100%)";
+const HERO_BACKGROUND =
+  "linear-gradient(135deg, rgba(230, 255, 251, 0.32), rgba(255, 255, 255, 0.06)), linear-gradient(135deg, #0f766e 0%, #115e59 56%, #134e4a 100%)";
+const BOARD_BACKGROUND =
+  "linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(242, 249, 247, 0.98)), repeating-linear-gradient(0deg, rgba(15, 118, 110, 0.03) 0, rgba(15, 118, 110, 0.03) 2px, transparent 2px, transparent 6px)";
+const BOARD_HEADER_BACKGROUND =
+  "linear-gradient(180deg, #fbfefd 0%, #edf7f4 100%)";
+const TIMELINE_LANE_BACKGROUND =
+  "linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(244, 250, 248, 0.94)), repeating-linear-gradient(0deg, rgba(15, 118, 110, 0.03) 0, rgba(15, 118, 110, 0.03) 1px, transparent 1px, transparent 52px)";
+const TIMELINE_LANE_SELECTED_BACKGROUND =
+  "linear-gradient(180deg, rgba(230, 255, 251, 0.92), rgba(240, 253, 250, 0.95)), repeating-linear-gradient(0deg, rgba(15, 118, 110, 0.03) 0, rgba(15, 118, 110, 0.03) 1px, transparent 1px, transparent 52px)";
+const PANEL_CLASS =
+  "rounded-[28px] border border-[rgba(15,118,110,0.14)] bg-white shadow-[0_18px_36px_rgba(15,118,110,0.08)]";
+const INPUT_CLASS =
+  "min-h-[46px] w-full rounded-[14px] border border-[rgba(15,118,110,0.18)] bg-[#f9fcfb] px-3.5 text-[#173f35] outline-none transition focus:border-[#0f766e] focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]";
+const TEXTAREA_CLASS =
+  "min-h-[132px] w-full rounded-[14px] border border-[rgba(15,118,110,0.18)] bg-[#f9fcfb] px-3.5 py-3 text-[#173f35] leading-7 outline-none transition focus:border-[#0f766e] focus:ring-4 focus:ring-[rgba(15,118,110,0.12)] resize-y";
+const PANEL_META_CLASS =
+  "inline-flex items-center justify-center rounded-full bg-[#e6fffb] px-3.5 py-2.5 text-[0.84rem] font-extrabold text-[#0f766e]";
+const EMPTY_CLASS =
+  "rounded-[20px] border border-dashed border-[rgba(15,118,110,0.18)] bg-[#f7fbfa] p-[22px] leading-7 text-[#47655e]";
+
+function cx(...values: Array<string | false | null | undefined>) {
+  return values.filter(Boolean).join(" ");
+}
+
+function formatMonthLabel(monthKey: string) {
+  return new Date(`${monthKey}-01T00:00:00`).toLocaleDateString("th-TH", {
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function formatDateLabel(dateKey: string) {
+  return new Date(`${dateKey}T00:00:00`).toLocaleDateString("th-TH", {
+    weekday: "long",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function formatCompactDateLabel(dateKey: string) {
+  return new Date(`${dateKey}T00:00:00`).toLocaleDateString("th-TH", {
+    day: "2-digit",
+    month: "short",
+  });
+}
+
+function formatTimeLabel(minutes: number) {
+  const hour = Math.floor(minutes / 60);
+  const minute = minutes % 60;
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+function getDayTone(dateKey: string) {
+  const day = new Date(`${dateKey}T00:00:00`).getDay();
+  return DAY_TONES[day];
+}
+
+function getStatusBadgeClasses(status: AppointmentItem["displayStatus"]) {
+  return cx(
+    "inline-flex items-center justify-center rounded-full px-3 py-2 text-[0.8rem] font-extrabold whitespace-nowrap",
+    status === "pending" && "bg-[#eff7f4] text-[#0f766e]",
+    status === "confirmed" && "bg-[#e6fffb] text-[#115e59]",
+    status === "completed" && "bg-[#edf4f2] text-[#47655e]",
+  );
+}
+
+function getScheduleStatusLabel(value: string) {
+  if (value === "working") {
+    return "เข้าเวร";
+  }
+
+  if (value === "leave") {
+    return "ลา";
+  }
+
+  return "ยังไม่ลงตาราง";
+}
+
+function getScheduleBadgeClasses(value: string) {
+  return cx(
+    "inline-flex items-center gap-2 rounded-full px-3 py-2 text-[0.8rem] font-extrabold",
+    value === "working" && "bg-[#e6fffb] text-[#115e59]",
+    value === "leave" && "bg-[#fff1f2] text-[#be123c]",
+    value !== "working" &&
+      value !== "leave" &&
+      "bg-[#edf4f2] text-[#47655e]",
+  );
+}
 
 export function StaffAdminHome() {
   const state = useStaffAdminHome();
@@ -197,7 +279,7 @@ function FilterSection({ state }: { state: StaffAdminHomeState }) {
           type="button"
           onClick={state.reloadDashboard}
           disabled={state.loading}
-          className="min-h-[46px] w-full rounded-[14px] bg-gradient-to-br from-[#1f5d4f] to-[#2e7464] px-4 font-bold text-[#fffdfa] shadow-[0_14px_28px_rgba(31,93,79,0.18)] transition hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-70 disabled:hover:translate-y-0"
+          className="min-h-[46px] w-full rounded-[14px] bg-gradient-to-br from-[#0f766e] to-[#115e59] px-4 font-bold text-white shadow-[0_14px_28px_rgba(15,118,110,0.18)] transition hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-70 disabled:hover:translate-y-0"
         >
           {state.loading ? "กำลังโหลด..." : "รีเฟรชข้อมูล"}
         </button>
@@ -227,7 +309,7 @@ function ErrorPanel({
         <button
           type="button"
           onClick={onLogin}
-          className="mt-3 inline-flex min-h-[42px] items-center justify-center rounded-xl bg-[#1f5d4f] px-4 font-bold text-[#fffdfa]"
+          className="mt-3 inline-flex min-h-[42px] items-center justify-center rounded-xl bg-[#0f766e] px-4 font-bold text-white"
         >
           ไปหน้าเข้าสู่ระบบ
         </button>
@@ -278,8 +360,8 @@ function TimelineSection({ state }: { state: StaffAdminHomeState }) {
               className={cx(
                 "min-w-[124px] rounded-[18px] border px-[14px] py-3 text-left transition hover:-translate-y-0.5 hover:shadow-[0_12px_18px_rgba(67,71,62,0.08)]",
                 state.activeWeekStart === option.start
-                  ? "border-[#2165554d] bg-gradient-to-b from-[#e8f3ee] to-[#f4faf7] shadow-[0_14px_24px_rgba(31,93,79,0.1)]"
-                  : "border-[#3d605524] bg-[#fffdfa]",
+                  ? "border-[rgba(15,118,110,0.24)] bg-gradient-to-b from-[#e6fffb] to-[#f7fbfa] shadow-[0_14px_24px_rgba(15,118,110,0.08)]"
+                  : "border-[rgba(15,118,110,0.12)] bg-white",
               )}
             >
               <strong className="block text-[0.9rem] font-extrabold text-[#1d4338]">
@@ -467,7 +549,7 @@ function SelectedAppointmentsSection({
             title={
               state.isSelectedAppointmentsCollapsed ? "ขยายรายการนัด" : "ย่อรายการนัด"
             }
-            className="inline-flex h-[42px] w-[42px] items-center justify-center rounded-full border border-[#355a4e29] bg-[#fffdfa] text-[#244d44] transition hover:-translate-y-0.5"
+            className="inline-flex h-[42px] w-[42px] items-center justify-center rounded-full border border-[rgba(15,118,110,0.16)] bg-white text-[#0f766e] transition hover:-translate-y-0.5"
           >
             <svg
               viewBox="0 0 20 20"
@@ -500,13 +582,13 @@ function SelectedAppointmentsSection({
                   key={appointment.id}
                   onClick={() => state.selectAppointment(appointment.id)}
                   className={cx(
-                    "cursor-pointer rounded-[22px] border border-[#4b615a1f] bg-[#fffdfa] p-4",
+                    "cursor-pointer rounded-[22px] border border-[rgba(15,118,110,0.12)] bg-white p-4",
                     appointment.id === state.selectedAppointment?.id &&
-                      "border-[#236b5a42] shadow-[0_12px_22px_rgba(30,94,79,0.08)]",
+                      "border-[rgba(15,118,110,0.28)] shadow-[0_12px_22px_rgba(15,118,110,0.08)]",
                   )}
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <span className="inline-flex items-center rounded-full bg-[#eff5f0] px-3 py-2 text-[0.85rem] font-extrabold text-[#1f5d4f]">
+                    <span className="inline-flex items-center rounded-full bg-[#e6fffb] px-3 py-2 text-[0.85rem] font-extrabold text-[#0f766e]">
                       {appointment.timeSelect ??
                         `${appointment.startTime ?? "--"} - ${appointment.endTime ?? "--"}`}
                     </span>
@@ -569,7 +651,7 @@ function StaffOverviewSection({
           <button
             type="button"
             onClick={onOpenStaffWorkModal}
-            className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[#178986] px-4 text-[0.9rem] font-extrabold text-white shadow-[0_10px_24px_rgba(23,137,134,0.18)] transition hover:bg-[#127370]"
+            className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[#0f766e] px-4 text-[0.9rem] font-extrabold text-white shadow-[0_10px_24px_rgba(15,118,110,0.18)] transition hover:bg-[#115e59]"
           >
             เพิ่ม
           </button>
@@ -582,7 +664,7 @@ function StaffOverviewSection({
           staffOverview.map((staff) => (
             <article
               key={staff.staffId}
-              className="rounded-[22px] border border-[#4b615a1f] bg-[#fffdfa] p-4"
+              className="rounded-[22px] border border-[rgba(15,118,110,0.12)] bg-white p-4"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -640,7 +722,7 @@ function UpcomingAppointmentsSection({
           upcomingAppointments.map((appointment) => (
             <article
               key={appointment.id}
-              className="rounded-[22px] border border-[#4b615a1f] bg-[#fffdfa] p-4"
+              className="rounded-[22px] border border-[rgba(15,118,110,0.12)] bg-white p-4"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -693,7 +775,7 @@ function StaffWorkModal({ state }: { state: StaffAdminHomeState }) {
       onClick={state.closeStaffWorkModal}
     >
       <section
-        className="w-full max-w-2xl rounded-[30px] border border-[#4b615a24] bg-[#fffaf2] shadow-[0_26px_70px_rgba(31,42,39,0.22)]"
+        className="w-full max-w-2xl rounded-[30px] border border-[rgba(15,118,110,0.14)] bg-white shadow-[0_26px_70px_rgba(15,118,110,0.16)]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4 border-b border-[#4b615a1c] px-6 py-5">
@@ -793,7 +875,7 @@ function StaffWorkModal({ state }: { state: StaffAdminHomeState }) {
 
           {state.staffScheduleError ? (
             <div className="px-6 pb-2">
-              <div className="rounded-[18px] border border-[#d77e7e45] bg-[#fff0ee] px-4 py-3 text-[0.92rem] text-[#9d4138]">
+              <div className="rounded-[18px] border border-[#fecdd3] bg-[#fff1f2] px-4 py-3 text-[0.92rem] text-[#be123c]">
                 {state.staffScheduleError}
               </div>
             </div>
@@ -803,14 +885,14 @@ function StaffWorkModal({ state }: { state: StaffAdminHomeState }) {
             <button
               type="button"
               onClick={state.closeStaffWorkModal}
-              className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-[#3c524c24] bg-white px-5 text-[0.95rem] font-bold text-[#33554d] transition hover:bg-[#f6f4ed]"
+              className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-[rgba(15,118,110,0.16)] bg-white px-5 text-[0.95rem] font-bold text-[#47655e] transition hover:bg-[#f7fbfa]"
             >
               ยกเลิก
             </button>
             <button
               type="submit"
               disabled={state.staffScheduleSubmitting}
-              className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-[#178986] px-5 text-[0.95rem] font-bold text-white transition hover:bg-[#127370] disabled:cursor-not-allowed disabled:bg-[#b7c8c1]"
+              className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-[#0f766e] px-5 text-[0.95rem] font-bold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:bg-[#b7c8c1]"
             >
               {state.staffScheduleSubmitting ? "กำลังบันทึก..." : "บันทึกตารางงาน"}
             </button>
@@ -823,7 +905,7 @@ function StaffWorkModal({ state }: { state: StaffAdminHomeState }) {
 
 function InfoBox({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-2xl bg-[#f6f4ed] px-[13px] py-3">
+    <div className="rounded-2xl bg-[#f7fbfa] px-[13px] py-3">
       <span className="mb-1 block text-[0.76rem] font-bold text-[#6a736c]">
         {label}
       </span>
