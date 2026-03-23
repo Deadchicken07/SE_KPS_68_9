@@ -34,12 +34,9 @@ function PaymentContent() {
             }
 
             try {
-                const token = localStorage.getItem('token');
                 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
                 const res = await fetch(`${apiUrl}/appointments/${id}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                    credentials: 'include'
                 });
 
                 if (!res.ok) {
@@ -102,13 +99,13 @@ function PaymentContent() {
                 .getPublicUrl(filePath);
 
             // 3. Send URL to backend
-            const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:4000/appointments/${appointmentId}/pay`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            const response = await fetch(`${apiUrl}/appointments/${appointmentId}/pay`, {
                 method: 'PATCH',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Content-Type': 'application/json'
                 },
+                credentials: 'include',
                 body: JSON.stringify({ slipUrl: publicUrl })
             });
 

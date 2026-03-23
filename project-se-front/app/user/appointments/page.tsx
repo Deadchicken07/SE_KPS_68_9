@@ -122,7 +122,7 @@ export default function AppointmentsPage() {
             const token = localStorage.getItem('token');
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || API_BASE_URL;
             const res = await fetch(`${apiUrl}/appointments/available-slots?date=${dateStr}`, {
-                headers: token ? { Authorization: `Bearer ${token}` } : {}
+                credentials: 'include'
             });
             if (res.ok) {
                 const data = await res.json();
@@ -236,9 +236,9 @@ export default function AppointmentsPage() {
             const res = await fetch(`${apiUrl}/appointments`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Content-Type': 'application/json'
                 },
+                credentials: 'include',
                 body: JSON.stringify({
                     staffId: booking.staff.id,
                     date: booking.date, 
