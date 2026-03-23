@@ -94,9 +94,12 @@ export class PharmacistService {
   }
 
   async getOrderForm(): Promise<OrderFormResponseDto> {
-    await this.ensureReceiptsForConsultations();
-
     const consultations = await this.prisma.consultations.findMany({
+      where: {
+        receipts: {
+          some: {},
+        },
+      },
       include: {
         users_consultations_user_idTousers: {
           select: {
@@ -161,8 +164,6 @@ export class PharmacistService {
   }
 
   async createOrder(dto: CreateOrderDto): Promise<OrderResponseDto> {
-    await this.ensureReceiptForConsultation(dto.consultationId);
-
     const existingReceipt = await this.prisma.receipts.findFirst({
       where: { consultation_id: dto.consultationId },
       orderBy: [{ created_at: 'desc' }, { id: 'desc' }],

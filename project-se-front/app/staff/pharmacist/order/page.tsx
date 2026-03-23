@@ -261,11 +261,6 @@ export default function PharmacistOrderPage() {
                   colon={false}
                   items={[
                     {
-                      key: "consultationId",
-                      label: "Consultation",
-                      children: `#${selectedConsultation.consultationId}`,
-                    },
-                    {
                       key: "patientName",
                       label: "ผู้ป่วย",
                       children: selectedConsultation.patientName,

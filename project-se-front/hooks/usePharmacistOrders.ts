@@ -43,10 +43,22 @@ export const usePharmacistOrders = () => {
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
 
+  const sortConsultations = (items: OrderFormConsultation[]) =>
+    [...items].sort((left, right) => {
+      const leftTime = left.createdAt ? new Date(left.createdAt).getTime() : 0
+      const rightTime = right.createdAt ? new Date(right.createdAt).getTime() : 0
+
+      if (leftTime !== rightTime) {
+        return leftTime - rightTime
+      }
+
+      return left.consultationId - right.consultationId
+    })
+
   const consultationOptions = useMemo(
     () =>
       consultations.map((consultation) => ({
-        label: `#${consultation.consultationId} ${consultation.patientName}`,
+        label: consultation.patientName,
         value: consultation.consultationId,
       })),
     [consultations],
@@ -61,7 +73,7 @@ export const usePharmacistOrders = () => {
 
     try {
       const response = await axios.get<OrderFormData>(`${API_URL}/pharmacist/order-form`)
-      setConsultations(response.data.consultations)
+      setConsultations(sortConsultations(response.data.consultations))
       return { ok: true as const }
     } catch (error) {
       return {
