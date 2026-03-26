@@ -2,7 +2,8 @@
 
 import { useState, Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Button, ConfigProvider, message, Spin } from 'antd';
+import { Button, ConfigProvider, message, Spin, QRCode } from 'antd';
+import generatePayload from 'promptpay-qr';
 import locale from 'antd/locale/th_TH';
 import { supabase } from '@/utils/supabase';
 
@@ -26,7 +27,7 @@ function PaymentContent() {
 
     useEffect(() => {
         const fetchAppointment = async () => {
-            const id = searchParams.get('id');
+            const id = searchParams.get('id') || searchParams.get('appointmentId');
             if (!id) {
                 setFetchError('ไม่พบรหัสการนัดหมาย');
                 setIsLoadingData(false);
@@ -70,7 +71,7 @@ function PaymentContent() {
 
     const handleConfirmPayment = async () => {
         if (!uploadedSlip) return alert('กรุณาแนบสลิปการโอนเงิน');
-        const appointmentId = searchParams.get('id');
+        const appointmentId = searchParams.get('id') || searchParams.get('appointmentId');
 
         if (!appointmentId) {
             alert('ไม่พบข้อมูลรหัสการนัดหมาย');
@@ -125,7 +126,7 @@ function PaymentContent() {
     if (isLoadingData) {
         return (
             <div className="appt-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                <Spin tip="กำลังโหลดข้อมูลการนัดหมาย..." size="large" />
+                <Spin description="กำลังโหลดข้อมูลการนัดหมาย..." size="large" />
             </div>
         );
     }
@@ -182,11 +183,13 @@ function PaymentContent() {
                                 </div>
                             </div>
 
-                            <div style={{ display: 'inline-block', marginBottom: 24 }}>
-                                <img 
-                                    src={`https://promptpay.io/0928104747/${price}`} 
-                                    alt="QR Code Payment" 
-                                    style={{ width: 300, height: 300, objectFit: 'contain', borderRadius: 8 }} 
+                            <div style={{ display: 'inline-block', marginBottom: 24, padding: 16, background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb' }}>
+                                <QRCode 
+                                    value={generatePayload('0928104747', { amount: Number(price) })}
+                                    size={250}
+                                    color="#000"
+                                    type="svg"
+                                    errorLevel="H"
                                 />
                             </div>
 

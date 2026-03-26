@@ -19,14 +19,15 @@ export class UserService {
     const search = query.search?.trim() ?? '';
     const skip = (page - 1) * limit;
 
-    const where: Prisma.usersWhereInput = search
-      ? {
+    const where: Prisma.usersWhereInput = {
+      ...(search ? {
         OR: [
           { name: { contains: search, mode: 'insensitive' } },
           { email: { contains: search, mode: 'insensitive' } },
         ],
-      }
-      : {};
+      } : {}),
+      ...(query.roleId ? { role_id: Number(query.roleId) } : {})
+    };
 
     const [users, total] = await Promise.all([
       this.prisma.users.findMany({
@@ -84,7 +85,7 @@ export class UserService {
       let roleThai = staff.roles?.name || '';
       if (roleThai === 'psychiatrist') roleThai = 'จิตแพทย์';
       else if (roleThai === 'psychologist') roleThai = 'นักจิตวิทยา';
-      
+
       return {
         id: staff.user_id,
         name: `${staff.name} ${staff.sur_name}`,

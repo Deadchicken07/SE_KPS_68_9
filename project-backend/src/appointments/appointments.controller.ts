@@ -50,6 +50,27 @@ export class AppointmentsController {
     return this.appointmentsService.createAppointment(userId, body);
   }
 
+  @Post('admin')
+  @UseGuards(RolesGuard)
+  @Roles(1) // Admin only
+  async createAppointmentByAdmin(@Body() body: any) {
+    let userId = body.userId;
+    if (!userId) {
+      const user = await this.appointmentsService.createWalkinUser({
+        name: body.name,
+        sur_name: body.surname,
+        phone: body.phone,
+        nation_id: body.nationId,
+        medical_condition: body.medicalCondition,
+        allergy_drug: body.allergyDrug,
+        current_address: body.currentAddress,
+        nation_address: body.nationAddress,
+      });
+      userId = user.user_id;
+    }
+    return this.appointmentsService.createAppointment(userId, body);
+  }
+
   @Get(':id')
   getAppointment(@Req() req, @Param('id', ParseIntPipe) appointmentId: number) {
     const userId = this.getUserIdFromRequest(req);

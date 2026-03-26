@@ -902,6 +902,23 @@ export default function AppointmentsPage() {
                                     {timeStaff && timeSlot && (
                                         <div style={{ marginTop: 28 }}>
                                             <div style={{ marginBottom: 20 }}>
+                                                <h2>รูปแบบการเข้ารับคำปรึกษา</h2>
+                                                <div style={{ display: 'flex', gap: 12 }}>
+                                                    <button
+                                                        className={`appt-slot-btn${appointmentType === 'online' ? ' appt-slot-btn--active' : ''}`}
+                                                        onClick={() => setAppointmentType('online')}
+                                                    >
+                                                        ออนไลน์ (Online)
+                                                    </button>
+                                                    <button
+                                                        className={`appt-slot-btn${appointmentType === 'onsite' ? ' appt-slot-btn--active' : ''}`}
+                                                        onClick={() => setAppointmentType('onsite')}
+                                                    >
+                                                        ที่คลินิก (Onsite)
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div style={{ marginBottom: 20 }}>
                                                 <h2>ระยะเวลาเข้ารับคำปรึกษา</h2>
                                                 <div style={{ display: 'flex', gap: 12 }}>
                                                     <button
