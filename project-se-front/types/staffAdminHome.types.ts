@@ -81,8 +81,6 @@ export type StaffScheduleEntry = {
   note: string | null;
 };
 
-export type ClinicHolidayScope = "all" | "individual";
-
 export type ClinicScheduleResponse = {
   month: string;
   selectedDate: string;
@@ -110,7 +108,6 @@ export type StaffScheduleFormState = {
 };
 
 export type ClinicHolidayFormState = {
-  scope: ClinicHolidayScope;
   staffId: string;
   note: string;
 };

@@ -5,10 +5,8 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import type {
   ClinicHolidayFormState,
-  ClinicHolidayScope,
   ClinicScheduleResponse,
   StaffOption,
-  StaffScheduleEntry,
 } from "@/types/staffAdminHome.types";
 import { mapRoleIdToRole, roleHome } from "@/types/role.types";
 import {
@@ -58,56 +56,6 @@ function getNormalizedMonthDate(monthKey: string, todayDateKey: string) {
     : getFirstDateOfMonth(monthKey);
 }
 
-function buildAllScopeHolidayEntries(
-  entries: StaffScheduleEntry[],
-  targetStaffIds: number[],
-) {
-  const targetStaffIdSet = new Set(targetStaffIds);
-  const groupedEntries = new Map<
-    string,
-    {
-      id: number;
-      note: string | null;
-      staffIds: Set<number>;
-    }
-  >();
-
-  for (const entry of entries) {
-    if (entry.status !== "holiday" || !targetStaffIdSet.has(entry.staffId)) {
-      continue;
-    }
-
-    const existing = groupedEntries.get(entry.workDate);
-
-    if (existing) {
-      existing.staffIds.add(entry.staffId);
-      if (!existing.note && entry.note) {
-        existing.note = entry.note;
-      }
-      continue;
-    }
-
-    groupedEntries.set(entry.workDate, {
-      id: entry.id,
-      note: entry.note,
-      staffIds: new Set([entry.staffId]),
-    });
-  }
-
-  return Array.from(groupedEntries.entries())
-    .filter(([, value]) => value.staffIds.size === targetStaffIds.length)
-    .map(
-      ([workDate, value]): StaffScheduleEntry => ({
-        id: value.id,
-        staffId: 0,
-        workDate,
-        status: "holiday",
-        note: value.note,
-      }),
-    )
-    .sort((left, right) => left.workDate.localeCompare(right.workDate));
-}
-
 export const useAdminWorkSchedule = () => {
   const router = useRouter();
   const { me, loading: authLoading } = useAuth();
@@ -121,7 +69,6 @@ export const useAdminWorkSchedule = () => {
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [form, setForm] = useState<ClinicHolidayFormState>({
-    scope: "all",
     staffId: "",
     note: "",
   });
@@ -217,10 +164,6 @@ export const useAdminWorkSchedule = () => {
   );
 
   useEffect(() => {
-    if (form.scope !== "individual") {
-      return;
-    }
-
     if (form.staffId) {
       return;
     }
@@ -235,54 +178,33 @@ export const useAdminWorkSchedule = () => {
       ...current,
       staffId: String(firstStaffId),
     }));
-  }, [form.scope, form.staffId, holidayStaffOptions]);
+  }, [form.staffId, holidayStaffOptions]);
 
-  const targetStaffIds = useMemo(() => {
-    if (form.scope === "all") {
-      return holidayStaffOptions.map((staff) => staff.id);
-    }
-
-    const staffId = Number(form.staffId);
-    return Number.isInteger(staffId) && staffId > 0 ? [staffId] : [];
-  }, [form.scope, form.staffId, holidayStaffOptions]);
+  const selectedStaff = useMemo<StaffOption | null>(
+    () =>
+      holidayStaffOptions.find((staff) => String(staff.id) === form.staffId) ??
+      null,
+    [form.staffId, holidayStaffOptions],
+  );
 
   const scheduleEntries = useMemo(() => {
-    const entries = data?.scheduleEntries ?? [];
-
-    if (!targetStaffIds.length) {
+    if (!selectedStaff) {
       return [];
     }
 
-    if (form.scope === "all") {
-      return buildAllScopeHolidayEntries(entries, targetStaffIds);
-    }
-
-    const targetStaffId = targetStaffIds[0];
-
-    return entries
+    return (data?.scheduleEntries ?? [])
       .filter(
         (entry) =>
-          entry.status === "holiday" && entry.staffId === targetStaffId,
+          entry.status === "holiday" && entry.staffId === selectedStaff.id,
       )
       .sort((left, right) => left.workDate.localeCompare(right.workDate));
-  }, [data?.scheduleEntries, form.scope, targetStaffIds]);
+  }, [data?.scheduleEntries, selectedStaff]);
 
   const selectedSchedule = useMemo(
     () =>
       scheduleEntries.find((entry) => entry.workDate === selectedDate) ?? null,
     [scheduleEntries, selectedDate],
   );
-
-  const selectedStaff = useMemo<StaffOption | null>(() => {
-    if (form.scope !== "individual") {
-      return null;
-    }
-
-    return (
-      holidayStaffOptions.find((staff) => String(staff.id) === form.staffId) ??
-      null
-    );
-  }, [form.scope, form.staffId, holidayStaffOptions]);
 
   const weekdayOptions = useMemo(() => {
     const monthDateKeys = getMonthDateKeys(month);
@@ -292,14 +214,12 @@ export const useAdminWorkSchedule = () => {
         (dateKey) =>
           dateKey >= todayDateKey && getWeekdayFromDateKey(dateKey) === value,
       );
-      const anchorDate =
-        matchingDates.find((dateKey) => dateKey >= todayDateKey) ?? null;
+      const anchorDate = matchingDates[0] ?? null;
 
       return {
         value,
         label,
         anchorDate,
-        count: matchingDates.length,
         disabled: !anchorDate,
       };
     });
@@ -338,16 +258,6 @@ export const useAdminWorkSchedule = () => {
     setFormError(null);
   };
 
-  const handleSelectDate = (dateKey: string) => {
-    if (!dateKey || dateKey < todayDateKey) {
-      return;
-    }
-
-    setSelectedDate(dateKey);
-    setMonth(dateKey.slice(0, 7));
-    setFormError(null);
-  };
-
   const handleSelectWeekday = (weekday: number) => {
     const option = weekdayOptions.find((item) => item.value === weekday);
 
@@ -356,18 +266,6 @@ export const useAdminWorkSchedule = () => {
     }
 
     setSelectedDate(option.anchorDate);
-    setFormError(null);
-  };
-
-  const handleScopeChange = (scope: ClinicHolidayScope) => {
-    setForm((current) => ({
-      ...current,
-      scope,
-      staffId:
-        scope === "individual"
-          ? current.staffId || String(holidayStaffOptions[0]?.id ?? "")
-          : "",
-    }));
     setFormError(null);
   };
 
@@ -388,26 +286,15 @@ export const useAdminWorkSchedule = () => {
   };
 
   const buildClinicHolidayPayload = () => {
-    if (form.scope === "individual") {
-      const staffId = Number(form.staffId);
-
-      if (!Number.isInteger(staffId) || staffId <= 0) {
-        throw new Error("กรุณาเลือกบุคลากร");
-      }
-
-      return {
-        month,
-        weekday: getWeekdayFromDateKey(selectedDate),
-        scope: form.scope,
-        staffId,
-      };
+    if (!selectedStaff) {
+      throw new Error("กรุณาเลือกบุคลากร");
     }
 
     return {
       month,
       weekday: getWeekdayFromDateKey(selectedDate),
-      scope: form.scope,
-      staffId: null,
+      scope: "individual" as const,
+      staffId: selectedStaff.id,
     };
   };
 
@@ -458,7 +345,7 @@ export const useAdminWorkSchedule = () => {
     setFormError(null);
 
     if (!selectedSchedule) {
-      setFormError("ยังไม่มีวันหยุดตามเงื่อนไขนี้ในวันที่เลือก");
+      setFormError("ยังไม่มีวันหยุดของบุคลากรในวันที่เลือก");
       return;
     }
 
@@ -500,8 +387,6 @@ export const useAdminWorkSchedule = () => {
     handleDelete,
     handleMonthChange,
     handleNoteChange,
-    handleScopeChange,
-    handleSelectDate,
     handleSelectWeekday,
     handleStaffChange,
     handleSubmit,

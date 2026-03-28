@@ -9,6 +9,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { AdminReportQueryDto } from './dto/admin-report-query.dto';
 import { DeleteStaffScheduleDto } from './dto/delete-staff-schedule.dto';
 import { DeleteClinicHolidayDto } from './dto/delete-clinic-holiday.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -26,6 +27,12 @@ export class StaffHomeController {
   getClinicSchedule(@Req() req, @Query() query: StaffHomeQueryDto) {
     this.ensureStaffAccess(req);
     return this.staffHomeService.getClinicSchedule(query);
+  }
+
+  @Get('admin-report')
+  getAdminReport(@Req() req, @Query() query: AdminReportQueryDto) {
+    this.ensureAdminAccess(req);
+    return this.staffHomeService.getAdminReport(query);
   }
 
   @Post('schedule')

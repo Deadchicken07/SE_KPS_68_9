@@ -8,6 +8,8 @@ import type {
   StaffScheduleEntry,
 } from "@/types/staffAdminHome.types";
 
+type PharmacistEditableStatus = Extract<ScheduleStatus, "working" | "leave">;
+
 type CalendarCell =
   | {
       kind: "empty";
@@ -143,6 +145,7 @@ export default function PharmacistWorkSchedulePage() {
     handleStatusChange,
     handleSubmit,
     hasAccess,
+    isHolidayLocked,
     loading,
     month,
     scheduleEntries,
@@ -277,9 +280,7 @@ export default function PharmacistWorkSchedulePage() {
                 </h2>
               </div>
               <span
-                className={getStatusBadgeClass(
-                  selectedSchedule?.status ?? null,
-                )}
+                className={getStatusBadgeClass(selectedSchedule?.status ?? null)}
               >
                 {getStatusLabel(selectedSchedule?.status ?? null)}
               </span>
@@ -303,17 +304,29 @@ export default function PharmacistWorkSchedulePage() {
                 <span className="mb-2 block text-sm font-bold text-[#33554d]">
                   สถานะ
                 </span>
-                <select
-                  value={form.status}
-                  onChange={(event) =>
-                    handleStatusChange(event.target.value as ScheduleStatus)
-                  }
-                  className={INPUT_CLASS}
-                >
-                  <option value="working">ทำงาน</option>
-                  <option value="leave">ลา</option>
-                  <option value="holiday">วันหยุด</option>
-                </select>
+                {isHolidayLocked ? (
+                  <div
+                    className={cx(
+                      INPUT_CLASS,
+                      "flex items-center font-semibold text-[#b45309]",
+                    )}
+                  >
+                    วันหยุด
+                  </div>
+                ) : (
+                  <select
+                    value={form.status}
+                    onChange={(event) =>
+                      handleStatusChange(
+                        event.target.value as PharmacistEditableStatus,
+                      )
+                    }
+                    className={INPUT_CLASS}
+                  >
+                    <option value="working">ทำงาน</option>
+                    <option value="leave">ลา</option>
+                  </select>
+                )}
               </label>
 
               <label className="block">
@@ -324,13 +337,12 @@ export default function PharmacistWorkSchedulePage() {
                   maxLength={255}
                   value={form.note}
                   onChange={(event) => handleNoteChange(event.target.value)}
+                  readOnly={isHolidayLocked}
                   className={TEXTAREA_CLASS}
                   placeholder={
                     form.status === "leave"
                       ? "กรอกเหตุผลการลา"
-                      : form.status === "holiday"
-                        ? "เพิ่มหมายเหตุวันหยุด (ถ้ามี)"
-                        : "เพิ่มหมายเหตุสำหรับวันนี้ (ถ้ามี)"
+                      : "เพิ่มหมายเหตุสำหรับวันนี้ (ถ้ามี)"
                   }
                 />
               </label>
@@ -341,21 +353,16 @@ export default function PharmacistWorkSchedulePage() {
                 </div>
               ) : null}
 
-              <div
-                className={cx(
-                  "flex flex-wrap gap-3",
-                  !selectedSchedule && "justify-start",
-                )}
-              >
+              <div className="flex flex-wrap gap-3">
                 <button
                   type="submit"
-                  disabled={submitting || deleting || loading}
+                  disabled={submitting || deleting || loading || isHolidayLocked}
                   className="inline-flex min-h-[48px] min-w-[220px] items-center justify-center rounded-full bg-[#0f766e] px-8 text-sm font-bold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:bg-[#b9c9c4]"
                 >
                   {submitting ? "กำลังบันทึก..." : "บันทึก"}
                 </button>
 
-                {selectedSchedule ? (
+                {selectedSchedule && selectedSchedule.status !== "holiday" ? (
                   <button
                     type="button"
                     onClick={handleDelete}
