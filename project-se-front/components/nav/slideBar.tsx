@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   AppstoreOutlined,
+  CalendarOutlined,
   FileTextOutlined,
   HomeOutlined,
   MedicineBoxOutlined,
@@ -23,6 +24,7 @@ const navIconMap = {
   dashboard: HomeOutlined,
   "admin report": FileTextOutlined,
   "patient history": TeamOutlined,
+  "work schedule": CalendarOutlined,
   "medication order": MedicineBoxOutlined,
   "delivery history": ScheduleOutlined,
   "medication inventory": AppstoreOutlined,

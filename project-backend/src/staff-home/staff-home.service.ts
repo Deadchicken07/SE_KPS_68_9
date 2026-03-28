@@ -5,6 +5,7 @@ import {
   schedule_status,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { DeleteStaffScheduleDto } from './dto/delete-staff-schedule.dto';
 import { StaffHomeQueryDto } from './dto/staff-home-query.dto';
 import { UpsertStaffScheduleDto } from './dto/upsert-staff-schedule.dto';
 
@@ -68,6 +69,14 @@ type StaffHomeStaffSummary = {
   nextAppointmentDate: string | null;
   nextAppointmentTime: string | null;
   scheduleStatus: schedule_status | 'unassigned';
+};
+
+type StaffHomeScheduleEntry = {
+  id: number;
+  staffId: number;
+  workDate: string;
+  status: schedule_status;
+  note: string | null;
 };
 
 @Injectable()
@@ -250,6 +259,28 @@ export class StaffHomeService {
       }),
     ]);
 
+    const scheduleRows = staffId
+      ? await this.prisma.schedule.findMany({
+          where: {
+            staff_id: staffId,
+            work_date: {
+              gte: monthStart,
+              lt: monthEndExclusive,
+            },
+          },
+          orderBy: {
+            work_date: 'asc',
+          },
+          select: {
+            id: true,
+            staff_id: true,
+            work_date: true,
+            status: true,
+            note: true,
+          },
+        })
+      : [];
+
     const mapAppointmentRecord = (record: (typeof appointments)[number]) => {
       const appointmentDate = record.appointment_date
         ? this.dateToIsoDate(record.appointment_date)
@@ -395,6 +426,16 @@ export class StaffHomeService {
       .sort((left, right) => this.getSortValue(left) - this.getSortValue(right))
       .slice(0, 8);
 
+    const scheduleEntries = scheduleRows.map(
+      (schedule): StaffHomeScheduleEntry => ({
+        id: schedule.id,
+        staffId: schedule.staff_id,
+        workDate: this.dateToIsoDate(schedule.work_date),
+        status: schedule.status ?? schedule_status.working,
+        note: schedule.note,
+      }),
+    );
+
     return {
       month,
       selectedDate,
@@ -408,6 +449,7 @@ export class StaffHomeService {
       summary,
       staffOptions,
       dailyStats,
+      scheduleEntries,
       weekStats,
       weekAppointments: weekAppointmentItems,
       selectedDateAppointments,
@@ -510,6 +552,51 @@ export class StaffHomeService {
         status: schedule.status,
         note: schedule.note,
       },
+    };
+  }
+
+  async deleteStaffSchedule(input: DeleteStaffScheduleDto) {
+    const staffId = Number(input?.staffId);
+    const workDate = input?.workDate?.trim();
+
+    if (!Number.isInteger(staffId) || staffId <= 0) {
+      throw new BadRequestException('staffId must be a positive integer');
+    }
+
+    if (!workDate || !/^\d{4}-\d{2}-\d{2}$/.test(workDate)) {
+      throw new BadRequestException('workDate must be in YYYY-MM-DD format');
+    }
+
+    if (workDate < this.getClinicNowParts(new Date()).dateKey) {
+      throw new BadRequestException('ไม่สามารถลบตารางงานย้อนหลังได้');
+    }
+
+    const workDateValue = this.toDateOnlyUtc(workDate);
+    const existingSchedule = await this.prisma.schedule.findUnique({
+      where: {
+        staff_id_work_date: {
+          staff_id: staffId,
+          work_date: workDateValue,
+        },
+      },
+      select: { id: true },
+    });
+
+    if (!existingSchedule) {
+      throw new BadRequestException('ไม่พบสถานะที่บันทึกไว้สำหรับวันนี้');
+    }
+
+    await this.prisma.schedule.delete({
+      where: {
+        staff_id_work_date: {
+          staff_id: staffId,
+          work_date: workDateValue,
+        },
+      },
+    });
+
+    return {
+      message: 'ลบสถานะวันทำงาน/วันลาเรียบร้อยแล้ว',
     };
   }
 
