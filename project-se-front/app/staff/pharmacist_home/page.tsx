@@ -74,7 +74,7 @@ export default function PharmacistHomePage() {
                     รายการคิวจ่ายยา
                   </Typography.Title>
                   <Typography.Text className="staff-section-muted">
-                    แสดงเฉพาะเคสที่ยังต้องดำเนินการ คลิกที่เเต่ละรายการเพื่อดูรายละเอียด
+                    แสดงเฉพาะเคสที่จ่ายค่ายาแล้วและยังต้องดำเนินการ คลิกที่แต่ละรายการเพื่อดูรายละเอียด
                   </Typography.Text>
                 </div>
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700">
