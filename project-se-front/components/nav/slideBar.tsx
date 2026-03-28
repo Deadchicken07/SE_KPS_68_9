@@ -57,25 +57,24 @@ export default function SidebarNav() {
           
         </Link>
 
-        <nav className="flex flex-col gap-1.5">
+        <nav className="flex flex-col gap-1.5"/>
           {links.map((link) => {
             const isActive = pathname === link.href;
             const Icon = getNavIcon(link.name);
-
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`rounded p-2 ${isActive
-                    ? "bg-[#065f46] text-white"
-                    : "text-[#d1fae5] hover:bg-[#065f46] hover:text-white"
-                  }`}
-              >
-                {link.name}
-              </Link>
-            );
-          })}
-        </nav>
+           
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`rounded p-2 ${isActive
+                  ? "bg-[#065f46] text-white"
+                  : "text-[#d1fae5] hover:bg-[#065f46] hover:text-white"
+                }`}
+            >
+              {link.name}
+            </Link>
+          );
+        })}
       </div>
     </aside>
   );
