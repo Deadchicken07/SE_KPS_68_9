@@ -43,7 +43,7 @@ export const roleLinks: Record<Roles, NavLinks[]> = {
     { name: "Dashboard", href: "/staff/pharmacist_home" },
     { name: "Medication Order", href: "/staff/pharmacist/order" },
     { name: "Delivery History", href: "/staff/pharmacist/delivery-history" },
-    { name: "Medication Inventory", href: "/staff/pharmacist" },
+    { name: "Med Inventory", href: "/staff/pharmacist" },
   ],
 };
 

@@ -1,4 +1,4 @@
-import type { Dispatch, SetStateAction } from "react";
+﻿import type { Dispatch, SetStateAction } from "react";
 import { Button, Input } from "antd";
 import type { FormErrors, RegisterForm } from "@/types/Register.types";
 import Label from "./Label";
@@ -24,75 +24,83 @@ export default function RegisterStep1Nation({
     form.surName.trim().length > 0;
 
   return (
-    <div className="space-y-8">
-      <Label text="เลขบัตรประชาชน" />
-
-      <Input
-        size="large"
-        value={form.nationId}
-        pattern="[0-9]*"
-        onChange={(e) =>
-          setForm((prev) => ({
-            ...prev,
-            nationId: e.target.value.replace(/\D/g, "").slice(0, 13),
-          }))
-        }
-        status={errors.nationId ? "error" : undefined}
-        className="input"
-      />
-
-      {errors.nationId && <p className="text-red-500 text-sm">{errors.nationId}</p>}
-
-      <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+    <div className="mb-12">
+      <div className="space-y-7">
         <div>
-          <Label text="ชื่อ" />
-
+          <Label text="เลขบัตรประชาชน" />
           <Input
             size="large"
-            value={form.name}
+            value={form.nationId}
+            pattern="[0-9]*"
             onChange={(e) =>
               setForm((prev) => ({
                 ...prev,
-                name: e.target.value.replace(/[^a-zA-Zก-๙\s]/g, ""),
+                nationId: e.target.value.replace(/\D/g, "").slice(0, 13),
               }))
             }
-            status={errors.name ? "error" : undefined}
-            className="input"
+            status={errors.nationId ? "error" : undefined}
+            className="input mt-2"
           />
-
-          {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
+          {errors.nationId && (
+            <p className="mt-2 text-sm text-red-500">{errors.nationId}</p>
+          )}
         </div>
 
-        <div>
-          <Label text="นามสกุล" />
+        <div className="grid grid-cols-2 gap-x-4 gap-y-6 pt-2">
+          <div>
+            <Label text="ชื่อ" />
+            <Input
+              size="large"
+              value={form.name}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  name: e.target.value.replace(/[^a-zA-Zก-๙\s]/g, ""),
+                }))
+              }
+              status={errors.name ? "error" : undefined}
+              className="input mt-2"
+            />
+            {errors.name && (
+              <p className="mt-2 text-sm text-red-500">{errors.name}</p>
+            )}
+          </div>
 
-          <Input
+          <div>
+            <Label text="นามสกุล" />
+            <Input
+              size="large"
+              value={form.surName}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  surName: e.target.value.replace(/[^a-zA-Zก-๙\s]/g, ""),
+                }))
+              }
+              status={errors.surName ? "error" : undefined}
+              className="input mt-2"
+            />
+            {errors.surName && (
+              <p className="mt-2 text-sm text-red-500">{errors.surName}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="pt-2">
+          <Button
+            type="primary"
             size="large"
-            value={form.surName}
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                surName: e.target.value.replace(/[^a-zA-Zก-๙\s]/g, ""),
-              }))
-            }
-            status={errors.surName ? "error" : undefined}
-            className="input"
-          />
-
-          {errors.surName && <p className="text-red-500 text-sm">{errors.surName}</p>}
+            onClick={handleNationCheck}
+            disabled={!isStepComplete}
+            loading={nationLoading}
+            className="btn-primary w-full"
+          >
+            {nationLoading
+              ? "ตรวจสอบเลขบัตรประชาชน..."
+              : "ตรวจสอบเลขบัตรประชาชน"}
+          </Button>
         </div>
       </div>
-
-      <Button
-        type="primary"
-        size="large"
-        onClick={handleNationCheck}
-        disabled={!isStepComplete}
-        loading={nationLoading}
-        className="btn-primary"
-      >
-        {nationLoading ? "ตรวจสอบเลขบัตรประชาชน..." : "ตรวจสอบเลขบัตรประชาชน"}
-      </Button>
     </div>
   );
 }

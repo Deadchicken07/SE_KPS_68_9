@@ -108,7 +108,9 @@ export default function PharmacistOrderPage() {
 
   useEffect(() => {
     if (consultations.length === 0) {
-      setSelectedConsultationId(null);
+      if (selectedConsultationId !== null) {
+        setSelectedConsultationId(null);
+      }
       form.resetFields();
       return;
     }
@@ -127,11 +129,18 @@ export default function PharmacistOrderPage() {
           ? requestedConsultationId
         : consultations[0].consultationId;
 
-    setSelectedConsultationId(nextConsultationId);
-    form.setFieldsValue({
-      consultationId: nextConsultationId,
-      tracking: "",
-    });
+    if (selectedConsultationId !== nextConsultationId) {
+      setSelectedConsultationId(nextConsultationId);
+      form.setFieldsValue({
+        consultationId: nextConsultationId,
+        tracking: "",
+      });
+      return;
+    }
+
+    if (form.getFieldValue("consultationId") !== nextConsultationId) {
+      form.setFieldValue("consultationId", nextConsultationId);
+    }
   }, [consultations, form, requestedConsultationId, selectedConsultationId]);
 
   const handleConsultationChange = (consultationId: number) => {
