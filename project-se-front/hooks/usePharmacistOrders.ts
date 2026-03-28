@@ -72,7 +72,10 @@ export const usePharmacistOrders = () => {
     setLoading(true)
 
     try {
-      const response = await axios.get<OrderFormData>(`${API_URL}/pharmacist/order-form`)
+      const response = await axios.get<OrderFormData>(
+        `${API_URL}/pharmacist/order-form`,
+        { withCredentials: true },
+      )
       setConsultations(sortConsultations(response.data.consultations))
       return { ok: true as const }
     } catch (error) {
@@ -89,7 +92,11 @@ export const usePharmacistOrders = () => {
     setSaving(true)
 
     try {
-      const response = await axios.post<PharmacistOrder>(`${API_URL}/pharmacist/orders`, payload)
+      const response = await axios.post<PharmacistOrder>(
+        `${API_URL}/pharmacist/orders`,
+        payload,
+        { withCredentials: true },
+      )
       await fetchOrderForm()
       return {
         ok: true as const,

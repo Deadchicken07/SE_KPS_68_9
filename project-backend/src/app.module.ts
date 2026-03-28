@@ -18,6 +18,7 @@ import { PsychiatristDashboardModule } from './psychiatrist-dashboard/psychiatri
 import { PsychologistDashboardModule } from './psychologist-dashboard/psychologist-dashboard.module';
 import { StaffHomeModule } from './staff-home/staff-home.module';
 import { PhamaHomeModule } from './phama-home/phama-home.module';
+import { JitsiMeetModule } from './jitsi-meet/jitsi-meet.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { PhamaHomeModule } from './phama-home/phama-home.module';
     PsychologistDashboardModule,
     StaffHomeModule,
     PhamaHomeModule,
+    JitsiMeetModule,
   ],
   controllers: [AppController],
   providers: [AppService],

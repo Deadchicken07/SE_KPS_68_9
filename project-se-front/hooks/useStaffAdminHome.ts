@@ -8,18 +8,16 @@ import type {
   StaffScheduleFormState,
 } from '@/types/staffAdminHome.types'
 import {
-  EMPTY_SUMMARY,
   buildTimeMarkers,
   clampToTodayOrLater,
   createStaffScheduleFormState,
   getCurrentDateKey,
   getCurrentMonthKey,
   getDefaultSelectedDate,
-  getKpiCards,
   getMonthWeekOptions,
   getTimelineBounds,
   getTimelineEvents,
-  parseErrorMessage,
+  parseStaffAdminHomeErrorMessage,
 } from '@/utils/staffAdminHome'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
@@ -110,7 +108,7 @@ export const useStaffAdminHome = () => {
           if (response.status === 401 || response.status === 403) {
             throw new Error('__AUTH__')
           }
-          throw new Error(parseErrorMessage(payload))
+          throw new Error(parseStaffAdminHomeErrorMessage(payload))
         }
 
         if (!ignore) {
@@ -153,7 +151,6 @@ export const useStaffAdminHome = () => {
     }
   }, [hasAccess, month, selectedDate, staffFilter, reloadKey])
 
-  const summary = data?.summary ?? EMPTY_SUMMARY
   const weekStats = data?.weekStats ?? []
   const weekAppointments = data?.weekAppointments ?? []
   const selectedDateAppointments = data?.selectedDateAppointments ?? []
@@ -220,9 +217,6 @@ export const useStaffAdminHome = () => {
     }))
   }, [timelineBounds, weekAppointments, weekStats])
   const monthWeekOptions = useMemo(() => getMonthWeekOptions(month), [month])
-
-  const selectedDayStats =
-    weekStats.find((item) => item.date === selectedDate) ?? null
   const selectedStaff =
     staffOptions.find((item) => String(item.id) === staffFilter) ?? null
   const selectedAppointment =
@@ -235,7 +229,6 @@ export const useStaffAdminHome = () => {
     )?.start ??
     null
   const todayDateKey = getCurrentDateKey()
-  const kpiCards = getKpiCards(summary, selectedDate, selectedDayStats)
 
   useEffect(() => {
     if (!isStaffWorkModalOpen) {
@@ -322,7 +315,7 @@ export const useStaffAdminHome = () => {
       const payload = await response.json().catch(() => null)
 
       if (!response.ok) {
-        throw new Error(parseErrorMessage(payload))
+        throw new Error(parseStaffAdminHomeErrorMessage(payload))
       }
 
       setMonth(staffScheduleForm.workDate.slice(0, 7))
@@ -338,10 +331,6 @@ export const useStaffAdminHome = () => {
     } finally {
       setStaffScheduleSubmitting(false)
     }
-  }
-
-  const reloadDashboard = () => {
-    setReloadKey((value) => value + 1)
   }
 
   const goToLogin = () => {
@@ -371,17 +360,14 @@ export const useStaffAdminHome = () => {
     hasAccess,
     isSelectedAppointmentsCollapsed,
     isStaffWorkModalOpen,
-    kpiCards,
     loading,
     month,
     monthWeekOptions,
     openStaffWorkModal,
     closeStaffWorkModal,
-    reloadDashboard,
     selectedAppointment,
     selectedDate,
     selectedDateAppointments,
-    selectedDayStats,
     selectedStaff,
     selectAppointment,
     setStaffFilter,
@@ -393,7 +379,7 @@ export const useStaffAdminHome = () => {
     staffScheduleForm,
     staffScheduleOptions,
     staffScheduleSubmitting,
-    summary,
+    summary: data?.summary ?? null,
     timeMarkers,
     timelineBounds,
     todayDateKey,

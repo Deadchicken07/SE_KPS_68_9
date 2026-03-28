@@ -3,8 +3,41 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { mapRoleIdToRole, roleHome, roleLinks, type Roles } from "@/types/role.types";
+import {
+  AppstoreOutlined,
+  CalendarOutlined,
+  FileTextOutlined,
+  HomeOutlined,
+  MedicineBoxOutlined,
+  ScheduleOutlined,
+  TeamOutlined,
+} from "@ant-design/icons";
+import {
+  mapRoleIdToRole,
+  roleHome,
+  roleLinks,
+  type Roles,
+} from "@/types/role.types";
 import { useAuth } from "@/components/providers/AuthProvider";
+
+const navIconMap = {
+  dashboard: HomeOutlined,
+  home: HomeOutlined,
+  "admin report": FileTextOutlined,
+  appointments: CalendarOutlined,
+  consultations: FileTextOutlined,
+  "leave form": CalendarOutlined,
+  "patient history": TeamOutlined,
+  "work schedule": CalendarOutlined,
+  "medication order": MedicineBoxOutlined,
+  "delivery history": ScheduleOutlined,
+  "medication inventory": AppstoreOutlined,
+} as const;
+
+const getNavIcon = (name: string) => {
+  const normalizedName = name.trim().toLowerCase();
+  return navIconMap[normalizedName as keyof typeof navIconMap] ?? HomeOutlined;
+};
 
 export default function SidebarNav() {
   const pathname = usePathname();
@@ -18,29 +51,49 @@ export default function SidebarNav() {
   const homePath = role ? roleHome[role] : "/login";
 
   return (
-    <aside className="sticky top-0 h-screen w-60 shrink-0 overflow-y-auto bg-[#0f766e] p-6 text-white">
-      <Link href={homePath} className="mb-6 block text-xl font-bold">
-        Staff Panel
-      </Link>
+    <aside className="sticky top-0 h-screen w-64 max-w-[82vw] shrink-0 overflow-x-hidden overflow-y-auto bg-[#157a72] px-5 py-6 text-white md:w-72 md:px-6 md:py-7">
+      <div className="flex min-h-full flex-col">
+        <Link
+          href={homePath}
+          className="mb-2 block px-1 pt-2 pb-1"
+        >
+          <p className="text-[2.1rem] leading-[0.92] font-extrabold tracking-[-0.05em] text-white md:text-[2.35rem]">
+            Jitdee
+          </p>
 
-      <div className="flex flex-col gap-4">
-        {links.map((link) => {
-          const isActive = pathname === link.href;
+        </Link>
 
-          return (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`rounded p-2 ${
-                isActive
-                  ? "bg-[#065f46] text-white"
-                  : "text-[#d1fae5] hover:bg-[#065f46] hover:text-white"
-              }`}
-            >
-              {link.name}
-            </Link>
-          );
-        })}
+        <nav className="flex flex-col gap-1.5">
+          {links.map((link) => {
+            const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
+            const Icon = getNavIcon(link.name);
+
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`group flex items-center gap-3 rounded-2xl px-3.5 py-3 transition-all duration-200 md:px-4 ${
+                  isActive
+                    ? "bg-[#0f655d] text-white"
+                    : "text-[#e7fcf7] hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                <span
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-all duration-200 ${
+                    isActive
+                      ? "bg-white/12 text-white"
+                      : "bg-transparent text-[#d1fae5] group-hover:bg-white/10"
+                  }`}
+                >
+                  <Icon />
+                </span>
+                <span className="min-w-0 truncate text-[0.97rem] font-medium md:text-[1rem]">
+                  {link.name}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
       </div>
     </aside>
   );

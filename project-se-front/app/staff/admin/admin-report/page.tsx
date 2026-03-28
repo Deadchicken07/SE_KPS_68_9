@@ -203,7 +203,7 @@ export default function AdminReportPage() {
 
   const goExport = (source: "overview" | "finance") => {
     const params = new URLSearchParams({ from: fromDate, to: toDate, status, service: serviceType, staff, source });
-    router.push(`/staff/admin-report/export?${params.toString()}`);
+    router.push(`/staff/admin/admin-report/export?${params.toString()}`);
   };
 
   const handleProfileChange = (field: keyof typeof profileForm, value: string) => {

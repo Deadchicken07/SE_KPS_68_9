@@ -1,46 +1,19 @@
 'use client'
 
-import axios from 'axios'
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import axios from 'axios'
 import { useAuth } from '@/components/providers/AuthProvider'
-import type {
-  PharmacistHomeOrdersResponse,
-} from '@/types/pharmacist.types'
+import type { PharmacistHomeOrdersResponse } from '@/types/pharmacist.types'
 import {
+  PHARMACIST_HOME_STATUS_RANK,
+  formatPharmacistHomeDateTime,
+  getPharmacistHomeErrorMessage,
   isOutstandingPharmacistHomeStatus,
   pharmacistHomeDisplayStatus,
-  pharmacistHomeStatusMeta,
 } from '@/utils/pharmacistHome'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
-
-const normalizeErrorMessage = (message: unknown): string => {
-  if (Array.isArray(message)) {
-    return message
-      .map((item) => normalizeErrorMessage(item))
-      .filter(Boolean)
-      .join(', ')
-  }
-
-  if (typeof message === 'string') {
-    return message
-  }
-
-  if (message && typeof message === 'object' && 'message' in message) {
-    return normalizeErrorMessage((message as { message?: unknown }).message)
-  }
-
-  return ''
-}
-
-const getErrorMessage = (error: unknown, fallback: string) => {
-  if (axios.isAxiosError(error)) {
-    return normalizeErrorMessage(error.response?.data?.message) || fallback
-  }
-
-  return fallback
-}
 
 export const usePharmacistHome = () => {
   const router = useRouter()
@@ -91,7 +64,10 @@ export const usePharmacistHome = () => {
       setData(response.data)
       return { ok: true as const }
     } catch (error) {
-      const message = getErrorMessage(error, 'โหลดข้อมูลคิวจ่ายยาไม่สำเร็จ')
+      const message = getPharmacistHomeErrorMessage(
+        error,
+        'โหลดข้อมูลคิวจ่ายยาไม่สำเร็จ',
+      )
       setError(message)
       return {
         ok: false as const,
@@ -111,6 +87,7 @@ export const usePharmacistHome = () => {
   }, [hasAccess])
 
   const consultations = data?.consultations ?? []
+  const generatedAtLabel = formatPharmacistHomeDateTime(data?.generatedAt)
 
   const outstandingConsultations = useMemo(
     () =>
@@ -122,16 +99,20 @@ export const usePharmacistHome = () => {
 
   const queueCount = outstandingConsultations.length
 
-  const unassignedCount = useMemo(
-    () => outstandingConsultations.filter((item) => !item.pharmacist_id).length,
+  const onlineDeliveryCount = useMemo(
+    () =>
+      outstandingConsultations.filter(
+        (item) => pharmacistHomeDisplayStatus(item) === 'pending_delivery',
+      ).length,
     [outstandingConsultations],
   )
 
-  const myQueueCount = useMemo(
+  const clinicPickupCount = useMemo(
     () =>
-      outstandingConsultations.filter((item) => item.pharmacist_id === me?.sub)
-        .length,
-    [outstandingConsultations, me?.sub],
+      outstandingConsultations.filter(
+        (item) => pharmacistHomeDisplayStatus(item) === 'pending_pickup',
+      ).length,
+    [outstandingConsultations],
   )
 
   const filteredConsultations = useMemo(() => {
@@ -140,8 +121,8 @@ export const usePharmacistHome = () => {
       const rightStatus = pharmacistHomeDisplayStatus(right)
 
       return (
-        pharmacistHomeStatusMeta[leftStatus].rank -
-          pharmacistHomeStatusMeta[rightStatus].rank ||
+        PHARMACIST_HOME_STATUS_RANK[leftStatus] -
+          PHARMACIST_HOME_STATUS_RANK[rightStatus] ||
         new Date(right.created_at ?? 0).getTime() -
           new Date(left.created_at ?? 0).getTime()
       )
@@ -204,15 +185,16 @@ export const usePharmacistHome = () => {
     data,
     error,
     filteredConsultations,
+    generatedAtLabel,
     hasAccess,
     isDetailModalOpen,
+    clinicPickupCount,
     loading,
-    myQueueCount,
+    onlineDeliveryCount,
     openConsultation,
     openOrderPage,
     queueCount,
     selected,
-    unassignedCount,
     closeDetailModal,
   }
 }

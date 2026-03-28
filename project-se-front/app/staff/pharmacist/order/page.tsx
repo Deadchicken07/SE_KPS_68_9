@@ -72,14 +72,14 @@ function PharmacistOrderPageContent() {
   const { me } = useAuth();
   const { consultations, loading, saving, consultationOptions, createOrder } =
     usePharmacistOrders();
-  const initialConsultationId = useMemo(() => {
+  const requestedConsultationId = useMemo(() => {
     const value = searchParams.get("consultationId");
     if (!value) {
       return null;
     }
 
     const parsedValue = Number(value);
-    return Number.isInteger(parsedValue) ? parsedValue : null;
+    return Number.isInteger(parsedValue) && parsedValue > 0 ? parsedValue : null;
   }, [searchParams]);
 
   const selectedConsultation = useMemo(
@@ -105,8 +105,10 @@ function PharmacistOrderPageContent() {
   );
 
   useEffect(() => {
-    if (!consultations.length) {
-      setSelectedConsultationId(null);
+    if (consultations.length === 0) {
+      if (selectedConsultationId !== null) {
+        setSelectedConsultationId(null);
+      }
       form.resetFields();
       return;
     }
@@ -117,23 +119,27 @@ function PharmacistOrderPageContent() {
         (consultation) => consultation.consultationId === selectedConsultationId,
       )
         ? selectedConsultationId
-        : initialConsultationId &&
+        : requestedConsultationId &&
             consultations.some(
               (consultation) =>
-                consultation.consultationId === initialConsultationId,
+                consultation.consultationId === requestedConsultationId,
             )
-          ? initialConsultationId
+          ? requestedConsultationId
         : consultations[0].consultationId;
 
     if (selectedConsultationId !== nextConsultationId) {
       setSelectedConsultationId(nextConsultationId);
+      form.setFieldsValue({
+        consultationId: nextConsultationId,
+        tracking: "",
+      });
+      return;
     }
 
-    form.setFieldsValue({
-      consultationId: nextConsultationId,
-      tracking: "",
-    });
-  }, [consultations, form, initialConsultationId, selectedConsultationId]);
+    if (form.getFieldValue("consultationId") !== nextConsultationId) {
+      form.setFieldValue("consultationId", nextConsultationId);
+    }
+  }, [consultations, form, requestedConsultationId, selectedConsultationId]);
 
   const handleConsultationChange = (consultationId: number) => {
     setSelectedConsultationId(consultationId);

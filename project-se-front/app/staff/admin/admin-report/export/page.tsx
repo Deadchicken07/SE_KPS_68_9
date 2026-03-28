@@ -53,7 +53,7 @@ function ExportContent() {
     <div className={styles.page}>
       <header className={styles.header}>
         <div className={styles.brand}>JitDee.com</div>
-        <button type="button" className={styles.backBtn} onClick={() => router.push("/staff/admin-report")}>กลับไปหน้า Admin Report</button>
+        <button type="button" className={styles.backBtn} onClick={() => router.push("/staff/admin/admin-report")}>กลับไปหน้า Admin Report</button>
       </header>
 
       <main className={styles.shell}>
@@ -101,7 +101,7 @@ function ExportContent() {
           </div>
           <div className={styles.actionRow}>
             <button type="button" className={styles.primaryBtn}>สร้างรายงาน</button>
-            <button type="button" className={styles.ghostBtn} onClick={() => router.push("/staff/admin-report")}>ย้อนกลับ</button>
+            <button type="button" className={styles.ghostBtn} onClick={() => router.push("/staff/admin/admin-report")}>ย้อนกลับ</button>
           </div>
         </section>
       </main>

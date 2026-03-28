@@ -30,7 +30,8 @@ export const mapRoleIdToRole = (roleId: number | null): Roles | null => {
 export const roleLinks: Record<Roles, NavLinks[]> = {
   admin: [
     { name: "Dashboard", href: "/staff/admin-home" },
-    { name: "Admin Report", href: "/staff/admin-report" },
+    { name: "Work Schedule", href: "/staff/admin-home/admin_work" },
+    { name: "Admin Report", href: "/staff/admin/admin-report" },
   ],
   user: [{ name: "Home", href: "/user" }],
   psychologist: [
@@ -38,19 +39,30 @@ export const roleLinks: Record<Roles, NavLinks[]> = {
       name: "Dashboard",
       href: "/staff/role-psychiatrist-psychologists/psychologist",
     },
+    {
+      name: "Leave Form",
+      href: "/staff/role-psychiatrist-psychologists/psychologist-leave",
+    },
     { name: "Patient History", href: "/staff/patient-history" },
+    { name: "Appointments", href: "/staff/appointments/med" },
+    { name: "Consultations", href: "/staff/consult" },
   ],
   psychiatrist: [
     {
       name: "Dashboard",
       href: "/staff/role-psychiatrist-psychologists/psychiatrist",
     },
+    {
+      name: "Leave Form",
+      href: "/staff/role-psychiatrist-psychologists/psychiatrist-leave",
+    },
     { name: "Patient History", href: "/staff/patient-history" },
-    { name: "Appointments", href: "/staff/appointments" },
+    { name: "Appointments", href: "/staff/appointments/med" },
     { name: "Consultations", href: "/staff/consult" },
   ],
   pharmacist: [
     { name: "Dashboard", href: "/staff/pharmacist_home" },
+    { name: "Work Schedule", href: "/staff/pharmacist_home/Phama_work" },
     { name: "Medication Order", href: "/staff/pharmacist/order" },
     { name: "Delivery History", href: "/staff/pharmacist/delivery-history" },
     { name: "Medication Inventory", href: "/staff/pharmacist" },

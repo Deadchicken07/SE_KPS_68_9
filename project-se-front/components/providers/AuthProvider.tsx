@@ -1,6 +1,7 @@
 "use client";
 
 import axios from "axios";
+import { mapRoleIdToRole } from "@/types/role.types";
 import {
   createContext,
   useCallback,
@@ -32,7 +33,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await axios.get<AuthMeResponse>(`${API_URL}/auth/me`, {
         withCredentials: true,
       });
-      setMe(response.data);
+      const data = response.data;
+      setMe({ ...data, role: mapRoleIdToRole(data.role_id) });
     } catch {
       setMe(null);
     } finally {

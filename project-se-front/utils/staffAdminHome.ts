@@ -162,6 +162,10 @@ export function parseErrorMessage(payload: unknown) {
   return "โหลดข้อมูลไม่สำเร็จ";
 }
 
+export function parseStaffAdminHomeErrorMessage(payload: unknown) {
+  return parseErrorMessage(payload);
+}
+
 function toDateKey(value: Date) {
   return [
     value.getUTCFullYear(),

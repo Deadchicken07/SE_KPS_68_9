@@ -1,86 +1,181 @@
-"use client";
-
 import { type CSSProperties } from "react";
-import { useStaffAdminHome } from "@/hooks/useStaffAdminHome";
+import type { useStaffAdminHome } from "@/hooks/useStaffAdminHome";
 import type {
   AppointmentItem,
-  KpiCard,
   StaffOverviewItem,
   StaffScheduleFormState,
 } from "@/types/staffAdminHome.types";
-import {
-  BOARD_BACKGROUND,
-  BOARD_HEADER_BACKGROUND,
-  EMPTY_CLASS,
-  HERO_BACKGROUND,
-  INPUT_CLASS,
-  PAGE_BACKGROUND,
-  PANEL_CLASS,
-  PANEL_META_CLASS,
-  TEXTAREA_CLASS,
-  TIMELINE_LANE_BACKGROUND,
-  TIMELINE_LANE_SELECTED_BACKGROUND,
-  WEEKDAY_LABELS,
-  cx,
-  formatCompactDateLabel,
-  formatDateLabel,
-  formatMonthLabel,
-  formatTimeLabel,
-  getDayTone,
-  getScheduleBadgeClasses,
-  getScheduleStatusLabel,
-  getStatusBadgeClasses,
-} from "@/utils/staffAdminHome";
 
 type StaffAdminHomeState = ReturnType<typeof useStaffAdminHome>;
 
-export function StaffAdminHome() {
-  const state = useStaffAdminHome();
+const DAY_TONES = [
+  { fill: "#d9f3ef", ink: "#0f4c49" },
+  { fill: "#ecf8f4", ink: "#115e59" },
+  { fill: "#dff4ee", ink: "#155e75" },
+  { fill: "#e8f6f1", ink: "#0f4c49" },
+  { fill: "#e5f1ef", ink: "#1f4d46" },
+  { fill: "#d7ede7", ink: "#134e4a" },
+  { fill: "#eef7f4", ink: "#234b44" },
+];
 
-  if (!state.hasAccess) {
+const WEEKDAY_LABELS = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
+
+export const PAGE_BACKGROUND =
+  "radial-gradient(circle at top left, rgba(63, 127, 109, 0.14), transparent 34%), radial-gradient(circle at bottom right, rgba(192, 144, 87, 0.12), transparent 28%), linear-gradient(180deg, #f7f1ea 0%, #f3ede4 100%)";
+const HERO_BACKGROUND =
+  "linear-gradient(135deg, rgba(230, 255, 251, 0.32), rgba(255, 255, 255, 0.06)), linear-gradient(135deg, #0f766e 0%, #115e59 56%, #134e4a 100%)";
+const BOARD_BACKGROUND =
+  "linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(242, 249, 247, 0.98)), repeating-linear-gradient(0deg, rgba(15, 118, 110, 0.03) 0, rgba(15, 118, 110, 0.03) 2px, transparent 2px, transparent 6px)";
+const BOARD_HEADER_BACKGROUND =
+  "linear-gradient(180deg, #fbfefd 0%, #edf7f4 100%)";
+const TIMELINE_LANE_BACKGROUND =
+  "linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(244, 250, 248, 0.94)), repeating-linear-gradient(0deg, rgba(15, 118, 110, 0.03) 0, rgba(15, 118, 110, 0.03) 1px, transparent 1px, transparent 52px)";
+const TIMELINE_LANE_SELECTED_BACKGROUND =
+  "linear-gradient(180deg, rgba(230, 255, 251, 0.92), rgba(240, 253, 250, 0.95)), repeating-linear-gradient(0deg, rgba(15, 118, 110, 0.03) 0, rgba(15, 118, 110, 0.03) 1px, transparent 1px, transparent 52px)";
+const PANEL_CLASS =
+  "rounded-[28px] border border-[rgba(15,118,110,0.14)] bg-white shadow-[0_18px_36px_rgba(15,118,110,0.08)]";
+const INPUT_CLASS =
+  "min-h-[46px] w-full rounded-[14px] border border-[rgba(15,118,110,0.18)] bg-[#f9fcfb] px-3.5 text-[#173f35] outline-none transition focus:border-[#0f766e] focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]";
+const TEXTAREA_CLASS =
+  "min-h-[132px] w-full rounded-[14px] border border-[rgba(15,118,110,0.18)] bg-[#f9fcfb] px-3.5 py-3 text-[#173f35] leading-7 outline-none transition focus:border-[#0f766e] focus:ring-4 focus:ring-[rgba(15,118,110,0.12)] resize-y";
+const PANEL_META_CLASS =
+  "inline-flex items-center justify-center rounded-full bg-[#e6fffb] px-3.5 py-2.5 text-[0.84rem] font-extrabold text-[#0f766e]";
+const EMPTY_CLASS =
+  "rounded-[20px] border border-dashed border-[rgba(15,118,110,0.18)] bg-[#f7fbfa] p-[22px] leading-7 text-[#47655e]";
+
+function cx(...values: Array<string | false | null | undefined>) {
+  return values.filter(Boolean).join(" ");
+}
+
+function formatMonthLabel(monthKey: string) {
+  return new Date(`${monthKey}-01T00:00:00`).toLocaleDateString("th-TH", {
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function formatDateLabel(dateKey: string) {
+  return new Date(`${dateKey}T00:00:00`).toLocaleDateString("th-TH", {
+    weekday: "long",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function formatCompactDateLabel(dateKey: string) {
+  return new Date(`${dateKey}T00:00:00`).toLocaleDateString("th-TH", {
+    day: "2-digit",
+    month: "short",
+  });
+}
+
+function formatTimeLabel(minutes: number) {
+  const hour = Math.floor(minutes / 60);
+  const minute = minutes % 60;
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+function getDayTone(dateKey: string) {
+  const day = new Date(`${dateKey}T00:00:00`).getDay();
+  return DAY_TONES[day];
+}
+
+function getStatusBadgeClasses(status: AppointmentItem["displayStatus"]) {
+  return cx(
+    "inline-flex items-center justify-center rounded-full px-3 py-2 text-[0.8rem] font-extrabold whitespace-nowrap",
+    status === "pending" && "bg-[#eff7f4] text-[#0f766e]",
+    status === "confirmed" && "bg-[#e6fffb] text-[#115e59]",
+    status === "completed" && "bg-[#edf4f2] text-[#47655e]",
+  );
+}
+
+function getScheduleStatusLabel(value: string) {
+  if (value === "working") {
+    return "เข้าเวร";
+  }
+
+  if (value === "leave") {
+    return "ลา";
+  }
+
+  return "ยังไม่ลงตาราง";
+}
+
+function getScheduleBadgeClasses(value: string) {
+  return cx(
+    "inline-flex items-center gap-2 rounded-full px-3 py-2 text-[0.8rem] font-extrabold",
+    value === "working" && "bg-[#e6fffb] text-[#115e59]",
+    value === "leave" && "bg-[#fff1f2] text-[#be123c]",
+    value !== "working" && value !== "leave" && "bg-[#edf4f2] text-[#47655e]",
+  );
+}
+
+function shouldShowStaffAppointmentMetrics(staff: StaffOverviewItem) {
+  const normalizedRole = staff.role?.trim().toLowerCase() ?? "";
+  const roleLabel = staff.roleLabel.trim();
+
+  return (
+    normalizedRole === "psychiatrist" ||
+    normalizedRole === "psychologist" ||
+    roleLabel === "จิตแพทย์" ||
+    roleLabel === "นักจิตวิทยา"
+  );
+}
+
+function buildDashboardSummaryCards(
+  summary: NonNullable<StaffAdminHomeState["summary"]>,
+) {
+  return [
+    {
+      label: "นัดหมายทั้งหมด",
+      value: summary.totalAppointments,
+    },
+    {
+      label: "ผู้รับบริการ",
+      value: summary.uniquePatients,
+    },
+    {
+      label: "บุคลากรที่มีนัด",
+      value: summary.activeStaffCount,
+    },
+    {
+      label: "ชำระแล้ว",
+      value: summary.paidAppointments,
+    },
+    {
+      label: "ออนไลน์",
+      value: summary.onlineAppointments,
+    },
+  ];
+}
+
+export function DashboardSummarySection({
+  summary,
+}: {
+  summary: StaffAdminHomeState["summary"];
+}) {
+  if (!summary) {
     return null;
   }
 
   return (
-    <main
-      className="min-h-screen px-4 pb-10 pt-6 text-[#18312c] sm:px-6 lg:px-7 lg:pb-14 lg:pt-8"
-      style={{ background: PAGE_BACKGROUND }}
-    >
-      <div className="mx-auto grid max-w-[1420px] gap-6">
-        <HeroSection
-          selectedStaffName={state.selectedStaff?.name ?? "ทั้งคลินิก"}
-          weekRange={state.data?.weekRange ?? null}
-        />
-        <FilterSection state={state} />
-        {state.error ? (
-          <ErrorPanel
-            authRequired={state.authRequired}
-            error={state.error}
-            onLogin={state.goToLogin}
-          />
-        ) : null}
-        <KpiSection cards={state.kpiCards} />
-        <section className="grid grid-cols-1 gap-6">
-          <TimelineSection state={state} />
-          <SelectedAppointmentsSection state={state} />
-        </section>
-        <section className="grid grid-cols-1 items-start gap-6 xl:grid-cols-2">
-          <StaffOverviewSection
-            onOpenStaffWorkModal={state.openStaffWorkModal}
-            staffOverview={state.staffOverview}
-          />
-          <UpcomingAppointmentsSection
-            selectedDate={state.selectedDate}
-            upcomingAppointments={state.upcomingAppointments}
-          />
-        </section>
-        <StaffWorkModal state={state} />
-      </div>
-    </main>
+    <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+      {buildDashboardSummaryCards(summary).map((card) => (
+        <article key={card.label} className={cx(PANEL_CLASS, "p-5")}>
+          <span className="mb-2 block text-[0.78rem] font-bold text-[#68756c]">
+            {card.label}
+          </span>
+          <strong className="block text-[1.95rem] leading-none">
+            {card.value}
+          </strong>
+        </article>
+      ))}
+    </section>
   );
 }
 
-function HeroSection({
+export function HeroSection({
   selectedStaffName,
   weekRange,
 }: {
@@ -98,11 +193,8 @@ function HeroSection({
             ตารางงานคลินิก
           </span>
           <h1 className="mt-4 text-[clamp(2rem,3vw,3.1rem)] font-semibold leading-[1.08]">
-            ตารางงานทั้งคลินิกแบบรายสัปดาห์
+            ตารางงานทั้งคลินิกรายสัปดาห์
           </h1>
-          <p className="mt-3 leading-7 text-[rgba(255,253,248,0.82)]">
-            มุมมองรายสัปดาห์ตามช่วงเวลาในแต่ละวัน กดที่บล็อกนัดหมายเพื่อดูรายละเอียดในรายการด้านล่างได้ทันที
-          </p>
         </div>
 
         <div className="flex flex-wrap gap-3.5">
@@ -132,16 +224,19 @@ function HeroSection({
   );
 }
 
-function FilterSection({ state }: { state: StaffAdminHomeState }) {
+export function FilterSection({ state }: { state: StaffAdminHomeState }) {
   return (
     <section
       className={cx(
         PANEL_CLASS,
-        "grid grid-cols-1 gap-4 p-[22px] md:grid-cols-2 xl:grid-cols-4",
+        "grid grid-cols-1 gap-4 p-[22px] md:grid-cols-2 xl:grid-cols-3",
       )}
     >
       <div className="grid gap-2">
-        <label className="text-[0.88rem] font-bold text-[#33554d]" htmlFor="month">
+        <label
+          className="text-[0.88rem] font-bold text-[#33554d]"
+          htmlFor="month"
+        >
           เลือกเดือน
         </label>
         <input
@@ -191,22 +286,11 @@ function FilterSection({ state }: { state: StaffAdminHomeState }) {
           ))}
         </select>
       </div>
-
-      <div className="flex items-end">
-        <button
-          type="button"
-          onClick={state.reloadDashboard}
-          disabled={state.loading}
-          className="min-h-[46px] w-full rounded-[14px] bg-gradient-to-br from-[#1f5d4f] to-[#2e7464] px-4 font-bold text-[#fffdfa] shadow-[0_14px_28px_rgba(31,93,79,0.18)] transition hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-70 disabled:hover:translate-y-0"
-        >
-          {state.loading ? "กำลังโหลด..." : "รีเฟรชข้อมูล"}
-        </button>
-      </div>
     </section>
   );
 }
 
-function ErrorPanel({
+export function ErrorPanel({
   authRequired,
   error,
   onLogin,
@@ -227,7 +311,7 @@ function ErrorPanel({
         <button
           type="button"
           onClick={onLogin}
-          className="mt-3 inline-flex min-h-[42px] items-center justify-center rounded-xl bg-[#1f5d4f] px-4 font-bold text-[#fffdfa]"
+          className="mt-3 inline-flex min-h-[42px] items-center justify-center rounded-xl bg-[#0f766e] px-4 font-bold text-white"
         >
           ไปหน้าเข้าสู่ระบบ
         </button>
@@ -236,25 +320,7 @@ function ErrorPanel({
   );
 }
 
-function KpiSection({ cards }: { cards: KpiCard[] }) {
-  return (
-    <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
-      {cards.map((card) => (
-        <article key={card.label} className={cx(PANEL_CLASS, "p-5")}>
-          <span className="mb-2 block text-[0.78rem] font-bold text-[#68756c]">
-            {card.label}
-          </span>
-          <strong className="block text-[1.95rem] leading-none">
-            {card.value}
-          </strong>
-          <p className="mt-2 text-[0.84rem] leading-6 text-[#6d776f]">{card.note}</p>
-        </article>
-      ))}
-    </section>
-  );
-}
-
-function TimelineSection({ state }: { state: StaffAdminHomeState }) {
+export function TimelineSection({ state }: { state: StaffAdminHomeState }) {
   return (
     <article className={PANEL_CLASS}>
       <div className="flex flex-wrap items-start justify-between gap-4 p-[24px_24px_18px]">
@@ -264,7 +330,9 @@ function TimelineSection({ state }: { state: StaffAdminHomeState }) {
           </h2>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2.5">
-          <span className={PANEL_META_CLASS}>{formatMonthLabel(state.month)}</span>
+          <span className={PANEL_META_CLASS}>
+            {formatMonthLabel(state.month)}
+          </span>
         </div>
       </div>
 
@@ -278,8 +346,8 @@ function TimelineSection({ state }: { state: StaffAdminHomeState }) {
               className={cx(
                 "min-w-[124px] rounded-[18px] border px-[14px] py-3 text-left transition hover:-translate-y-0.5 hover:shadow-[0_12px_18px_rgba(67,71,62,0.08)]",
                 state.activeWeekStart === option.start
-                  ? "border-[#2165554d] bg-gradient-to-b from-[#e8f3ee] to-[#f4faf7] shadow-[0_14px_24px_rgba(31,93,79,0.1)]"
-                  : "border-[#3d605524] bg-[#fffdfa]",
+                  ? "border-[rgba(15,118,110,0.24)] bg-gradient-to-b from-[#e6fffb] to-[#f7fbfa] shadow-[0_14px_24px_rgba(15,118,110,0.08)]"
+                  : "border-[rgba(15,118,110,0.12)] bg-white",
               )}
             >
               <strong className="block text-[0.9rem] font-extrabold text-[#1d4338]">
@@ -342,7 +410,11 @@ function TimelineSection({ state }: { state: StaffAdminHomeState }) {
                     style={{ background: tone.fill, color: tone.ink }}
                   >
                     <span className="mb-1.5 block text-[0.72rem] font-extrabold tracking-[0.08em]">
-                      {WEEKDAY_LABELS[new Date(`${day.date}T00:00:00`).getDay()]}
+                      {
+                        WEEKDAY_LABELS[
+                          new Date(`${day.date}T00:00:00`).getDay()
+                        ]
+                      }
                     </span>
                     <strong className="block text-base font-bold">
                       {formatCompactDateLabel(day.date)}
@@ -373,7 +445,9 @@ function TimelineSection({ state }: { state: StaffAdminHomeState }) {
                     ))}
                     {day.events.length ? (
                       day.events.map((event) => {
-                        const isActive = event.appointment.id === state.selectedAppointment?.id;
+                        const isActive =
+                          event.appointment.id ===
+                          state.selectedAppointment?.id;
                         const eventStyle = {
                           left: `${event.left}%`,
                           width: `${event.width}%`,
@@ -395,7 +469,10 @@ function TimelineSection({ state }: { state: StaffAdminHomeState }) {
                             )}
                             onClick={(clickEvent) => {
                               clickEvent.stopPropagation();
-                              state.selectAppointment(event.appointment.id, day.date);
+                              state.selectAppointment(
+                                event.appointment.id,
+                                day.date,
+                              );
                             }}
                           >
                             <div className="flex items-center justify-between gap-2">
@@ -436,7 +513,7 @@ function TimelineSection({ state }: { state: StaffAdminHomeState }) {
   );
 }
 
-function SelectedAppointmentsSection({
+export function SelectedAppointmentsSection({
   state,
 }: {
   state: StaffAdminHomeState;
@@ -450,7 +527,9 @@ function SelectedAppointmentsSection({
           </h2>
           <p className="mt-2 text-[0.94rem] leading-7 text-[#68756c]">
             {formatDateLabel(state.selectedDate)}
-            {state.selectedStaff ? ` • ${state.selectedStaff.name}` : " • แสดงทั้งคลินิก"}
+            {state.selectedStaff
+              ? ` • ${state.selectedStaff.name}`
+              : " • แสดงทั้งคลินิก"}
           </p>
         </div>
         <div className="flex items-center gap-2.5">
@@ -462,12 +541,16 @@ function SelectedAppointmentsSection({
             onClick={state.toggleSelectedAppointmentsCollapsed}
             aria-expanded={!state.isSelectedAppointmentsCollapsed}
             aria-label={
-              state.isSelectedAppointmentsCollapsed ? "ขยายรายการนัด" : "ย่อรายการนัด"
+              state.isSelectedAppointmentsCollapsed
+                ? "ขยายรายการนัด"
+                : "ย่อรายการนัด"
             }
             title={
-              state.isSelectedAppointmentsCollapsed ? "ขยายรายการนัด" : "ย่อรายการนัด"
+              state.isSelectedAppointmentsCollapsed
+                ? "ขยายรายการนัด"
+                : "ย่อรายการนัด"
             }
-            className="inline-flex h-[42px] w-[42px] items-center justify-center rounded-full border border-[#355a4e29] bg-[#fffdfa] text-[#244d44] transition hover:-translate-y-0.5"
+            className="inline-flex h-[42px] w-[42px] items-center justify-center rounded-full border border-[rgba(15,118,110,0.16)] bg-white text-[#0f766e] transition hover:-translate-y-0.5"
           >
             <svg
               viewBox="0 0 20 20"
@@ -500,17 +583,21 @@ function SelectedAppointmentsSection({
                   key={appointment.id}
                   onClick={() => state.selectAppointment(appointment.id)}
                   className={cx(
-                    "cursor-pointer rounded-[22px] border border-[#4b615a1f] bg-[#fffdfa] p-4",
+                    "cursor-pointer rounded-[22px] border border-[rgba(15,118,110,0.12)] bg-white p-4",
                     appointment.id === state.selectedAppointment?.id &&
-                      "border-[#236b5a42] shadow-[0_12px_22px_rgba(30,94,79,0.08)]",
+                      "border-[rgba(15,118,110,0.28)] shadow-[0_12px_22px_rgba(15,118,110,0.08)]",
                   )}
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <span className="inline-flex items-center rounded-full bg-[#eff5f0] px-3 py-2 text-[0.85rem] font-extrabold text-[#1f5d4f]">
+                    <span className="inline-flex items-center rounded-full bg-[#e6fffb] px-3 py-2 text-[0.85rem] font-extrabold text-[#0f766e]">
                       {appointment.timeSelect ??
                         `${appointment.startTime ?? "--"} - ${appointment.endTime ?? "--"}`}
                     </span>
-                    <span className={getStatusBadgeClasses(appointment.displayStatus)}>
+                    <span
+                      className={getStatusBadgeClasses(
+                        appointment.displayStatus,
+                      )}
+                    >
                       {appointment.displayStatusLabel}
                     </span>
                   </div>
@@ -519,38 +606,44 @@ function SelectedAppointmentsSection({
                   </h3>
                   <p className="mt-1 leading-7 text-[#6d776f]">
                     {appointment.staffName}
-                    {appointment.staffRoleLabel ? ` • ${appointment.staffRoleLabel}` : ""}
+                    {appointment.staffRoleLabel
+                      ? ` • ${appointment.staffRoleLabel}`
+                      : ""}
                   </p>
                   <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <InfoBox label="รูปแบบ" value={appointment.appointmentTypeLabel} />
-                    <InfoBox label="ชำระเงิน" value={appointment.paymentStatusLabel} />
-                    <InfoBox label="อีเมล" value={appointment.patientEmail ?? "-"} />
-                    <InfoBox label="เบอร์โทร" value={appointment.patientPhone ?? "-"} />
+                    <InfoBox
+                      label="รูปแบบ"
+                      value={appointment.appointmentTypeLabel}
+                    />
+                    <InfoBox
+                      label="ชำระเงิน"
+                      value={appointment.paymentStatusLabel}
+                    />
+                    <InfoBox
+                      label="อีเมล"
+                      value={appointment.patientEmail ?? "-"}
+                    />
+                    <InfoBox
+                      label="เบอร์โทร"
+                      value={appointment.patientPhone ?? "-"}
+                    />
                   </div>
                 </article>
               ))
             ) : (
               <div className={EMPTY_CLASS}>
-                วันนี้ยังไม่มีนัดหมายในตัวกรองที่เลือก หรือฐานข้อมูลยังไม่มีรายการในวันดังกล่าว
+                วันนี้ยังไม่มีนัดหมายในตัวกรองที่เลือก
+                หรือฐานข้อมูลยังไม่มีรายการในวันดังกล่าว
               </div>
             )}
           </div>
-
-          <div className="px-[22px] pb-[22px] text-[0.84rem] leading-6 text-[#6d776f]">
-            ภาพรวมวันนี้: ชำระแล้ว {state.selectedDayStats?.paidAppointments ?? 0} นัด • ออนไลน์{" "}
-            {state.selectedDayStats?.onlineAppointments ?? 0} นัด
-          </div>
         </>
-      ) : (
-        <div className="px-[22px] pb-[22px] text-[0.88rem] leading-7 text-[#6d776f]">
-          ย่อรายละเอียดไว้แล้ว • วันนี้มี {state.selectedDateAppointments.length} รายการ
-        </div>
-      )}
+      ) : null}
     </article>
   );
 }
 
-function StaffOverviewSection({
+export function StaffOverviewSection({
   onOpenStaffWorkModal,
   staffOverview,
 }: {
@@ -569,9 +662,9 @@ function StaffOverviewSection({
           <button
             type="button"
             onClick={onOpenStaffWorkModal}
-            className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[#178986] px-4 text-[0.9rem] font-extrabold text-white shadow-[0_10px_24px_rgba(23,137,134,0.18)] transition hover:bg-[#127370]"
+            className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[#0f766e] px-4 text-[0.9rem] font-extrabold text-white shadow-[0_10px_24px_rgba(15,118,110,0.18)] transition hover:bg-[#115e59]"
           >
-            เพิ่ม
+            แก้ไข
           </button>
           <span className={PANEL_META_CLASS}>{staffOverview.length} คน</span>
         </div>
@@ -582,7 +675,7 @@ function StaffOverviewSection({
           staffOverview.map((staff) => (
             <article
               key={staff.staffId}
-              className="rounded-[22px] border border-[#4b615a1f] bg-[#fffdfa] p-4"
+              className="rounded-[22px] border border-[rgba(15,118,110,0.12)] bg-white p-4"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -599,17 +692,23 @@ function StaffOverviewSection({
                 </span>
               </div>
 
-              <div className="mt-4 grid grid-cols-2 gap-2.5 xl:grid-cols-4">
-                <InfoBox label="นัดทั้งหมด" value={staff.totalAppointments} />
-                <InfoBox label="ชำระแล้ว" value={staff.paidAppointments} />
-                <InfoBox label="ออนไลน์" value={staff.onlineAppointments} />
-                <InfoBox label="นัดถัดไป" value={staff.nextAppointmentTime ?? "-"} />
-              </div>
+              {shouldShowStaffAppointmentMetrics(staff) ? (
+                <div className="mt-4 grid grid-cols-2 gap-2.5 xl:grid-cols-4">
+                  <InfoBox label="นัดทั้งหมด" value={staff.totalAppointments} />
+                  <InfoBox label="ชำระแล้ว" value={staff.paidAppointments} />
+                  <InfoBox label="ออนไลน์" value={staff.onlineAppointments} />
+                  <InfoBox
+                    label="นัดถัดไป"
+                    value={staff.nextAppointmentTime ?? "-"}
+                  />
+                </div>
+              ) : null}
             </article>
           ))
         ) : (
           <div className={EMPTY_CLASS}>
-            ยังไม่พบบุคลากรที่ตรงกับบทบาททางคลินิกในฐานข้อมูล หรือยังไม่มีนัดหมายในเดือนนี้
+            ยังไม่พบบุคลากรที่ตรงกับบทบาททางคลินิกในฐานข้อมูล
+            หรือยังไม่มีนัดหมายในเดือนนี้
           </div>
         )}
       </div>
@@ -617,7 +716,7 @@ function StaffOverviewSection({
   );
 }
 
-function UpcomingAppointmentsSection({
+export function UpcomingAppointmentsSection({
   selectedDate,
   upcomingAppointments,
 }: {
@@ -632,7 +731,9 @@ function UpcomingAppointmentsSection({
             นัดหมายถัดไปของคลินิก
           </h2>
         </div>
-        <span className={PANEL_META_CLASS}>{upcomingAppointments.length} รายการ</span>
+        <span className={PANEL_META_CLASS}>
+          {upcomingAppointments.length} รายการ
+        </span>
       </div>
 
       <div className="grid gap-3.5 px-[22px] pb-[22px]">
@@ -640,7 +741,7 @@ function UpcomingAppointmentsSection({
           upcomingAppointments.map((appointment) => (
             <article
               key={appointment.id}
-              className="rounded-[22px] border border-[#4b615a1f] bg-[#fffdfa] p-4"
+              className="rounded-[22px] border border-[rgba(15,118,110,0.12)] bg-white p-4"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -648,17 +749,23 @@ function UpcomingAppointmentsSection({
                     {appointment.patientName}
                   </h3>
                   <div className="mt-1.5 text-[0.92rem] text-[#5e6c65]">
-                    {formatDateLabel(appointment.appointmentDate ?? selectedDate)} •{" "}
-                    {appointment.timeSelect ?? "-"}
+                    {formatDateLabel(
+                      appointment.appointmentDate ?? selectedDate,
+                    )}{" "}
+                    • {appointment.timeSelect ?? "-"}
                   </div>
                 </div>
-                <span className={getStatusBadgeClasses(appointment.displayStatus)}>
+                <span
+                  className={getStatusBadgeClasses(appointment.displayStatus)}
+                >
                   {appointment.displayStatusLabel}
                 </span>
               </div>
               <p className="mt-2 leading-7 text-[#6d776f]">
                 {appointment.staffName}
-                {appointment.staffRoleLabel ? ` • ${appointment.staffRoleLabel}` : ""}
+                {appointment.staffRoleLabel
+                  ? ` • ${appointment.staffRoleLabel}`
+                  : ""}
               </p>
             </article>
           ))
@@ -672,7 +779,7 @@ function UpcomingAppointmentsSection({
   );
 }
 
-function StaffWorkModal({ state }: { state: StaffAdminHomeState }) {
+export function StaffWorkModal({ state }: { state: StaffAdminHomeState }) {
   if (!state.isStaffWorkModalOpen) {
     return null;
   }
@@ -693,7 +800,7 @@ function StaffWorkModal({ state }: { state: StaffAdminHomeState }) {
       onClick={state.closeStaffWorkModal}
     >
       <section
-        className="w-full max-w-2xl rounded-[30px] border border-[#4b615a24] bg-[#fffaf2] shadow-[0_26px_70px_rgba(31,42,39,0.22)]"
+        className="w-full max-w-2xl rounded-[30px] border border-[rgba(15,118,110,0.14)] bg-white shadow-[0_26px_70px_rgba(15,118,110,0.16)]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4 border-b border-[#4b615a1c] px-6 py-5">
@@ -793,7 +900,7 @@ function StaffWorkModal({ state }: { state: StaffAdminHomeState }) {
 
           {state.staffScheduleError ? (
             <div className="px-6 pb-2">
-              <div className="rounded-[18px] border border-[#d77e7e45] bg-[#fff0ee] px-4 py-3 text-[0.92rem] text-[#9d4138]">
+              <div className="rounded-[18px] border border-[#fecdd3] bg-[#fff1f2] px-4 py-3 text-[0.92rem] text-[#be123c]">
                 {state.staffScheduleError}
               </div>
             </div>
@@ -803,16 +910,18 @@ function StaffWorkModal({ state }: { state: StaffAdminHomeState }) {
             <button
               type="button"
               onClick={state.closeStaffWorkModal}
-              className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-[#3c524c24] bg-white px-5 text-[0.95rem] font-bold text-[#33554d] transition hover:bg-[#f6f4ed]"
+              className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-[rgba(15,118,110,0.16)] bg-white px-5 text-[0.95rem] font-bold text-[#47655e] transition hover:bg-[#f7fbfa]"
             >
               ยกเลิก
             </button>
             <button
               type="submit"
               disabled={state.staffScheduleSubmitting}
-              className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-[#178986] px-5 text-[0.95rem] font-bold text-white transition hover:bg-[#127370] disabled:cursor-not-allowed disabled:bg-[#b7c8c1]"
+              className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-[#0f766e] px-5 text-[0.95rem] font-bold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:bg-[#b7c8c1]"
             >
-              {state.staffScheduleSubmitting ? "กำลังบันทึก..." : "บันทึกตารางงาน"}
+              {state.staffScheduleSubmitting
+                ? "กำลังบันทึก..."
+                : "บันทึกตารางงาน"}
             </button>
           </div>
         </form>
@@ -823,7 +932,7 @@ function StaffWorkModal({ state }: { state: StaffAdminHomeState }) {
 
 function InfoBox({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-2xl bg-[#f6f4ed] px-[13px] py-3">
+    <div className="rounded-2xl bg-[#f7fbfa] px-[13px] py-3">
       <span className="mb-1 block text-[0.76rem] font-bold text-[#6a736c]">
         {label}
       </span>
