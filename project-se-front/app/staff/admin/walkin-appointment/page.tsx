@@ -5,12 +5,14 @@ import { Form, Input, Select, DatePicker, Button, Card, Typography, message, Rad
 import axios from "axios";
 import { useStaff } from "@/hooks/useStaff";
 import dayjs from "dayjs";
+import { useRouter } from "next/navigation";
 
 const { Title } = Typography;
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 export default function WalkinAppointmentPage() {
-  const [form] = Form.useForm();
+  const form = Form.useForm()[0];
+  const router = useRouter();
   const { staffs } = useStaff();
 
   const [loading, setLoading] = useState(false);
@@ -134,15 +136,20 @@ export default function WalkinAppointmentPage() {
         payload.userId = values.userId;
       }
 
-      await axios.post(`${API}/appointments/admin`, payload, {
+      const res = await axios.post(`${API}/appointments/admin`, payload, {
         withCredentials: true,
       });
 
       message.success("เพิ่มการนัดหมายสำเร็จ");
-      form.resetFields();
-      setSelectedDate(null);
-      setSelectedTime(null);
-      setAvailableSlotsMap({});
+      const appointmentId = res.data.appointmentId;
+      if (appointmentId) {
+        router.push(`/staff/admin/payment?appointmentId=${appointmentId}`);
+      } else {
+        form.resetFields();
+        setSelectedDate(null);
+        setSelectedTime(null);
+        setAvailableSlotsMap({});
+      }
     } catch (error: any) {
       console.error(error);
       message.error(error.response?.data?.message || "ไม่สามารถเพิ่มการนัดหมายได้");
