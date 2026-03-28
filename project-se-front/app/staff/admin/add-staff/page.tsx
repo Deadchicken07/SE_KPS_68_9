@@ -6,7 +6,7 @@ import axios from "axios";
 import { notification, Spin, Upload, Button } from "antd";
 import { UploadOutlined, PlusOutlined } from "@ant-design/icons";
 import styles from "./page.module.css";
-import { supabase } from "@/utils/supabase";
+import { isSupabaseConfigured, supabase } from "@/utils/supabase";
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 
@@ -56,6 +56,10 @@ export default function AddStaffPage() {
 
       // 1. Upload image to Supabase if exists
       if (profileImage) {
+        if (!isSupabaseConfigured || !supabase) {
+          throw new Error("Supabase is not configured");
+        }
+
         const fileExt = profileImage.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
         const filePath = `avatars/${fileName}`;

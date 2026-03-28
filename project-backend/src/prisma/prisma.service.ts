@@ -12,6 +12,7 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy
 {
   private readonly logger = new Logger(PrismaService.name);
+  private readonly databaseConfigured = Boolean(process.env.DATABASE_URL);
   private isRefreshingConnection = false;
 
   constructor() {

@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import type { Metadata } from "next";
+import Script from "next/script";
 import AppThemeProvider from "@/components/ui/AppThemeProvider";
 import AxiosSessionGuard from "@/components/providers/AxiosSessionGuard";
 import "./globals.css";
@@ -15,6 +16,51 @@ export const metadata: Metadata = {
   description: "JitDee.com",
 };
 
+const hydrationAttributeCleanupScript = `
+  (() => {
+    const attributeNames = ["bis_skin_checked"];
+
+    const cleanup = (root) => {
+      for (const attributeName of attributeNames) {
+        const selector = "[" + attributeName + "]";
+        root.querySelectorAll(selector).forEach((node) => {
+          node.removeAttribute(attributeName);
+        });
+      }
+    };
+
+    cleanup(document);
+
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (
+          mutation.type === "attributes" &&
+          mutation.attributeName &&
+          attributeNames.includes(mutation.attributeName)
+        ) {
+          mutation.target.removeAttribute(mutation.attributeName);
+          continue;
+        }
+
+        if (mutation.type === "childList") {
+          mutation.addedNodes.forEach((node) => {
+            if (node instanceof Element) {
+              cleanup(node);
+            }
+          });
+        }
+      }
+    });
+
+    observer.observe(document.documentElement, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: attributeNames,
+    });
+  })();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -27,6 +73,9 @@ export default function RootLayout({
         style={rootFontVariables}
         suppressHydrationWarning
       >
+        <Script id="hydration-attribute-cleanup" strategy="beforeInteractive">
+          {hydrationAttributeCleanupScript}
+        </Script>
         <AuthProvider>
           <AppThemeProvider>{children}</AppThemeProvider>
           <AxiosSessionGuard />

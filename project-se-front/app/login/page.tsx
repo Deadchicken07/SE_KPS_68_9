@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -57,7 +58,7 @@ const resolveRedirectPath = (
   return canRoleAccessPath(role, redirectTarget) ? redirectTarget : fallbackPath;
 };
 
-export default function LoginPage() {
+function LoginPageContent() {
   const [api, contextHolder] = notification.useNotification();
   const { login, loading, error } = useLogin();
   const [form] = Form.useForm();
@@ -402,3 +403,9 @@ export default function LoginPage() {
     </>
   );
 }
+
+const LoginPage = dynamic(() => Promise.resolve(LoginPageContent), {
+  ssr: false,
+});
+
+export default LoginPage;
