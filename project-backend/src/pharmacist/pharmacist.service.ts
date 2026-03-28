@@ -168,7 +168,10 @@ export class PharmacistService {
     pharmacistId: number,
   ): Promise<OrderResponseDto> {
     const tracking = dto.tracking?.trim() || null;
-    const status = this.resolveReceiptStatus(tracking, dto.status?.trim() || null);
+    const status = this.resolveReceiptStatus(
+      tracking,
+      dto.status?.trim() || null,
+    );
 
     const updatedReceipt = await this.prisma.$transaction(async (tx) => {
       const consultation = await tx.consultations.findUnique({
