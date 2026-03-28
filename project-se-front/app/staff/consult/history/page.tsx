@@ -8,7 +8,7 @@ import {
   Divider,
   Modal,
   Pagination,
-  Spin,
+  Skeleton,
   Table,
   Tag,
   Tooltip,
@@ -91,7 +91,7 @@ export default function ConsultHistoryPage() {
             </Button>
           }
         >
-          {loading && <Spin />}
+          {loading && <Skeleton active paragraph={{ rows: 4 }} />}
           {error && <Typography.Text type="danger">{error}</Typography.Text>}
 
           {!loading &&
@@ -154,7 +154,7 @@ export default function ConsultHistoryPage() {
             </Typography.Title>
           }
         >
-          {resLoading && <Spin />}
+          {resLoading && <Skeleton active paragraph={{ rows: 3 }} />}
           {resError && <Typography.Text type="danger">{resError}</Typography.Text>}
 
           {!resLoading && responses.length === 0 && (
@@ -274,7 +274,7 @@ export default function ConsultHistoryPage() {
           },
         }}
       >
-        {detailLoading && <Spin />}
+        {detailLoading && <Skeleton active paragraph={{ rows: 4 }} />}
         {selectedResponse?.answers.map((a, index) => (
           <Card
             key={index}

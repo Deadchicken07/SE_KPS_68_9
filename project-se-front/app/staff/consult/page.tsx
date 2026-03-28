@@ -7,7 +7,7 @@ import {
   Input,
   Button,
   Typography,
-  Spin,
+  Skeleton,
   InputNumber,
   Divider,
   Switch,
@@ -127,6 +127,10 @@ export default function ConsultPage() {
             บันทึกการปรึกษา
           </Typography.Title>
 
+          {loading ? (
+            <Skeleton active paragraph={{ rows: 6 }} />
+          ) : (
+            <>
           <Typography.Text style={{ fontWeight: 500, color: "#374151" }}>
             เลือกผู้ป่วย
           </Typography.Text>
@@ -140,11 +144,10 @@ export default function ConsultPage() {
             placeholder="ค้นหาหรือเลือกผู้ป่วย"
             style={{ width: "100%" }}
             options={userOptions}
-            loading={loading}
             onChange={(val) => setSelectedUser(val)}
             value={selectedUser}
             disabled={!!userIdFromQuery}
-            notFoundContent={loading ? <Spin size="small" /> : "ไม่พบข้อมูล"}
+            notFoundContent="ไม่พบข้อมูล"
             size="large"
           />
 
@@ -296,6 +299,8 @@ export default function ConsultPage() {
               ส่ง
             </Button>
           </div>
+          </>
+          )}
         </Card>
       </div>
     </div>
