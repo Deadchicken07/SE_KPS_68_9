@@ -6,18 +6,21 @@ import { Appointment } from "@/types/appointment.types";
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 
-export const useAppointment = (date: string | null) => {
+export const useStaffById = (id: number | null, date: string | null) => {
   const [data, setData] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!id) return;
+
     const fetch = async () => {
       try {
         setLoading(true);
         setError(null);
-        const res = await axios.get<Appointment[]>(`${API}/appointments/staff`, {
+        const res = await axios.get<Appointment[]>(`${API}/appointments/staff/${id}`, {
           params: date ? { date } : {},
+          withCredentials: true,
         });
         setData(res.data);
       } catch {
@@ -28,7 +31,7 @@ export const useAppointment = (date: string | null) => {
     };
 
     fetch();
-  }, [date]);
+  }, [id, date]);
 
   return { data, loading, error };
 };

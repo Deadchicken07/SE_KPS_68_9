@@ -51,6 +51,6 @@ export const roleHome: Record<Roles, string> = {
   admin: "/staff/admin-home",
   user: "/user",
   psychologist: "/staff/patient-history",
-  psychiatrist: "/staff/patient-history",
+  psychiatrist: "/staff/appointment",
   pharmacist: "/staff/pharmacist_home",
 };

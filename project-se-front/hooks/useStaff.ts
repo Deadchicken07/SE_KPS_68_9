@@ -14,7 +14,7 @@ export const useStaff = () => {
         try {
             setLoading(true);
             setError(null);
-            const res = await axios.get<Staff[]>(`${API}/users/staff`);
+            const res = await axios.get<Staff[]>(`${API}/users/staff`, { withCredentials: true });
             setStaffs(res.data);
         } catch (err: unknown) {
             setError("ไม่สามารถดึงข้อมูลบุคลากรได้");
@@ -28,7 +28,7 @@ export const useStaff = () => {
         try {
             setLoading(true);
             setError(null);
-            const res = await axios.get<Staff>(`${API}/users/staff/${id}`);
+            const res = await axios.get<Staff>(`${API}/users/staff/${id}`, { withCredentials: true });
             return res.data;
         } catch (err: unknown) {
             setError("ไม่สามารถดึงข้อมูลบุคลากรได้");

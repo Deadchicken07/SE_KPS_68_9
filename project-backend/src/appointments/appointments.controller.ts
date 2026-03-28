@@ -39,6 +39,11 @@ export class AppointmentsController {
     return this.appointmentsService.getMySchedule(userId);
   }
 
+  // @Get('staff/:staffId')
+  // findAllByStaff(@Param('staffId', ParseIntPipe) staffId : number){
+  //   return this.appointmentsService.findAllByStaff(staffId)
+  // }
+
   @Get(':id')
   getAppointment(@Req() req, @Param('id', ParseIntPipe) appointmentId: number) {
     const userId = this.getUserIdFromRequest(req);
