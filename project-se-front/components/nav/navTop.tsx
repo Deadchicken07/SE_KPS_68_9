@@ -12,7 +12,7 @@ import { navigateToAppointmentsWithLoginGuard } from "@/utils/guardedNavigation"
 import { useAuth } from "@/components/providers/AuthProvider";
 
 const { Header } = Layout;
-const API_URL = "http://localhost:4000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 const links = [
   { name: "หน้าแรก", href: "/user" },

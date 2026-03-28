@@ -9,7 +9,7 @@ import 'dayjs/locale/th';
 import buddhistEra from 'dayjs/plugin/buddhistEra';
 import locale from 'antd/locale/th_TH';
 
-const API_BASE_URL = 'http://localhost:4000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 dayjs.extend(buddhistEra);
 dayjs.locale('th');
@@ -113,7 +113,7 @@ export default function AppointmentsPage() {
     const [modalApi, modalContextHolder] = Modal.useModal();
     const [isAuthChecking, setIsAuthChecking] = useState(true);
     const [mode, setMode] = useState<'staff' | 'time'>('staff');
-    
+
     const { staffs: fetchedStaffs } = useStaff();
     const [availableSlotsMap, setAvailableSlotsMap] = useState<Record<number, string[]>>({});
 
@@ -241,7 +241,7 @@ export default function AppointmentsPage() {
                 credentials: 'include',
                 body: JSON.stringify({
                     staffId: booking.staff.id,
-                    date: booking.date, 
+                    date: booking.date,
                     timeSelect: timeRangeString,
                     duration: booking.duration,
                     appointmentType: booking.appointmentType,
@@ -747,7 +747,7 @@ export default function AppointmentsPage() {
                                     {selectedDate && (
                                         <>
                                             <h2 style={{ marginTop: 8 }}>
-                                                เวลา <span style={{fontSize: 14, fontWeight: 'normal', color: '#6b7280'}}>(แสดงเฉพาะเวลาที่ว่าง)</span>
+                                                เวลา <span style={{ fontSize: 14, fontWeight: 'normal', color: '#6b7280' }}>(แสดงเฉพาะเวลาที่ว่าง)</span>
                                             </h2>
                                             {selectedStaff.slots.length > 0 ? (
                                                 <TimeSlotGrid

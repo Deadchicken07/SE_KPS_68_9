@@ -80,7 +80,7 @@ type PaymentFormState = {
   slipPreviewUrl: string | null;
 };
 
-const API_BASE_URL = "http://localhost:4000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 const DEFAULT_MEET_LINK =
   process.env.NEXT_PUBLIC_CLINIC_MEET_URL ?? "https://meet.google.com/new";
 const JOIN_LEAD_MS = 30 * 60 * 1000;
