@@ -39,6 +39,7 @@ type StaffAppointmentItem = {
   appointmentType: 'online' | 'onsite' | null;
   paymentStatus: string | null;
   depositSlipFile: string | null;
+  meetUrl: string | null;
 };
 
 type TimeRange = {
@@ -514,6 +515,54 @@ export class AppointmentsService {
     ].join('-');
   }
 
+  async deleteMeetUrl(staffId: number, appointmentId: number) {
+    const appointment = await this.prisma.appointments.findUnique({
+      where: { id: appointmentId },
+      select: { id: true, staff_id: true },
+    });
+
+    if (!appointment) {
+      throw new NotFoundException('Appointment not found');
+    }
+
+    if (appointment.staff_id !== staffId) {
+      throw new ForbiddenException(
+        'You do not have permission to update this appointment',
+      );
+    }
+
+    await this.prisma.appointments.update({
+      where: { id: appointmentId },
+      data: { meet_url: null },
+    });
+
+    return { message: 'Meet URL deleted successfully', appointmentId };
+  }
+
+  async updateMeetUrl(staffId: number, appointmentId: number, meetUrl: string) {
+    const appointment = await this.prisma.appointments.findUnique({
+      where: { id: appointmentId },
+      select: { id: true, staff_id: true },
+    });
+
+    if (!appointment) {
+      throw new NotFoundException('Appointment not found');
+    }
+
+    if (appointment.staff_id !== staffId) {
+      throw new ForbiddenException(
+        'You do not have permission to update this appointment',
+      );
+    }
+
+    await this.prisma.appointments.update({
+      where: { id: appointmentId },
+      data: { meet_url: meetUrl },
+    });
+
+    return { message: 'Meet URL updated successfully', appointmentId, meetUrl };
+  }
+
   async findAllByStaff(staffId: number): Promise<StaffAppointmentItem[]> {
     const records = await this.prisma.appointments.findMany({
       where: {
@@ -556,6 +605,7 @@ export class AppointmentsService {
       appointmentType: record.appointment_type ?? null,
       paymentStatus: record.status ?? null,
       depositSlipFile: record.deposit_slip_file ?? null,
+      meetUrl: record.meet_url ?? null,
     }));
   }
 
