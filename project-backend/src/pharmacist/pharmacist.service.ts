@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, item_type_enum, receipt_status } from '@prisma/client';
+import { Prisma, item_type_enum, pay_type_enum, receipt_status } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { CreateMedicationDto } from './dto/create-medication.dto';
@@ -145,6 +145,7 @@ export class PharmacistService {
             id: true,
             tracking: true,
             status: true,
+            payment_status: true,
           },
         },
       },
@@ -154,10 +155,7 @@ export class PharmacistService {
     return {
       consultations: consultations
         .filter((consultation) =>
-          this.isPendingReceipt(
-            consultation.receipts[0]?.tracking ?? null,
-            consultation.receipts[0]?.status ?? null,
-          ),
+          this.isOrderFormReady(consultation.receipts[0] ?? null),
         )
         .map((consultation) => this.mapOrderFormConsultation(consultation)),
     };
@@ -702,6 +700,7 @@ export class PharmacistService {
             id: true;
             tracking: true;
             status: true;
+            payment_status: true;
           };
         };
       };
@@ -725,6 +724,7 @@ export class PharmacistService {
       ),
       note: consultation.note ?? null,
       createdAt: this.toIsoString(consultation.created_at),
+      latestPaymentStatus: consultation.receipts[0]?.payment_status ?? null,
       latestReceiptStatus: consultation.receipts[0]?.status ?? null,
       receiptCount: consultation.receipts.length,
       suggestedItems: consultation.prescription_items
@@ -910,17 +910,21 @@ export class PharmacistService {
     };
   }
 
-  private isPendingReceipt(
-    tracking: string | null | undefined,
-    status: string | null | undefined,
+  private isOrderFormReady(
+    receipt:
+      | {
+          payment_status?: pay_type_enum | null;
+          status?: string | null;
+        }
+      | null
+      | undefined,
   ) {
-    const normalizedStatus = status?.trim().toLowerCase() ?? null;
+    const normalizedStatus = receipt?.status?.trim().toLowerCase() ?? null;
 
     return (
-      !tracking &&
-      normalizedStatus !== 'delivered' &&
-      normalizedStatus !== 'picked_up' &&
-      normalizedStatus !== 'cancelled'
+      receipt?.payment_status === pay_type_enum.Paid &&
+      (normalizedStatus === 'pending_delivery' ||
+        normalizedStatus === 'pending_pickup')
     );
   }
 

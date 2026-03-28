@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   PaginatedUserResponse,
@@ -8,10 +12,45 @@ import { UserQueryDto } from './dto/user-query.dto';
 import { Prisma } from '@prisma/client';
 import { CreateStaffDto } from './dto/create-staff.dto';
 import * as bcrypt from 'bcrypt';
+import {
+  normalizeEmail,
+  normalizeOptionalText,
+} from '../common/utils/normalize-input';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UserProfileResponseDto } from './dto/user-profile-response.dto';
 
 @Injectable()
 export class UserService {
   constructor(private readonly prisma: PrismaService) { }
+
+  private buildPatientCode(userId: number) {
+    return `PT-${userId.toString().padStart(6, '0')}`;
+  }
+
+  private mapProfile(user: {
+    user_id: number;
+    name: string;
+    sur_name: string;
+    phone: string | null;
+    email: string | null;
+    medical_condition: string | null;
+    allergy_drug: string | null;
+    addresses: { detail: string | null } | null;
+    addresses_users_address_id_nationToaddresses: { detail: string | null } | null;
+  }): UserProfileResponseDto {
+    return {
+      patientCode: this.buildPatientCode(user.user_id),
+      firstName: user.name,
+      lastName: user.sur_name,
+      phone: user.phone ?? '',
+      email: user.email ?? '',
+      chronicDisease: user.medical_condition ?? '',
+      allergies: user.allergy_drug ?? '',
+      currentAddress: user.addresses?.detail ?? '',
+      shippingAddress:
+        user.addresses_users_address_id_nationToaddresses?.detail ?? '',
+    };
+  }
 
   async findAll(query: UserQueryDto): Promise<PaginatedUserResponse> {
     const page = Number(query.page) || 1;
@@ -71,6 +110,144 @@ export class UserService {
     })
 
     return user;
+  }
+
+  async getMyProfile(userId: number): Promise<UserProfileResponseDto> {
+    const user = await this.prisma.users.findUnique({
+      where: { user_id: userId },
+      select: {
+        user_id: true,
+        name: true,
+        sur_name: true,
+        phone: true,
+        email: true,
+        medical_condition: true,
+        allergy_drug: true,
+        addresses: {
+          select: {
+            detail: true,
+          },
+        },
+        addresses_users_address_id_nationToaddresses: {
+          select: {
+            detail: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return this.mapProfile(user);
+  }
+
+  async updateMyProfile(
+    userId: number,
+    body: UpdateProfileDto,
+  ): Promise<UserProfileResponseDto> {
+    const firstName = body.firstName?.trim();
+    const lastName = body.lastName?.trim();
+
+    if (!firstName || !lastName) {
+      throw new BadRequestException('First name and last name are required');
+    }
+
+    try {
+      const user = await this.prisma.$transaction(async (prisma) => {
+        const existingUser = await prisma.users.findUnique({
+          where: { user_id: userId },
+          select: {
+            user_id: true,
+            address_id: true,
+            address_id_nation: true,
+          },
+        });
+
+        if (!existingUser) {
+          throw new NotFoundException('User not found');
+        }
+
+        const currentAddressDetail = normalizeOptionalText(body.currentAddress);
+        const shippingAddressDetail = normalizeOptionalText(body.shippingAddress);
+
+        let currentAddressId = existingUser.address_id ?? null;
+        let shippingAddressId = existingUser.address_id_nation ?? null;
+
+        if (currentAddressDetail) {
+          if (currentAddressId) {
+            await prisma.addresses.update({
+              where: { id: currentAddressId },
+              data: { detail: currentAddressDetail },
+            });
+          } else {
+            const address = await prisma.addresses.create({
+              data: { detail: currentAddressDetail },
+            });
+            currentAddressId = address.id;
+          }
+        }
+
+        if (shippingAddressDetail) {
+          if (shippingAddressId) {
+            await prisma.addresses.update({
+              where: { id: shippingAddressId },
+              data: { detail: shippingAddressDetail },
+            });
+          } else {
+            const address = await prisma.addresses.create({
+              data: { detail: shippingAddressDetail },
+            });
+            shippingAddressId = address.id;
+          }
+        }
+
+        return prisma.users.update({
+          where: { user_id: userId },
+          data: {
+            name: firstName,
+            sur_name: lastName,
+            phone: normalizeOptionalText(body.phone),
+            email: body.email ? normalizeEmail(body.email) : null,
+            medical_condition: normalizeOptionalText(body.chronicDisease),
+            allergy_drug: normalizeOptionalText(body.allergies),
+            address_id: currentAddressId,
+            address_id_nation: shippingAddressId,
+          },
+          select: {
+            user_id: true,
+            name: true,
+            sur_name: true,
+            phone: true,
+            email: true,
+            medical_condition: true,
+            allergy_drug: true,
+            addresses: {
+              select: {
+                detail: true,
+              },
+            },
+            addresses_users_address_id_nationToaddresses: {
+              select: {
+                detail: true,
+              },
+            },
+          },
+        });
+      });
+
+      return this.mapProfile(user);
+    } catch (error: unknown) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new BadRequestException('Email already exists');
+      }
+
+      throw error;
+    }
   }
 
   async findStaffs() {

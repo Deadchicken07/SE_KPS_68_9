@@ -23,7 +23,7 @@ import { useUser } from "@/hooks/useUsers";
 import { useConsultation } from "@/hooks/useConsultation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { PrescriptionFormItem } from "@/types/consult.types";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { usePharmacistMedications } from "@/hooks/usePharmacistMedications";
 
 const { TextArea } = Input;
@@ -31,6 +31,7 @@ const { TextArea } = Input;
 let nextId = 1;
 
 export default function ConsultPage() {
+   const router = useRouter();
   const [messageApi, contextHolder] = message.useMessage();
   const { user, loading } = useUser();
   const [note, setNote] = useState("");
@@ -98,6 +99,7 @@ export default function ConsultPage() {
 
     if (success) {
       messageApi.success("บันทึกการปรึกษาสำเร็จ");
+      router.push(`/staff/appointments/med`);
     } else {
       messageApi.error("เกิดข้อผิดพลาด กรุณาลองใหม่");
     }
