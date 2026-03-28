@@ -163,46 +163,67 @@ export class PharmacistService {
     };
   }
 
-  async createOrder(dto: CreateOrderDto): Promise<OrderResponseDto> {
-    const existingReceipt = await this.prisma.receipts.findFirst({
-      where: { consultation_id: dto.consultationId },
-      orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
-      select: { id: true },
-    });
+  async createOrder(
+    dto: CreateOrderDto,
+    pharmacistId: number,
+  ): Promise<OrderResponseDto> {
+    const tracking = dto.tracking?.trim() || null;
+    const status = this.resolveReceiptStatus(tracking, dto.status?.trim() || null);
 
-    if (!existingReceipt) {
-      throw new NotFoundException('Receipt not found');
-    }
+    const updatedReceipt = await this.prisma.$transaction(async (tx) => {
+      const consultation = await tx.consultations.findUnique({
+        where: { id: dto.consultationId },
+        select: { id: true, pharmacist_id: true },
+      });
 
-    const updatedReceipt = await this.prisma.receipts.update({
-      where: { id: existingReceipt.id },
-      data: {
-        tracking: dto.tracking?.trim() || null,
-        status: this.resolveReceiptStatus(
-          dto.tracking?.trim() || null,
-          dto.status?.trim() || null,
-        ),
-      },
-      include: {
-        users: {
-          select: {
-            user_id: true,
-            name: true,
-            sur_name: true,
-          },
+      if (!consultation) {
+        throw new NotFoundException('Consultation not found');
+      }
+
+      const existingReceipt = await tx.receipts.findFirst({
+        where: { consultation_id: dto.consultationId },
+        orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
+        select: { id: true },
+      });
+
+      if (!existingReceipt) {
+        throw new NotFoundException('Receipt not found');
+      }
+
+      if (consultation.pharmacist_id !== pharmacistId) {
+        await tx.consultations.update({
+          where: { id: consultation.id },
+          data: { pharmacist_id: pharmacistId },
+        });
+      }
+
+      return tx.receipts.update({
+        where: { id: existingReceipt.id },
+        data: {
+          tracking,
+          status,
         },
-        receipt_details: {
-          orderBy: { id: 'asc' },
-          include: {
-            medications: {
-              select: {
-                id: true,
-                name: true,
+        include: {
+          users: {
+            select: {
+              user_id: true,
+              name: true,
+              sur_name: true,
+            },
+          },
+          receipt_details: {
+            orderBy: { id: 'asc' },
+            include: {
+              medications: {
+                select: {
+                  id: true,
+                  name: true,
+                },
               },
             },
           },
         },
-      },
+      });
     });
 
     return this.mapOrderReceipt(updatedReceipt);
