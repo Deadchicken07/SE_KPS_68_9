@@ -16,6 +16,7 @@ import { PhamaHomeModule } from './phama-home/phama-home.module';
 import { ResponsesModule } from './responses/responses.module';
 import { ConsultationsModule } from './consultations/consultations.module';
 import { PharmacistModule } from './pharmacist/pharmacist.module';
+import { JitsiMeetModule } from './jitsi-meet/jitsi-meet.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { PharmacistModule } from './pharmacist/pharmacist.module';
     ResponsesModule,
     ConsultationsModule,
     PharmacistModule,
+    JitsiMeetModule,
   ],
   controllers: [AppController],
   providers: [AppService],
