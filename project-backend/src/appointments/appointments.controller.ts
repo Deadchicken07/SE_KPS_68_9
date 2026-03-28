@@ -38,6 +38,13 @@ export class AppointmentsController {
     return this.appointmentsService.getAllPaidAppointments();
   }
 
+  @Patch(':id/confirm')
+  @UseGuards(RolesGuard)
+  @Roles(1) // Admin only
+  async confirmPayment(@Param('id', ParseIntPipe) appointmentId: number) {
+    return this.appointmentsService.confirmPayment(appointmentId);
+  }
+
   @Get('me')
   getMyAppointments(@Req() req) {
     const userId = this.getUserIdFromRequest(req);

@@ -41,6 +41,7 @@ model appointments {
   status                             pay_type_enum?          @default(Not_paying)
   time_select                        String?                 @db.VarChar(255)
   deposit_slip_file                  String?                 @db.VarChar(255)
+  meet_url                           String?
   users_appointments_staff_idTousers users?                  @relation("appointments_staff_idTousers", fields: [staff_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
   users_appointments_user_idTousers  users?                  @relation("appointments_user_idTousers", fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
 }
@@ -262,6 +263,7 @@ enum item_type_enum {
 enum pay_type_enum {
   Paid
   Not_paying @map("Not paying")
+  Pending
 }
 
 enum questionnaires_type_enum {

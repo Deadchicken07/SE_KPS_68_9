@@ -8,7 +8,7 @@ import { DatePicker, Select } from "antd";
 import dayjs from "dayjs";
 
 type TabKey = "upcoming" | "past";
-type AppointmentStatus = "pending" | "confirmed" | "completed";
+type AppointmentStatus = "pending" | "confirmed" | "completed" | "waiting";
 
 type AppointmentItem = {
   id: number;
@@ -89,6 +89,7 @@ const statusText: Record<AppointmentStatus, string> = {
   pending: "รอชำระเงิน",
   confirmed: "ยืนยันแล้ว",
   completed: "สำเร็จแล้ว",
+  waiting: "รอการตรวจสอบ",
 };
 
 const appointmentTypeText: Record<NonNullable<AppointmentItem["appointmentType"]>, string> = {
@@ -221,6 +222,12 @@ function getJoinAccessInfo(item: AppointmentItem, now: Date): JoinAccessInfo {
   }
 
   if (item.paymentStatus !== "Paid") {
+    if (item.paymentStatus === "Pending") {
+      return {
+        state: "payment-required",
+        message: "อยู่ระหว่างการพิจารณาตรวจสอบการชำระเงินของท่าน โดยเจ้าหน้าที่",
+      };
+    }
     return {
       state: "payment-required",
       message: "กรุณาชำระเงินก่อน จึงจะเปิดลิงก์ Google Meet ได้",
@@ -389,7 +396,9 @@ export default function AppointmentSchedulePage() {
         ? "completed"
         : item.paymentStatus === "Paid"
           ? "confirmed"
-          : "pending";
+          : item.paymentStatus === "Pending"
+            ? "waiting"
+            : "pending";
 
       return {
         ...item,
@@ -682,13 +691,14 @@ export default function AppointmentSchedulePage() {
         <div className="appt-list">
           {appointments.map((item, index) => {
             const isPaid = item.paymentStatus === "Paid";
+            const isPending = item.paymentStatus === "Pending";
             const joinInfo = getJoinAccessInfo(item, clock);
             const canJoin = joinInfo.state === "open";
             const isRescheduling = processingRescheduleId === item.id;
             const isPaying = processingPayId === item.id;
             const isBusy = isRescheduling || isPaying;
             const joinLink = item.meetLink ?? DEFAULT_MEET_LINK;
-            const secondaryActionLabel = !isPaid
+            const secondaryActionLabel = !isPaid && !isPending
               ? "ชำระเงิน"
               : canJoin
                 ? "เข้าร่วม Google Meet"
@@ -744,8 +754,8 @@ export default function AppointmentSchedulePage() {
 
                   <p className="appt-payment">
                     การชำระเงิน:{" "}
-                    <span className={`appt-payment__pill ${isPaid ? "is-paid" : "is-unpaid"}`}>
-                      {isPaid ? "ชำระแล้ว" : "ยังไม่ชำระ"}
+                    <span className={`appt-payment__pill ${isPaid ? "is-paid" : isPending ? "is-pending" : "is-unpaid"}`}>
+                      {isPaid ? "ชำระแล้ว" : isPending ? "รอตรวจสอบ" : "ยังไม่ชำระ"}
                     </span>
                   </p>
 
@@ -760,13 +770,17 @@ export default function AppointmentSchedulePage() {
                         >
                           {isRescheduling ? "กำลังดำเนินการ..." : "เลื่อนนัด"}
                         </button>
-                        {!isPaid ? (
+                        {!isPaid && !isPending ? (
                           <Link
                             className="appt-btn appt-btn--primary"
                             href={`/user/payment?appointmentId=${item.id}`}
                           >
                             ไปหน้าชำระเงิน
                           </Link>
+                        ) : isPending ? (
+                          <button className="appt-btn appt-btn--disabled" disabled type="button">
+                            รอตรวจสอบสลิป
+                          </button>
                         ) : canJoin ? (
                           <a
                             className="appt-btn appt-btn--join"

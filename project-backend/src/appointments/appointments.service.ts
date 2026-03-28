@@ -8,7 +8,7 @@ import { pay_type_enum } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
 
-type AppointmentStatus = 'pending' | 'confirmed' | 'completed';
+type AppointmentStatus = 'pending' | 'confirmed' | 'completed' | 'waiting';
 
 type AppointmentScheduleItem = {
   id: number;
@@ -317,10 +317,7 @@ export class AppointmentsService {
     const feeMap = new Map(fees.map(f => [f.id, f.price_per_hours ? Number(f.price_per_hours) : 0]));
 
     const records = await this.prisma.appointments.findMany({
-      where: {
-        status: 'Paid',
-        deposit_slip_file: { not: null }
-      },
+      where: {},
       include: {
         users_appointments_user_idTousers: {
           select: {
@@ -417,6 +414,29 @@ export class AppointmentsService {
     };
   }
 
+  async confirmPayment(appointmentId: number) {
+    const appointment = await this.prisma.appointments.findUnique({
+      where: { id: appointmentId },
+    });
+
+    if (!appointment) {
+      throw new NotFoundException('Appointment not found');
+    }
+
+    await this.prisma.appointments.update({
+      where: { id: appointmentId },
+      data: {
+        status: pay_type_enum.Paid,
+      },
+    });
+
+    return {
+      message: 'Payment confirmed successfully',
+      appointmentId,
+      status: pay_type_enum.Paid,
+    };
+  }
+
   async markAppointmentPaid(
     userId: number,
     appointmentId: number,
@@ -432,6 +452,14 @@ export class AppointmentsService {
       };
     }
 
+    if (appointment.status === pay_type_enum.Pending) {
+        return {
+          message: 'Appointment is already pending verification',
+          appointmentId,
+          status: pay_type_enum.Pending,
+        };
+      }
+
     const appointmentDate = appointment.appointment_date
       ? this.dateToIsoDate(appointment.appointment_date)
       : null;
@@ -446,15 +474,15 @@ export class AppointmentsService {
     await this.prisma.appointments.update({
       where: { id: appointmentId },
       data: {
-        status: pay_type_enum.Paid,
+        status: pay_type_enum.Pending,
         deposit_slip_file: slipUrl,
       },
     });
 
     return {
-      message: 'Payment completed successfully',
+      message: 'Payment slip uploaded successfully, awaiting verification',
       appointmentId,
-      status: pay_type_enum.Paid,
+      status: pay_type_enum.Pending,
     };
   }
 
@@ -564,6 +592,10 @@ export class AppointmentsService {
     if (paymentStatus === pay_type_enum.Paid) {
       return 'confirmed';
     }
+
+    if (paymentStatus === pay_type_enum.Pending) {
+        return 'waiting';
+      }
 
     return 'pending';
   }
