@@ -39,8 +39,8 @@ export default function ConsultPage() {
   const [prescriptions, setPrescriptions] = useState<PrescriptionFormItem[]>(
     [],
   );
-  const { me } = useAuth();
-  const canPrescribe = me?.role !== 'psychologist';
+  const { me, loading: authLoading } = useAuth();
+  const canPrescribe = !authLoading && me?.role !== 'psychologist';
   const { createConsultation } = useConsultation();
   const { medications, medicationsLoading } = usePharmacistMedications();
   const searchParams = useSearchParams();
