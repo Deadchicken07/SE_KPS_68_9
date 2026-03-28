@@ -40,6 +40,7 @@ type StaffAppointmentItem = {
   paymentStatus: string | null;
   depositSlipFile: string | null;
   meetUrl: string | null;
+  hasConsultation: boolean;
 };
 
 type TimeRange = {
@@ -587,26 +588,53 @@ export class AppointmentsService {
       ],
     });
 
-    return records.map((record) => ({
-      id: record.id,
-      staffId: record.staff_id ?? null,
-      patientId: record.user_id ?? null,
-      patientName: this.buildPatientName(
-        record.users_appointments_user_idTousers?.name,
-        record.users_appointments_user_idTousers?.sur_name,
-        record.users_appointments_user_idTousers?.user_id ??
-          record.user_id ??
-          null,
-      ),
-      appointmentDate: record.appointment_date
+    const userIds = records
+      .map((r) => r.user_id)
+      .filter((id): id is number => id !== null);
+
+    const consultations = await this.prisma.consultations.findMany({
+      where: {
+        staff_id: staffId,
+        user_id: { in: userIds },
+      },
+      select: { user_id: true, created_at: true },
+    });
+
+    return records.map((record) => {
+      const apptDateKey = record.appointment_date
         ? this.dateToIsoDate(record.appointment_date)
-        : null,
-      timeSelect: record.time_select ?? null,
-      appointmentType: record.appointment_type ?? null,
-      paymentStatus: record.status ?? null,
-      depositSlipFile: record.deposit_slip_file ?? null,
-      meetUrl: record.meet_url ?? null,
-    }));
+        : null;
+
+      const hasConsultation =
+        record.user_id !== null &&
+        apptDateKey !== null &&
+        consultations.some(
+          (c) =>
+            c.user_id === record.user_id &&
+            c.created_at !== null &&
+            this.dateToIsoDate(c.created_at) === apptDateKey,
+        );
+
+      return {
+        id: record.id,
+        staffId: record.staff_id ?? null,
+        patientId: record.user_id ?? null,
+        patientName: this.buildPatientName(
+          record.users_appointments_user_idTousers?.name,
+          record.users_appointments_user_idTousers?.sur_name,
+          record.users_appointments_user_idTousers?.user_id ??
+            record.user_id ??
+            null,
+        ),
+        appointmentDate: apptDateKey,
+        timeSelect: record.time_select ?? null,
+        appointmentType: record.appointment_type ?? null,
+        paymentStatus: record.status ?? null,
+        depositSlipFile: record.deposit_slip_file ?? null,
+        meetUrl: record.meet_url ?? null,
+        hasConsultation,
+      };
+    });
   }
 
   private buildPatientName(

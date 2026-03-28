@@ -46,6 +46,9 @@ function AppointmentCard({ a, onConsult, onAddLink, onViewLink }: {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {a.hasConsultation && (
+            <Tag color="success">เสร็จสิ้น</Tag>
+          )}
           <Tag
             icon={a.appointmentType === "online" ? <WifiOutlined /> : <EnvironmentOutlined />}
             color={a.appointmentType === "online" ? "blue" : "grey"}
@@ -84,13 +87,19 @@ function PsychiatistPageInner() {
   const meetUrl = useMeetUrl(() => setRefresh((r) => r + 1));
   const jitsi = useJitsiMeet();
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   const appointments = (data ?? []).filter((a) => {
-    if (!selectedDate) return true;
-    const [, selMonth, selDay] = selectedDate.split("-");
-    const d = new Date(a.appointmentDate);
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return month === selMonth && day === selDay;
+    const apptDate = new Date(a.appointmentDate);
+    apptDate.setHours(0, 0, 0, 0);
+    if (selectedDate) {
+      const [, selMonth, selDay] = selectedDate.split("-");
+      const month = String(apptDate.getMonth() + 1).padStart(2, "0");
+      const day = String(apptDate.getDate()).padStart(2, "0");
+      return month === selMonth && day === selDay;
+    }
+    return apptDate >= today;
   });
 
   return (
