@@ -131,6 +131,7 @@ export function ClinicalRoleWeeklyDashboard({
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<number | null>(
     null,
   );
+  const [isAppointmentDialogOpen, setIsAppointmentDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authRequired, setAuthRequired] = useState(false);
@@ -290,6 +291,13 @@ export function ClinicalRoleWeeklyDashboard({
     () => scheduleData?.selectedDateAppointments ?? [],
     [scheduleData],
   );
+  const visibleAppointments = useMemo(() => {
+    const sameDayAppointments = weekAppointments.filter(
+      (item) => item.appointmentDate === selectedDate,
+    );
+
+    return sameDayAppointments.length ? sameDayAppointments : selectedDateAppointments;
+  }, [selectedDate, selectedDateAppointments, weekAppointments]);
   const upcomingAppointments = useMemo(
     () => scheduleData?.upcomingAppointments ?? [],
     [scheduleData],
@@ -324,9 +332,27 @@ export function ClinicalRoleWeeklyDashboard({
     null;
   const selectedDayStats =
     weekStats.find((item) => item.date === selectedDate) ?? null;
-  const selectedAppointment =
-    selectedDateAppointments.find((item) => item.id === selectedAppointmentId) ??
-    null;
+  const selectedAppointment = useMemo(
+    () =>
+      visibleAppointments.find((item) => item.id === selectedAppointmentId) ??
+      weekAppointments.find((item) => item.id === selectedAppointmentId) ??
+      null,
+    [selectedAppointmentId, visibleAppointments, weekAppointments],
+  );
+  const focusedAppointments = useMemo(() => {
+    if (!selectedAppointment) {
+      return [];
+    }
+
+    const matchingAppointments = visibleAppointments.filter((item) =>
+      isSamePatientAppointment(item, selectedAppointment),
+    );
+
+    return matchingAppointments.length ? matchingAppointments : [selectedAppointment];
+  }, [selectedAppointment, visibleAppointments]);
+  const orderedFocusedAppointments = useMemo(() => {
+    return [...focusedAppointments].sort(compareAppointmentsChronologically);
+  }, [focusedAppointments]);
   const currentStaffName = [me?.name, me?.sur_name].filter(Boolean).join(" ");
   const extraSections = useMemo(
     () => buildRoleSections(role, roleData, upcomingAppointments),
@@ -347,6 +373,13 @@ export function ClinicalRoleWeeklyDashboard({
     setSelectedDate(`${nextMonth}-01`);
   };
 
+  const handleAppointmentOpen = (dateKey: string, appointmentId: number) => {
+    setSelectedDate(dateKey);
+    setMonth(dateKey.slice(0, 7));
+    setSelectedAppointmentId(appointmentId);
+    setIsAppointmentDialogOpen(true);
+  };
+
   return (
     <main
       className="min-h-screen px-4 pb-10 pt-6 text-[#18312c] sm:px-6 lg:px-7 lg:pb-14 lg:pt-8"
@@ -364,8 +397,6 @@ export function ClinicalRoleWeeklyDashboard({
         <FilterSection
           loading={loading}
           month={month}
-          selectedDate={selectedDate}
-          onDateChange={handleDateChange}
           onMonthChange={handleMonthChange}
           onReload={() => setReloadKey((current) => current + 1)}
         />
@@ -378,12 +409,11 @@ export function ClinicalRoleWeeklyDashboard({
           />
         ) : null}
 
-        <SummarySection cards={summaryCards} loading={loading} />
-
         <TimelineSection
           activeWeekStart={activeWeekStart}
           month={month}
           monthWeekOptions={monthWeekOptions}
+          onAppointmentOpen={handleAppointmentOpen}
           onDateChange={handleDateChange}
           onSelectAppointment={setSelectedAppointmentId}
           selectedAppointmentId={selectedAppointment?.id ?? null}
@@ -393,28 +423,12 @@ export function ClinicalRoleWeeklyDashboard({
           weekRows={weekRows}
         />
 
-        <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-          <SelectedAppointmentsSection
-            appointments={selectedDateAppointments}
-            onSelect={setSelectedAppointmentId}
-            selectedAppointmentId={selectedAppointment?.id ?? null}
-            selectedDate={selectedDate}
-            selectedDayStats={selectedDayStats}
-            title={config.queueTitle}
-            description={config.queueDescription}
-          />
-          <SelectedAppointmentDetailSection
-            appointment={selectedAppointment}
-            description={config.detailDescription}
-            title={config.detailTitle}
-          />
-        </section>
-
-        <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-          {extraSections.map((section) => (
-            <InsightSectionCard key={section.title} section={section} />
-          ))}
-        </section>
+        <AppointmentDetailsDialog
+          appointment={selectedAppointment}
+          appointments={orderedFocusedAppointments}
+          isOpen={isAppointmentDialogOpen}
+          onClose={() => setIsAppointmentDialogOpen(false)}
+        />
       </div>
     </main>
   );
@@ -481,15 +495,11 @@ function HeroSection({
 function FilterSection({
   loading,
   month,
-  selectedDate,
-  onDateChange,
   onMonthChange,
   onReload,
 }: {
   loading: boolean;
   month: string;
-  selectedDate: string;
-  onDateChange: (dateKey: string) => void;
   onMonthChange: (monthKey: string) => void;
   onReload: () => void;
 }) {
@@ -497,7 +507,7 @@ function FilterSection({
     <section
       className={cx(
         PANEL_CLASS,
-        "grid grid-cols-1 gap-4 p-[22px] md:grid-cols-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_220px]",
+        "grid grid-cols-1 gap-4 p-[22px] md:grid-cols-[minmax(0,1fr)_220px]",
       )}
     >
       <label className="grid gap-2" htmlFor="role-dashboard-month">
@@ -511,18 +521,6 @@ function FilterSection({
         />
       </label>
 
-      <label className="grid gap-2" htmlFor="role-dashboard-date">
-        <span className="text-[0.88rem] font-bold text-[#33554d]">
-          วันที่กำลังดู
-        </span>
-        <input
-          id="role-dashboard-date"
-          type="date"
-          value={selectedDate}
-          onChange={(event) => onDateChange(event.target.value)}
-          className={INPUT_CLASS}
-        />
-      </label>
 
       <div className="flex items-end">
         <button
@@ -608,6 +606,7 @@ function TimelineSection({
   activeWeekStart,
   month,
   monthWeekOptions,
+  onAppointmentOpen,
   onDateChange,
   onSelectAppointment,
   selectedAppointmentId,
@@ -625,6 +624,7 @@ function TimelineSection({
     anchorDate: string;
     rangeLabel: string;
   }>;
+  onAppointmentOpen: (dateKey: string, appointmentId: number) => void;
   onDateChange: (dateKey: string) => void;
   onSelectAppointment: (appointmentId: number) => void;
   selectedAppointmentId: number | null;
@@ -739,7 +739,7 @@ function TimelineSection({
                   </button>
 
                   <div
-                    className="relative cursor-pointer"
+                    className="relative"
                     style={{
                       minHeight: `${day.laneHeight}px`,
                       background: isSelected
@@ -769,7 +769,7 @@ function TimelineSection({
                             type="button"
                             title={`${event.range.label} • ${event.appointment.patientName} • ${event.appointment.staffName}`}
                             className={cx(
-                              "absolute flex h-[60px] flex-col justify-between overflow-hidden rounded-2xl border px-2.5 py-2 text-left shadow-[0_8px_14px_rgba(114,93,46,0.08)] transition hover:-translate-y-0.5",
+                              "absolute flex h-[60px] cursor-pointer flex-col justify-between overflow-hidden rounded-2xl border px-2.5 py-2 text-left shadow-[0_8px_14px_rgba(114,93,46,0.08)] transition hover:-translate-y-0.5",
                               isActive &&
                                 "shadow-[0_0_0_2px_rgba(30,94,79,0.24),0_14px_22px_rgba(72,65,49,0.14)]",
                             )}
@@ -782,8 +782,8 @@ function TimelineSection({
                             }}
                             onClick={(clickEvent) => {
                               clickEvent.stopPropagation();
-                              onDateChange(day.date);
                               onSelectAppointment(event.appointment.id);
+                              onAppointmentOpen(day.date, event.appointment.id);
                             }}
                           >
                             <div className="flex items-center justify-between gap-2">
@@ -824,139 +824,123 @@ function TimelineSection({
   );
 }
 
-function SelectedAppointmentsSection({
+function AppointmentDetailsDialog({
+  appointment,
   appointments,
-  onSelect,
-  selectedAppointmentId,
-  selectedDate,
-  selectedDayStats,
-  title,
-  description,
+  isOpen,
+  onClose,
 }: {
+  appointment: AppointmentItem | null;
   appointments: AppointmentItem[];
-  onSelect: (appointmentId: number) => void;
-  selectedAppointmentId: number | null;
-  selectedDate: string;
-  selectedDayStats: DailyStat | null;
-  title: string;
-  description: string;
+  isOpen: boolean;
+  onClose: () => void;
 }) {
+  if (!isOpen) {
+    return null;
+  }
+
+  const primaryAppointment = appointment ?? appointments[0] ?? null;
+
   return (
-    <article className={PANEL_CLASS}>
-      <div className="flex flex-wrap items-start justify-between gap-4 p-[24px_24px_18px]">
-        <div>
-          <h2 className="text-[1.32rem] font-semibold text-[#173630]">{title}</h2>
-          <p className="mt-2 text-[0.94rem] leading-7 text-[#68756c]">
-            {formatDateLabel(selectedDate)} • {description}
-          </p>
-        </div>
-        <span className={PANEL_META_CLASS}>{appointments.length} รายการ</span>
-      </div>
-
-      <div className="grid gap-3.5 px-[22px] pb-[22px]">
-        {appointments.length ? (
-          appointments.map((appointment) => (
-            <article
-              key={appointment.id}
-              onClick={() => onSelect(appointment.id)}
-              className={cx(
-                "cursor-pointer rounded-[22px] border border-[#4b615a1f] bg-[#fffdfa] p-4",
-                appointment.id === selectedAppointmentId &&
-                  "border-[#236b5a42] shadow-[0_12px_22px_rgba(30,94,79,0.08)]",
-              )}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <span className="inline-flex items-center rounded-full bg-[#eff5f0] px-3 py-2 text-[0.85rem] font-extrabold text-[#1f5d4f]">
-                  {getAppointmentTimeLabel(appointment)}
-                </span>
-                <span className={getStatusBadgeClasses(appointment.displayStatus)}>
-                  {appointment.displayStatusLabel}
-                </span>
-              </div>
-              <h3 className="mt-3 text-[1.05rem] font-semibold text-[#173630]">
-                {appointment.patientName}
-              </h3>
-              <p className="mt-1 leading-7 text-[#6d776f]">
-                {appointment.staffName}
-                {appointment.staffRoleLabel ? ` • ${appointment.staffRoleLabel}` : ""}
-              </p>
-              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <InfoBox label="รูปแบบ" value={appointment.appointmentTypeLabel} />
-                <InfoBox label="ชำระเงิน" value={appointment.paymentStatusLabel} />
-                <InfoBox label="อีเมล" value={appointment.patientEmail ?? "-"} />
-                <InfoBox label="เบอร์โทร" value={appointment.patientPhone ?? "-"} />
-              </div>
-            </article>
-          ))
-        ) : (
-          <div className={EMPTY_CLASS}>
-            ยังไม่มีรายการนัดในวันที่เลือก หรือ backend ยังไม่มีข้อมูลสำหรับวันดังกล่าว
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[rgba(25,36,32,0.46)] p-3 backdrop-blur-sm sm:p-4 lg:items-center"
+      onClick={onClose}
+    >
+      <section
+        className="flex max-h-[calc(100vh-1.5rem)] w-full max-w-[1080px] flex-col overflow-hidden rounded-[28px] border border-[#4b615a24] bg-[#fffaf2] shadow-[0_26px_70px_rgba(31,42,39,0.22)] sm:max-h-[calc(100vh-2rem)]"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-[#4b615a1c] px-5 py-4 sm:px-6 sm:py-5">
+          <div className="min-w-0">
+            <span className="inline-flex rounded-full bg-[#edf3ee] px-3 py-1 text-[0.76rem] font-extrabold tracking-[0.12em] text-[#33554d]">
+              APPOINTMENT DETAILS
+            </span>
+            <h3 className="mt-3 truncate text-[1.7rem] font-semibold text-[#173630] sm:text-[1.9rem]">
+              {primaryAppointment?.patientName ?? "รายละเอียดนัดหมาย"}
+            </h3>
           </div>
-        )}
-      </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#3c524c24] bg-white text-[1.2rem] text-[#33554d] transition hover:bg-[#f6f4ed]"
+            aria-label="ปิดรายละเอียดนัดหมาย"
+          >
+            x
+          </button>
+        </div>
 
-      <div className="px-[22px] pb-[22px] text-[0.84rem] leading-6 text-[#6d776f]">
-        ภาพรวมวันนี้: ชำระแล้ว {selectedDayStats?.paidAppointments ?? 0} นัด •
-        ออนไลน์ {selectedDayStats?.onlineAppointments ?? 0} นัด • ผู้รับบริการ{" "}
-        {selectedDayStats?.uniquePatients ?? 0} คน
-      </div>
-    </article>
+        <div className="min-h-0 overflow-y-auto px-4 pb-4 pt-4 sm:px-6 sm:pb-6 sm:pt-5">
+          <AppointmentDetailsContent
+            appointment={primaryAppointment}
+            appointments={appointments}
+          />
+        </div>
+      </section>
+    </div>
   );
 }
 
-function SelectedAppointmentDetailSection({
+function AppointmentDetailsContent({
   appointment,
-  description,
-  title,
+  appointments,
 }: {
   appointment: AppointmentItem | null;
-  description: string;
-  title: string;
+  appointments: AppointmentItem[];
+}) {
+  if (!appointment) {
+    return (
+      <div className={EMPTY_CLASS}>
+        ยังไม่มีข้อมูลนัดหมายสำหรับรายการที่เลือกในตอนนี้
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <article className={cx(PANEL_CLASS, "p-5 sm:p-6")}>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <InfoBox label="อีเมล" value={appointment.patientEmail ?? "-"} />
+          <InfoBox label="เบอร์โทร" value={appointment.patientPhone ?? "-"} />
+          <InfoBox
+            label="ดูแลโดย"
+            value={formatAppointmentStaffLabel(appointment)}
+          />
+        </div>
+      </article>
+
+      <div className="space-y-4">
+        {appointments.map((item) => (
+          <AppointmentScheduleCard key={item.id} appointment={item} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AppointmentScheduleCard({
+  appointment,
+}: {
+  appointment: AppointmentItem;
 }) {
   return (
-    <article className={PANEL_CLASS}>
-      <div className="border-b border-[#4b615a1c] p-[24px_24px_18px]">
-        <h2 className="text-[1.32rem] font-semibold text-[#173630]">{title}</h2>
-        <p className="mt-2 text-[0.94rem] leading-7 text-[#68756c]">
-          {description}
-        </p>
+    <article className={cx(PANEL_CLASS, "p-5 sm:p-6")}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={PANEL_META_CLASS}>
+            {formatDateLabel(appointment.appointmentDate ?? getCurrentDateKey())}
+          </span>
+          <span className="inline-flex items-center rounded-full bg-[#eff5f0] px-3 py-2 text-[0.85rem] font-extrabold text-[#1f5d4f]">
+            {getAppointmentTimeLabel(appointment)}
+          </span>
+        </div>
+        <span className={getStatusBadgeClasses(appointment.displayStatus)}>
+          {appointment.displayStatusLabel}
+        </span>
       </div>
 
-      <div className="p-[22px]">
-        {appointment ? (
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <span className="inline-flex rounded-full bg-[#edf3ee] px-3 py-1 text-[0.76rem] font-extrabold tracking-[0.12em] text-[#33554d]">
-                  {formatDateLabel(appointment.appointmentDate ?? getCurrentDateKey())}
-                </span>
-                <h3 className="mt-3 text-[1.7rem] font-semibold text-[#173630]">
-                  {appointment.patientName}
-                </h3>
-                <p className="mt-2 text-[0.95rem] leading-7 text-[#6d776f]">
-                  ดูแลโดย {appointment.staffName}
-                  {appointment.staffRoleLabel ? ` • ${appointment.staffRoleLabel}` : ""}
-                </p>
-              </div>
-              <span className={getStatusBadgeClasses(appointment.displayStatus)}>
-                {appointment.displayStatusLabel}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <InfoBox label="เวลา" value={getAppointmentTimeLabel(appointment)} />
-              <InfoBox label="รูปแบบนัด" value={appointment.appointmentTypeLabel} />
-              <InfoBox label="สถานะชำระเงิน" value={appointment.paymentStatusLabel} />
-              <InfoBox label="อีเมล" value={appointment.patientEmail ?? "-"} />
-              <InfoBox label="เบอร์โทร" value={appointment.patientPhone ?? "-"} />
-              <InfoBox label="ความเชี่ยวชาญ" value={appointment.staffSpecialty ?? "-"} />
-            </div>
-          </div>
-        ) : (
-          <div className={EMPTY_CLASS}>
-            เลือกรายการนัดจากแผงด้านซ้ายหรือจากตารางด้านบนเพื่อดูรายละเอียด
-          </div>
-        )}
+      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <InfoBox label="รูปแบบนัด" value={appointment.appointmentTypeLabel} />
+        <InfoBox label="สถานะชำระเงิน" value={appointment.paymentStatusLabel} />
       </div>
     </article>
   );
@@ -1032,7 +1016,9 @@ function InfoBox({ label, value }: { label: string; value: string | number }) {
       <span className="mb-1 block text-[0.76rem] font-bold text-[#6a736c]">
         {label}
       </span>
-      <strong className="text-[0.95rem] text-[#18312c]">{value}</strong>
+      <strong className="block break-words text-[0.95rem] text-[#18312c]">
+        {value}
+      </strong>
     </div>
   );
 }
@@ -1179,6 +1165,109 @@ function getAppointmentTimeLabel(appointment: AppointmentItem) {
   return appointment.timeSelect ?? rangeLabel;
 }
 
+function formatAppointmentStaffLabel(appointment: AppointmentItem) {
+  return appointment.staffRoleLabel
+    ? `${appointment.staffName} • ${appointment.staffRoleLabel}`
+    : appointment.staffName;
+}
+
+function compareAppointmentsChronologically(
+  leftAppointment: AppointmentItem,
+  rightAppointment: AppointmentItem,
+) {
+  const leftDate = leftAppointment.appointmentDate ?? "9999-12-31";
+  const rightDate = rightAppointment.appointmentDate ?? "9999-12-31";
+  const dateCompare = leftDate.localeCompare(rightDate);
+
+  if (dateCompare !== 0) {
+    return dateCompare;
+  }
+
+  const leftStart = getAppointmentStartMinutes(leftAppointment);
+  const rightStart = getAppointmentStartMinutes(rightAppointment);
+  const startCompare = leftStart - rightStart;
+
+  if (startCompare !== 0) {
+    return startCompare;
+  }
+
+  const leftEnd = getAppointmentEndMinutes(leftAppointment);
+  const rightEnd = getAppointmentEndMinutes(rightAppointment);
+  const endCompare = leftEnd - rightEnd;
+
+  if (endCompare !== 0) {
+    return endCompare;
+  }
+
+  return leftAppointment.id - rightAppointment.id;
+}
+
+function getAppointmentStartMinutes(appointment: AppointmentItem) {
+  return (
+    parseAppointmentMinutes(appointment.startTime) ??
+    parseAppointmentMinutes(appointment.timeSelect?.split("-")[0]?.trim()) ??
+    Number.MAX_SAFE_INTEGER
+  );
+}
+
+function getAppointmentEndMinutes(appointment: AppointmentItem) {
+  return (
+    parseAppointmentMinutes(appointment.endTime) ??
+    parseAppointmentMinutes(appointment.timeSelect?.split("-")[1]?.trim()) ??
+    Number.MAX_SAFE_INTEGER
+  );
+}
+
+function parseAppointmentMinutes(timeText: string | null | undefined) {
+  if (!timeText) {
+    return null;
+  }
+
+  const normalizedTime = timeText.replace(/\./g, ":").trim();
+  const match = normalizedTime.match(/^(\d{1,2}):(\d{2})$/);
+
+  if (!match) {
+    return null;
+  }
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+
+  if (hours > 23 || minutes > 59) {
+    return null;
+  }
+
+  return hours * 60 + minutes;
+}
+
+function isSamePatientAppointment(
+  currentAppointment: AppointmentItem,
+  selectedAppointment: AppointmentItem,
+) {
+  return (
+    getAppointmentPatientKey(currentAppointment) ===
+    getAppointmentPatientKey(selectedAppointment)
+  );
+}
+
+function getAppointmentPatientKey(appointment: AppointmentItem) {
+  if (appointment.patientId !== null) {
+    return `patient:${appointment.patientId}`;
+  }
+
+  const email = appointment.patientEmail?.trim().toLowerCase();
+  if (email) {
+    return `email:${email}`;
+  }
+
+  const phone = appointment.patientPhone?.trim();
+  if (phone) {
+    return `phone:${phone}`;
+  }
+
+  return `name:${appointment.patientName.trim().toLowerCase()}`;
+}
+
 function getCurrentMonthKey() {
   const now = new Date();
   return [now.getFullYear(), String(now.getMonth() + 1).padStart(2, "0")].join(
@@ -1194,3 +1283,4 @@ function getCurrentDateKey() {
     String(now.getDate()).padStart(2, "0"),
   ].join("-");
 }
+

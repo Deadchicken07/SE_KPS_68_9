@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   Alert,
   Button,
@@ -18,6 +18,9 @@ import {
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import { useLogin } from "@/hooks/useLogin";
 import { canRoleAccessPath, mapRoleIdToRole } from "@/types/role.types";
+
+const LOGIN_BACKGROUND =
+  "radial-gradient(circle at 15% 20%, rgba(14, 91, 80, 0.16), transparent 46%), radial-gradient(circle at 85% 78%, rgba(192, 144, 87, 0.14), transparent 46%), linear-gradient(135deg, #f8f3ed 0%, #efe6da 52%, #e8dccd 100%)";
 
 const getRedirectPathByRoleId = (roleId: number | null) => {
   switch (roleId) {
@@ -61,16 +64,30 @@ export default function LoginPage() {
   const emailValue = Form.useWatch("email", form);
   const passwordValue = Form.useWatch("password", form);
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [isHydrated, setIsHydrated] = useState(false);
-  const registered = isHydrated ? searchParams.get("registered") : null;
-  const expired = isHydrated ? searchParams.get("expired") : null;
-  const redirectTarget = isHydrated ? searchParams.get("redirect") : null;
+  const [queryState, setQueryState] = useState<{
+    registered: string | null;
+    expired: string | null;
+    redirectTarget: string | null;
+  }>({
+    registered: null,
+    expired: null,
+    redirectTarget: null,
+  });
   const isLoginDisabled = !emailValue?.trim() || !passwordValue?.trim();
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    setQueryState({
+      registered: params.get("registered"),
+      expired: params.get("expired"),
+      redirectTarget: params.get("redirect"),
+    });
     setIsHydrated(true);
   }, []);
+
+  const { registered, expired, redirectTarget } = queryState;
 
   useEffect(() => {
     if (registered === "success") {
@@ -92,6 +109,15 @@ export default function LoginPage() {
     }
   };
 
+  if (!isHydrated) {
+    return (
+      <div
+        suppressHydrationWarning
+        style={{ minHeight: "100dvh", background: LOGIN_BACKGROUND }}
+      />
+    );
+  }
+
   return (
     <>
       {contextHolder}
@@ -102,8 +128,7 @@ export default function LoginPage() {
           minHeight: "100dvh",
           padding: "32px 16px",
           boxSizing: "border-box",
-          background:
-            "radial-gradient(circle at 15% 20%, rgba(14, 91, 80, 0.16), transparent 46%), radial-gradient(circle at 85% 78%, rgba(192, 144, 87, 0.14), transparent 46%), linear-gradient(135deg, #f8f3ed 0%, #efe6da 52%, #e8dccd 100%)",
+          background: LOGIN_BACKGROUND,
         }}
       >
         <Button
