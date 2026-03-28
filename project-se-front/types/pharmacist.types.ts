@@ -27,6 +27,7 @@ export interface OrderFormConsultation {
   pharmacistName: string;
   note: string | null;
   createdAt: string | null;
+  latestPaymentStatus: string | null;
   latestReceiptStatus: string | null;
   receiptCount: number;
   suggestedItems: OrderFormConsultationItem[];
@@ -124,6 +125,7 @@ export interface PharmacistHomeReceipt {
   total: number | null;
   tracking: string | null;
   status: ReceiptStatus | null;
+  payment_status: string | null;
 }
 
 export interface PharmacistHomeConsultation {

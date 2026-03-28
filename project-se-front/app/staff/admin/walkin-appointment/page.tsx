@@ -159,7 +159,16 @@ export default function WalkinAppointmentPage() {
   };
 
   return (
-    <div style={{ display: "flex", justifyContent: "center", padding: 24, background: '#f4efe8', minHeight: '100vh' }}>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        padding: 24,
+        background:
+          "radial-gradient(circle at top left, rgba(63, 127, 109, 0.14), transparent 34%), radial-gradient(circle at bottom right, rgba(192, 144, 87, 0.12), transparent 28%), linear-gradient(180deg, #f7f1ea 0%, #f3ede4 100%)",
+        minHeight: "100vh",
+      }}
+    >
       <Card style={{ width: "100%", maxWidth: 650, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", borderRadius: 12, padding: 12 }}>
         <Title level={3} style={{ textAlign: "center", marginBottom: 24, color: "#0f766e" }}>
           จองคิวผู้ป่วย Walk-in

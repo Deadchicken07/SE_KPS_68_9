@@ -9,4 +9,5 @@ export interface Appointment {
   paymentStatus: "Paid" | "Not_paying";
   depositSlipFile: string | null;
   meetUrl: string | null;
+  hasConsultation: boolean;
 }

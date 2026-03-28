@@ -1,4 +1,4 @@
-import { type CSSProperties, useEffect, useState } from "react";
+﻿import { type CSSProperties, useEffect, useState } from "react";
 import type { useStaffAdminHome } from "@/hooks/useStaffAdminHome";
 import type {
   AppointmentItem,
@@ -99,6 +99,10 @@ function getScheduleStatusLabel(value: string) {
     return "ลา";
   }
 
+  if (value === "holiday") {
+    return "วันหยุด";
+  }
+
   return "ยังไม่ลงตาราง";
 }
 
@@ -107,7 +111,11 @@ function getScheduleBadgeClasses(value: string) {
     "inline-flex items-center gap-2 rounded-full px-3 py-2 text-[0.8rem] font-extrabold",
     value === "working" && "bg-[#e6fffb] text-[#115e59]",
     value === "leave" && "bg-[#fff1f2] text-[#be123c]",
-    value !== "working" && value !== "leave" && "bg-[#edf4f2] text-[#47655e]",
+    value === "holiday" && "bg-[#fff7e6] text-[#b45309]",
+    value !== "working" &&
+      value !== "leave" &&
+      value !== "holiday" &&
+      "bg-[#edf4f2] text-[#47655e]",
   );
 }
 
@@ -680,10 +688,8 @@ export function SelectedAppointmentsSection({
 }
 
 export function StaffOverviewSection({
-  onOpenStaffWorkModal,
   staffOverview,
 }: {
-  onOpenStaffWorkModal: () => void;
   staffOverview: StaffOverviewItem[];
 }) {
   return (
@@ -695,13 +701,6 @@ export function StaffOverviewSection({
           </h2>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onOpenStaffWorkModal}
-            className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[#0f766e] px-4 text-[0.9rem] font-extrabold text-white shadow-[0_10px_24px_rgba(15,118,110,0.18)] transition hover:bg-[#115e59]"
-          >
-            แก้ไข
-          </button>
           <span className={PANEL_META_CLASS}>{staffOverview.length} คน</span>
         </div>
       </div>

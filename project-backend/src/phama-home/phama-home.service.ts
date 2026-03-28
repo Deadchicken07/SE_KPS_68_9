@@ -87,6 +87,7 @@ type ReceiptRow = {
   total: Prisma.Decimal | number | string | null;
   tracking: string | null;
   status: string | null;
+  payment_status: string | null;
 };
 
 @Injectable()
@@ -221,7 +222,7 @@ export class PhamaHomeService {
     }
 
     const rows = (await this.prisma.$queryRawUnsafe(
-      `SELECT id, consultation_id, user_id, created_at, slip_file, total, tracking, status::text AS status
+      `SELECT id, consultation_id, user_id, created_at, slip_file, total, tracking, status::text AS status, payment_status::text AS payment_status
        FROM receipts
        WHERE consultation_id = ANY($1)
        ORDER BY created_at DESC NULLS LAST, id DESC`,
@@ -313,6 +314,7 @@ export class PhamaHomeService {
         total: this.toNumber(receipt.total),
         tracking: receipt.tracking,
         status: receipt.status,
+        payment_status: receipt.payment_status,
       })),
     };
   }

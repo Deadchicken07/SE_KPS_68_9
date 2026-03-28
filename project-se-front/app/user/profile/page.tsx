@@ -1,7 +1,9 @@
-﻿"use client";
+"use client";
 
-import { ChangeEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "./page.module.css";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 type PatientProfile = {
   patientCode: string;
@@ -9,237 +11,172 @@ type PatientProfile = {
   lastName: string;
   phone: string;
   email: string;
-  birthDate: string;
-  gender: string;
-  bloodGroup: string;
   chronicDisease: string;
   allergies: string;
-  emergencyContact: string;
   currentAddress: string;
   shippingAddress: string;
 };
 
 const defaultProfile: PatientProfile = {
-  patientCode: "PT-000712",
-  firstName: "ศิริพร",
-  lastName: "ใจดี",
-  phone: "0891234567",
-  email: "siriporn.patient@example.com",
-  birthDate: "1998-04-12",
-  gender: "หญิง",
-  bloodGroup: "A",
-  chronicDisease: "ภูมิแพ้อากาศ",
-  allergies: "ไม่พบประวัติแพ้ยา",
-  emergencyContact: "สมชาย ใจดี 0815551212",
-  currentAddress: "99/12 ถนนสุขุมวิท แขวงคลองตัน เขตวัฒนา กรุงเทพมหานคร 10110",
-  shippingAddress: "99/12 ถนนสุขุมวิท แขวงคลองตัน เขตวัฒนา กรุงเทพมหานคร 10110",
+  patientCode: "",
+  firstName: "",
+  lastName: "",
+  phone: "",
+  email: "",
+  chronicDisease: "",
+  allergies: "",
+  currentAddress: "",
+  shippingAddress: "",
 };
+
+type ApiError = {
+  message?: string | string[];
+};
+
+function parseApiError(payload: ApiError | null, fallbackMessage: string) {
+  if (Array.isArray(payload?.message)) {
+    return payload.message[0] ?? fallbackMessage;
+  }
+
+  return payload?.message || fallbackMessage;
+}
+
+function displayValue(value: string) {
+  return value.trim() || "-";
+}
 
 export default function UserProfilePage() {
   const [savedProfile, setSavedProfile] = useState<PatientProfile>(defaultProfile);
-  const [formData, setFormData] = useState<PatientProfile>(defaultProfile);
-  const [isEditing, setIsEditing] = useState(false);
-  const [notice, setNotice] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!notice) {
+    if (!error) {
       return;
     }
 
     const timer = window.setTimeout(() => {
-      setNotice("");
-    }, 3000);
+      setError("");
+    }, 4000);
 
     return () => window.clearTimeout(timer);
-  }, [notice]);
+  }, [error]);
 
-  const fullName = useMemo(
-    () => `${savedProfile.firstName} ${savedProfile.lastName}`,
-    [savedProfile.firstName, savedProfile.lastName]
-  );
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setIsLoading(true);
+        setError("");
 
-  const onInputChange = (
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = event.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+        const response = await fetch(`${API_URL}/users/me/profile`, {
+          credentials: "include",
+        });
 
-  const onStartEdit = () => {
-    setNotice("");
-    setFormData(savedProfile);
-    setIsEditing(true);
-  };
+        if (!response.ok) {
+          const payload = (await response.json().catch(() => null)) as ApiError | null;
+          throw new Error(parseApiError(payload, "ไม่สามารถโหลดข้อมูลโปรไฟล์ได้"));
+        }
 
-  const onCancel = () => {
-    setFormData(savedProfile);
-    setIsEditing(false);
-    setNotice("ยกเลิกการแก้ไขแล้ว");
-  };
+        const profile = (await response.json()) as PatientProfile;
+        setSavedProfile(profile);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "ไม่สามารถโหลดข้อมูลโปรไฟล์ได้");
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const onSave = () => {
-    setSavedProfile(formData);
-    setIsEditing(false);
-    setNotice("บันทึกข้อมูลเรียบร้อย");
-  };
+    void fetchProfile();
+  }, []);
 
   return (
     <main className={styles.page}>
-      <section className={styles.card}>
-        <div className={styles.header}>
-          <div>
-            <h1>ข้อมูลส่วนตัวผู้ป่วย</h1>
-            <div className={styles.metaRow}>
-              <p className={styles.subtitle}>ชื่อ: {fullName} | รหัสผู้ป่วย: {savedProfile.patientCode}</p>
-              <div className={styles.noticeSlot}>
-                <p className={`${styles.notice} ${notice ? "" : styles.noticeHidden}`}>{notice || " "}</p>
-              </div>
+      {isLoading ? (
+        <div className={styles.feedback}>กำลังโหลดข้อมูลโปรไฟล์...</div>
+      ) : (
+        <>
+          <header className={styles.pageHeader}>
+            {/* <span className={styles.pageKicker}>USER AREA</span> */}
+            <h1 className={styles.pageTitle}>Profile</h1>
+          </header>
+
+          {error ? (
+            <div className={`${styles.feedback} ${styles.feedbackError}`} role="alert">
+              {error}
             </div>
+          ) : null}
+
+          <div className={styles.contentGrid}>
+            <section className={styles.panel}>
+              <div className={styles.panelHeader}>
+                <div>
+                  <p className={styles.panelEyebrow}>Contact</p>
+                  <h2 className={styles.panelTitle}>ข้อมูลติดต่อ</h2>
+                </div>
+              </div>
+
+              <div className={styles.fieldGrid}>
+                <article className={styles.fieldCard}>
+                  <span className={styles.fieldLabel}>ชื่อ</span>
+                  <p className={styles.fieldValue}>{displayValue(savedProfile.firstName)}</p>
+                </article>
+                <article className={styles.fieldCard}>
+                  <span className={styles.fieldLabel}>นามสกุล</span>
+                  <p className={styles.fieldValue}>{displayValue(savedProfile.lastName)}</p>
+                </article>
+                <article className={styles.fieldCard}>
+                  <span className={styles.fieldLabel}>เบอร์โทรศัพท์</span>
+                  <p className={styles.fieldValue}>{displayValue(savedProfile.phone)}</p>
+                </article>
+                <article className={styles.fieldCard}>
+                  <span className={styles.fieldLabel}>อีเมล</span>
+                  <p className={styles.fieldValue}>{displayValue(savedProfile.email)}</p>
+                </article>
+              </div>
+            </section>
+
+            <section className={styles.panel}>
+              <div className={styles.panelHeader}>
+                <div>
+                  <p className={styles.panelEyebrow}>Health</p>
+                  <h2 className={styles.panelTitle}>ข้อมูลสุขภาพเบื้องต้น</h2>
+                </div>
+              </div>
+
+              <div className={styles.fieldGrid}>
+                <article className={styles.fieldCard}>
+                  <span className={styles.fieldLabel}>โรคประจำตัว</span>
+                  <p className={styles.fieldValue}>{displayValue(savedProfile.chronicDisease)}</p>
+                </article>
+                <article className={styles.fieldCard}>
+                  <span className={styles.fieldLabel}>ประวัติแพ้ยา</span>
+                  <p className={styles.fieldValue}>{displayValue(savedProfile.allergies)}</p>
+                </article>
+              </div>
+            </section>
+
+            <section className={`${styles.panel} ${styles.panelWide}`}>
+              <div className={styles.panelHeader}>
+                <div>
+                  <p className={styles.panelEyebrow}>Address</p>
+                  <h2 className={styles.panelTitle}>ข้อมูลที่อยู่</h2>
+                </div>
+              </div>
+
+              <div className={styles.addressGrid}>
+                <article className={styles.addressCard}>
+                  <span className={styles.fieldLabel}>ที่อยู่ปัจจุบัน</span>
+                  <p className={styles.addressValue}>{displayValue(savedProfile.currentAddress)}</p>
+                </article>
+                <article className={styles.addressCard}>
+                  <span className={styles.fieldLabel}>ที่อยู่ตามทะเบียนบ้าน</span>
+                  <p className={styles.addressValue}>{displayValue(savedProfile.shippingAddress)}</p>
+                </article>
+              </div>
+            </section>
           </div>
-
-          <div className={styles.actions}>
-            {!isEditing ? (
-              <button type="button" className={styles.editButton} onClick={onStartEdit}>
-                แก้ไขข้อมูล
-              </button>
-            ) : (
-              <>
-                <button type="button" className={styles.cancelButton} onClick={onCancel}>
-                  ยกเลิก
-                </button>
-                <button type="button" className={styles.saveButton} onClick={onSave}>
-                  บันทึก
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-
-        <div className={styles.formGrid}>
-          <label>
-            ชื่อ
-            <input
-              name="firstName"
-              value={formData.firstName}
-              onChange={onInputChange}
-              disabled={!isEditing}
-            />
-          </label>
-
-          <label>
-            นามสกุล
-            <input
-              name="lastName"
-              value={formData.lastName}
-              onChange={onInputChange}
-              disabled={!isEditing}
-            />
-          </label>
-
-          <label>
-            เบอร์โทรศัพท์
-            <input name="phone" value={formData.phone} onChange={onInputChange} disabled={!isEditing} />
-          </label>
-
-          <label>
-            อีเมล
-            <input name="email" value={formData.email} onChange={onInputChange} disabled={!isEditing} />
-          </label>
-
-          <label>
-            วันเกิด
-            <input
-              type="date"
-              name="birthDate"
-              value={formData.birthDate}
-              onChange={onInputChange}
-              disabled={!isEditing}
-            />
-          </label>
-
-          <label>
-            เพศ
-            <select
-              name="gender"
-              value={formData.gender}
-              onChange={onInputChange}
-              disabled={!isEditing}
-              className={!isEditing ? styles.selectReadonly : ""}
-            >
-              <option value="หญิง">หญิง</option>
-              <option value="ชาย">ชาย</option>
-            </select>
-          </label>
-
-          <label>
-            หมู่เลือด
-            <select
-              name="bloodGroup"
-              value={formData.bloodGroup}
-              onChange={onInputChange}
-              disabled={!isEditing}
-              className={!isEditing ? styles.selectReadonly : ""}
-            >
-              <option value="A">A</option>
-              <option value="B">B</option>
-              <option value="AB">AB</option>
-              <option value="O">O</option>
-            </select>
-          </label>
-
-          <label>
-            โรคประจำตัว
-            <input
-              name="chronicDisease"
-              value={formData.chronicDisease}
-              onChange={onInputChange}
-              disabled={!isEditing}
-            />
-          </label>
-
-          <label className={styles.fullWidth}>
-            ประวัติแพ้ยา
-            <input
-              name="allergies"
-              value={formData.allergies}
-              onChange={onInputChange}
-              disabled={!isEditing}
-            />
-          </label>
-
-          <label className={styles.fullWidth}>
-            ผู้ติดต่อฉุกเฉิน
-            <input
-              name="emergencyContact"
-              value={formData.emergencyContact}
-              onChange={onInputChange}
-              disabled={!isEditing}
-            />
-          </label>
-
-          <label className={styles.fullWidth}>
-            ที่อยู่ปัจจุบัน
-            <textarea
-              name="currentAddress"
-              value={formData.currentAddress}
-              onChange={onInputChange}
-              rows={3}
-              disabled={!isEditing}
-            />
-          </label>
-
-          <label className={styles.fullWidth}>
-            ที่อยู่การจัดส่งยา
-            <textarea
-              name="shippingAddress"
-              value={formData.shippingAddress}
-              onChange={onInputChange}
-              rows={3}
-              disabled={!isEditing}
-            />
-          </label>
-        </div>
-      </section>
+        </>
+      )}
     </main>
   );
 }

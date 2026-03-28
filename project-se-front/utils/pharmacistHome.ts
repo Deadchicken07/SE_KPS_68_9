@@ -119,6 +119,12 @@ export function latestPharmacistHomeReceipt(
   return consultation.receipts[0] ?? null
 }
 
+export function pharmacistHomeLatestPaymentStatus(
+  consultation: PharmacistHomeConsultation,
+) {
+  return latestPharmacistHomeReceipt(consultation)?.payment_status ?? null
+}
+
 export function pharmacistHomeDisplayStatus(
   consultation: PharmacistHomeConsultation,
 ): PharmacistHomeDisplayStatus {
@@ -139,10 +145,15 @@ export function pharmacistHomeDisplayStatus(
 export function isOutstandingPharmacistHomeStatus(
   status: PharmacistHomeDisplayStatus,
 ) {
+  return status === 'pending_delivery' || status === 'pending_pickup'
+}
+
+export function isPaidOutstandingPharmacistHomeConsultation(
+  consultation: PharmacistHomeConsultation,
+) {
   return (
-    status === 'no_receipt' ||
-    status === 'pending_delivery' ||
-    status === 'pending_pickup'
+    pharmacistHomeLatestPaymentStatus(consultation) === 'Paid' &&
+    isOutstandingPharmacistHomeStatus(pharmacistHomeDisplayStatus(consultation))
   )
 }
 

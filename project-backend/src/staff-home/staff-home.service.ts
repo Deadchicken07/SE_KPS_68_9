@@ -2,11 +2,15 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   appointments_type_enum,
   pay_type_enum,
+  receipt_status,
   schedule_status,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { AdminReportQueryDto } from './dto/admin-report-query.dto';
+import { DeleteClinicHolidayDto } from './dto/delete-clinic-holiday.dto';
 import { DeleteStaffScheduleDto } from './dto/delete-staff-schedule.dto';
 import { StaffHomeQueryDto } from './dto/staff-home-query.dto';
+import { UpsertClinicHolidayDto } from './dto/upsert-clinic-holiday.dto';
 import { UpsertStaffScheduleDto } from './dto/upsert-staff-schedule.dto';
 
 type DashboardStatus = 'pending' | 'confirmed' | 'completed';
@@ -79,6 +83,46 @@ type StaffHomeScheduleEntry = {
   note: string | null;
 };
 
+type AdminReportAppointmentRow = {
+  id: number;
+  patientId: number | null;
+  patientName: string;
+  staffId: number | null;
+  staffName: string;
+  staffRoleLabel: string;
+  appointmentDate: string | null;
+  timeSelect: string | null;
+  appointmentTypeLabel: string;
+  paymentStatus: pay_type_enum | null;
+  paymentStatusLabel: string;
+};
+
+type AdminReportConsultationRow = {
+  id: number;
+  patientId: number | null;
+  patientName: string;
+  staffId: number | null;
+  staffName: string;
+  pharmacistName: string | null;
+  createdAt: string | null;
+  createdDateKey: string | null;
+  notePreview: string | null;
+};
+
+type AdminReportReceiptRow = {
+  id: number;
+  receiptNo: string;
+  patientName: string;
+  staffId: number | null;
+  staffName: string;
+  createdAt: string | null;
+  createdDateKey: string | null;
+  total: number;
+  status: receipt_status | null;
+  statusLabel: string;
+  tracking: string | null;
+};
+
 @Injectable()
 export class StaffHomeService {
   constructor(private readonly prisma: PrismaService) {}
@@ -89,8 +133,11 @@ export class StaffHomeService {
       this.getMonthBounds(month);
     const selectedDate = this.resolveSelectedDate(query.date, month, dayKeys);
     const selectedDateValue = this.toDateOnlyUtc(selectedDate);
-    const { weekStart, weekEndExclusive, dayKeys: weekDayKeys } =
-      this.getWeekBounds(selectedDate);
+    const {
+      weekStart,
+      weekEndExclusive,
+      dayKeys: weekDayKeys,
+    } = this.getWeekBounds(selectedDate);
     const staffId = this.parseStaffId(query.staffId);
 
     const appointmentWhere = {
@@ -101,7 +148,13 @@ export class StaffHomeService {
       ...(staffId ? { staff_id: staffId } : {}),
     };
 
-    const [appointments, weekAppointments, selectedDateClinicAppointments, staffRows] = await Promise.all([
+    const [
+      appointments,
+      weekAppointments,
+      selectedDateClinicAppointments,
+      staffRows,
+      holidayStaffRows,
+    ] = await Promise.all([
       this.prisma.appointments.findMany({
         where: appointmentWhere,
         orderBy: [{ appointment_date: 'asc' }, { time_select: 'asc' }],
@@ -257,29 +310,26 @@ export class StaffHomeService {
           },
         },
       }),
+      this.getClinicHolidayStaffRows(),
     ]);
 
-    const scheduleRows = staffId
-      ? await this.prisma.schedule.findMany({
-          where: {
-            staff_id: staffId,
-            work_date: {
-              gte: monthStart,
-              lt: monthEndExclusive,
-            },
-          },
-          orderBy: {
-            work_date: 'asc',
-          },
-          select: {
-            id: true,
-            staff_id: true,
-            work_date: true,
-            status: true,
-            note: true,
-          },
-        })
-      : [];
+    const scheduleRows = await this.prisma.schedule.findMany({
+      where: {
+        ...(staffId ? { staff_id: staffId } : {}),
+        work_date: {
+          gte: monthStart,
+          lt: monthEndExclusive,
+        },
+      },
+      orderBy: [{ work_date: 'asc' }, { staff_id: 'asc' }],
+      select: {
+        id: true,
+        staff_id: true,
+        work_date: true,
+        status: true,
+        note: true,
+      },
+    });
 
     const mapAppointmentRecord = (record: (typeof appointments)[number]) => {
       const appointmentDate = record.appointment_date
@@ -321,7 +371,8 @@ export class StaffHomeService {
 
     const appointmentItems = appointments.map(mapAppointmentRecord);
     const weekAppointmentItems = weekAppointments.map(mapAppointmentRecord);
-    const selectedDateClinicAppointmentItems = selectedDateClinicAppointments.map(mapAppointmentRecord);
+    const selectedDateClinicAppointmentItems =
+      selectedDateClinicAppointments.map(mapAppointmentRecord);
     const dailyStats = this.buildDailyStats(dayKeys, appointmentItems);
     const weekStats = this.buildDailyStats(weekDayKeys, weekAppointmentItems);
 
@@ -364,6 +415,15 @@ export class StaffHomeService {
       avatarUrl: staff.file_name ?? null,
     }));
 
+    const holidayStaffOptions = holidayStaffRows.map((staff) => ({
+      id: staff.user_id,
+      name: this.buildFullName(staff.name, staff.sur_name),
+      role: staff.roles?.name ?? null,
+      roleLabel: this.toRoleLabel(staff.roles?.name),
+      specialty: staff.info ?? null,
+      avatarUrl: staff.file_name ?? null,
+    }));
+
     const staffOverview = staffRows
       .map((staff) => {
         const staffAppointments = selectedDateClinicAppointmentItems
@@ -372,10 +432,13 @@ export class StaffHomeService {
             (left, right) => this.getSortValue(left) - this.getSortValue(right),
           );
         const nextAppointment =
-          staffAppointments.find((item) => !this.isPastAppointment(
-            item.appointmentDate,
-            this.tryParseTimeRange(item.timeSelect),
-          )) ?? null;
+          staffAppointments.find(
+            (item) =>
+              !this.isPastAppointment(
+                item.appointmentDate,
+                this.tryParseTimeRange(item.timeSelect),
+              ),
+          ) ?? null;
 
         return {
           staffId: staff.user_id,
@@ -399,8 +462,7 @@ export class StaffHomeService {
           ).length,
           nextAppointmentDate: nextAppointment?.appointmentDate ?? null,
           nextAppointmentTime: nextAppointment?.timeSelect ?? null,
-          scheduleStatus:
-            staff.schedule[0]?.status ?? ('unassigned' as const),
+          scheduleStatus: staff.schedule[0]?.status ?? ('unassigned' as const),
         } satisfies StaffHomeStaffSummary;
       })
       .sort((left, right) => {
@@ -413,7 +475,9 @@ export class StaffHomeService {
 
     const selectedDateAppointments = appointmentItems
       .filter((item) => item.appointmentDate === selectedDate)
-      .sort((left, right) => this.getSortValue(left) - this.getSortValue(right));
+      .sort(
+        (left, right) => this.getSortValue(left) - this.getSortValue(right),
+      );
 
     const upcomingAppointments = appointmentItems
       .filter(
@@ -448,6 +512,7 @@ export class StaffHomeService {
       },
       summary,
       staffOptions,
+      holidayStaffOptions,
       dailyStats,
       scheduleEntries,
       weekStats,
@@ -455,6 +520,418 @@ export class StaffHomeService {
       selectedDateAppointments,
       upcomingAppointments,
       staffOverview,
+    };
+  }
+
+  async getAdminReport(query: AdminReportQueryDto) {
+    const { fromDate, toDate, dateKeys, fromDateValue, toDateValueExclusive } =
+      this.getAdminReportRange(query.from, query.to);
+    const staffId = this.parseStaffId(query.staffId);
+    const [staffRows, appointments, consultations, receipts] =
+      await Promise.all([
+        this.getClinicHolidayStaffRows(),
+        this.prisma.appointments.findMany({
+          where: {
+            appointment_date: {
+              gte: fromDateValue,
+              lt: toDateValueExclusive,
+            },
+            ...(staffId ? { staff_id: staffId } : {}),
+          },
+          orderBy: [{ appointment_date: 'desc' }, { time_select: 'desc' }],
+          include: {
+            users_appointments_user_idTousers: {
+              select: {
+                user_id: true,
+                name: true,
+                sur_name: true,
+              },
+            },
+            users_appointments_staff_idTousers: {
+              select: {
+                user_id: true,
+                name: true,
+                sur_name: true,
+                roles: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        }),
+        this.prisma.consultations.findMany({
+          where: {
+            created_at: {
+              gte: this.toClinicDateTimeStart(fromDate),
+              lt: this.toClinicDateTimeStart(this.addDateKeyDays(toDate, 1)),
+            },
+            ...(staffId ? { staff_id: staffId } : {}),
+          },
+          orderBy: {
+            created_at: 'desc',
+          },
+          include: {
+            users_consultations_user_idTousers: {
+              select: {
+                user_id: true,
+                name: true,
+                sur_name: true,
+              },
+            },
+            users_consultations_staff_idTousers: {
+              select: {
+                user_id: true,
+                name: true,
+                sur_name: true,
+                roles: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+            users_consultations_pharmacist_idTousers: {
+              select: {
+                name: true,
+                sur_name: true,
+              },
+            },
+          },
+        }),
+        this.prisma.receipts.findMany({
+          where: {
+            created_at: {
+              gte: this.toClinicDateTimeStart(fromDate),
+              lt: this.toClinicDateTimeStart(this.addDateKeyDays(toDate, 1)),
+            },
+            ...(staffId
+              ? {
+                  consultations: {
+                    is: {
+                      staff_id: staffId,
+                    },
+                  },
+                }
+              : {}),
+          },
+          orderBy: {
+            created_at: 'desc',
+          },
+          include: {
+            users: {
+              select: {
+                name: true,
+                sur_name: true,
+              },
+            },
+            consultations: {
+              select: {
+                staff_id: true,
+                users_consultations_staff_idTousers: {
+                  select: {
+                    name: true,
+                    sur_name: true,
+                  },
+                },
+              },
+            },
+          },
+        }),
+      ]);
+
+    const staffOptions = staffRows.map((staff) => ({
+      id: staff.user_id,
+      name: this.buildFullName(staff.name, staff.sur_name),
+      roleLabel: this.toRoleLabel(staff.roles?.name),
+    }));
+
+    const appointmentRows = appointments.map(
+      (appointment): AdminReportAppointmentRow => ({
+        id: appointment.id,
+        patientId: appointment.user_id ?? null,
+        patientName: this.buildFullName(
+          appointment.users_appointments_user_idTousers?.name,
+          appointment.users_appointments_user_idTousers?.sur_name,
+        ),
+        staffId: appointment.staff_id ?? null,
+        staffName: this.buildFullName(
+          appointment.users_appointments_staff_idTousers?.name,
+          appointment.users_appointments_staff_idTousers?.sur_name,
+        ),
+        staffRoleLabel: this.toRoleLabel(
+          appointment.users_appointments_staff_idTousers?.roles?.name,
+        ),
+        appointmentDate: appointment.appointment_date
+          ? this.dateToIsoDate(appointment.appointment_date)
+          : null,
+        timeSelect: appointment.time_select ?? null,
+        appointmentTypeLabel: this.toAppointmentTypeLabel(
+          appointment.appointment_type ?? null,
+        ),
+        paymentStatus: appointment.status ?? null,
+        paymentStatusLabel: this.toAdminReportPaymentStatusLabel(
+          appointment.status ?? null,
+        ),
+      }),
+    );
+
+    const consultationRows = consultations.map(
+      (consultation): AdminReportConsultationRow => ({
+        id: consultation.id,
+        patientId: consultation.user_id ?? null,
+        patientName: this.buildFullName(
+          consultation.users_consultations_user_idTousers?.name,
+          consultation.users_consultations_user_idTousers?.sur_name,
+        ),
+        staffId: consultation.staff_id ?? null,
+        staffName: this.buildFullName(
+          consultation.users_consultations_staff_idTousers?.name,
+          consultation.users_consultations_staff_idTousers?.sur_name,
+        ),
+        pharmacistName: this.buildFullName(
+          consultation.users_consultations_pharmacist_idTousers?.name,
+          consultation.users_consultations_pharmacist_idTousers?.sur_name,
+        ),
+        createdAt: consultation.created_at?.toISOString() ?? null,
+        createdDateKey: consultation.created_at
+          ? this.toClinicDateKey(consultation.created_at)
+          : null,
+        notePreview: consultation.note?.trim()
+          ? consultation.note.trim().slice(0, 120)
+          : null,
+      }),
+    );
+
+    const receiptRows = receipts.map(
+      (receipt): AdminReportReceiptRow => ({
+        id: receipt.id,
+        receiptNo: `RC-${String(receipt.id).padStart(5, '0')}`,
+        patientName: this.buildFullName(receipt.users?.name, receipt.users?.sur_name),
+        staffId: receipt.consultations?.staff_id ?? null,
+        staffName: this.buildFullName(
+          receipt.consultations?.users_consultations_staff_idTousers?.name,
+          receipt.consultations?.users_consultations_staff_idTousers?.sur_name,
+        ),
+        createdAt: receipt.created_at?.toISOString() ?? null,
+        createdDateKey: receipt.created_at
+          ? this.toClinicDateKey(receipt.created_at)
+          : null,
+        total: this.toNumber(receipt.total),
+        status: receipt.status ?? null,
+        statusLabel: this.toReceiptStatusLabel(receipt.status ?? null),
+        tracking: receipt.tracking ?? null,
+      }),
+    );
+
+    const uniquePatients = new Set<number>();
+    appointmentRows.forEach((item) => {
+      if (Number.isInteger(item.patientId)) {
+        uniquePatients.add(item.patientId as number);
+      }
+    });
+    consultationRows.forEach((item) => {
+      if (Number.isInteger(item.patientId)) {
+        uniquePatients.add(item.patientId as number);
+      }
+    });
+
+    const summary = {
+      uniquePatients: uniquePatients.size,
+      totalAppointments: appointmentRows.length,
+      totalConsultations: consultationRows.length,
+      paidAppointments: appointmentRows.filter(
+        (item) => item.paymentStatus === pay_type_enum.Paid,
+      ).length,
+      pendingAppointments: appointmentRows.filter(
+        (item) => item.paymentStatus !== pay_type_enum.Paid,
+      ).length,
+      totalRevenue: receiptRows.reduce((total, item) => total + item.total, 0),
+      totalReceipts: receiptRows.length,
+    };
+
+    const trendMap = new Map(
+      dateKeys.map((dateKey) => [
+        dateKey,
+        {
+          dateKey,
+          appointmentCount: 0,
+          consultationCount: 0,
+          revenue: 0,
+        },
+      ]),
+    );
+
+    appointmentRows.forEach((item) => {
+      if (!item.appointmentDate) {
+        return;
+      }
+
+      const trend = trendMap.get(item.appointmentDate);
+      if (trend) {
+        trend.appointmentCount += 1;
+      }
+    });
+
+    consultationRows.forEach((item) => {
+      if (!item.createdDateKey) {
+        return;
+      }
+
+      const trend = trendMap.get(item.createdDateKey);
+      if (trend) {
+        trend.consultationCount += 1;
+      }
+    });
+
+    receiptRows.forEach((item) => {
+      if (!item.createdDateKey) {
+        return;
+      }
+
+      const trend = trendMap.get(item.createdDateKey);
+      if (trend) {
+        trend.revenue += item.total;
+      }
+    });
+
+    const appointmentTypeBreakdown = [
+      {
+        label: this.toAppointmentTypeLabel(appointments_type_enum.online),
+        count: appointmentRows.filter(
+          (item) =>
+            item.appointmentTypeLabel ===
+            this.toAppointmentTypeLabel(appointments_type_enum.online),
+        ).length,
+      },
+      {
+        label: this.toAppointmentTypeLabel(appointments_type_enum.onsite),
+        count: appointmentRows.filter(
+          (item) =>
+            item.appointmentTypeLabel ===
+            this.toAppointmentTypeLabel(appointments_type_enum.onsite),
+        ).length,
+      },
+    ];
+
+    const paymentBreakdown = [
+      {
+        label: this.toAdminReportPaymentStatusLabel(pay_type_enum.Paid),
+        count: appointmentRows.filter(
+          (item) => item.paymentStatus === pay_type_enum.Paid,
+        ).length,
+      },
+      {
+        label: this.toAdminReportPaymentStatusLabel(pay_type_enum.Pending),
+        count: appointmentRows.filter(
+          (item) => item.paymentStatus === pay_type_enum.Pending,
+        ).length,
+      },
+      {
+        label: this.toAdminReportPaymentStatusLabel(pay_type_enum.Not_paying),
+        count: appointmentRows.filter(
+          (item) => item.paymentStatus === pay_type_enum.Not_paying,
+        ).length,
+      },
+    ];
+
+    const staffMetricMap = new Map<
+      number,
+      {
+        staffId: number;
+        staffName: string;
+        roleLabel: string;
+        appointmentCount: number;
+        consultationCount: number;
+        revenue: number;
+      }
+    >();
+
+    const ensureStaffMetric = (targetStaffId: number | null) => {
+      if (!Number.isInteger(targetStaffId)) {
+        return null;
+      }
+
+      const resolvedStaffId = targetStaffId as number;
+
+      const staffEntry = staffRows.find(
+        (staff) => staff.user_id === resolvedStaffId,
+      );
+      if (!staffEntry) {
+        return null;
+      }
+
+      if (!staffMetricMap.has(resolvedStaffId)) {
+        staffMetricMap.set(resolvedStaffId, {
+          staffId: resolvedStaffId,
+          staffName: this.buildFullName(staffEntry.name, staffEntry.sur_name),
+          roleLabel: this.toRoleLabel(staffEntry.roles?.name),
+          appointmentCount: 0,
+          consultationCount: 0,
+          revenue: 0,
+        });
+      }
+
+      return staffMetricMap.get(resolvedStaffId) ?? null;
+    };
+
+    appointmentRows.forEach((item) => {
+      const metric = ensureStaffMetric(item.staffId);
+      if (metric) {
+        metric.appointmentCount += 1;
+      }
+    });
+
+    consultationRows.forEach((item) => {
+      const metric = ensureStaffMetric(item.staffId);
+      if (metric) {
+        metric.consultationCount += 1;
+      }
+    });
+
+    receiptRows.forEach((item) => {
+      const metric = ensureStaffMetric(item.staffId);
+      if (metric) {
+        metric.revenue += item.total;
+      }
+    });
+
+    const topStaff = Array.from(staffMetricMap.values())
+      .filter(
+        (item) =>
+          item.appointmentCount > 0 ||
+          item.consultationCount > 0 ||
+          item.revenue > 0,
+      )
+      .sort((left, right) => {
+        if (right.appointmentCount !== left.appointmentCount) {
+          return right.appointmentCount - left.appointmentCount;
+        }
+
+        if (right.consultationCount !== left.consultationCount) {
+          return right.consultationCount - left.consultationCount;
+        }
+
+        return right.revenue - left.revenue;
+      })
+      .slice(0, 6);
+
+    return {
+      filters: {
+        from: fromDate,
+        to: toDate,
+        staffId,
+      },
+      summary,
+      staffOptions,
+      trend: dateKeys.map((dateKey) => trendMap.get(dateKey)!),
+      appointmentTypeBreakdown,
+      paymentBreakdown,
+      topStaff,
+      recentAppointments: appointmentRows.slice(0, 6),
+      recentConsultations: consultationRows.slice(0, 6),
+      recentReceipts: receiptRows.slice(0, 6),
     };
   }
 
@@ -476,8 +953,10 @@ export class StaffHomeService {
       throw new BadRequestException('ไม่สามารถบันทึกตารางงานย้อนหลังได้');
     }
 
-    if (status !== 'working' && status !== 'leave') {
-      throw new BadRequestException('status must be working or leave');
+    if (status !== 'working' && status !== 'leave' && status !== 'holiday') {
+      throw new BadRequestException(
+        'status must be working, leave, or holiday',
+      );
     }
 
     if (note && note.length > 255) {
@@ -600,6 +1079,261 @@ export class StaffHomeService {
     };
   }
 
+  async upsertClinicHoliday(input: UpsertClinicHolidayDto) {
+    const month = this.normalizeMonth(input?.month);
+    const weekday = this.parseClinicHolidayWeekday(input?.weekday);
+    const scope = this.parseClinicHolidayScope(input?.scope);
+    const note = input?.note?.trim() || null;
+
+    if (note && note.length > 255) {
+      throw new BadRequestException('note must not exceed 255 characters');
+    }
+
+    const workDates = this.getClinicHolidayDateKeys(month, weekday);
+    const staffIds = await this.getClinicHolidayTargetStaffIds(
+      scope,
+      input?.staffId,
+    );
+
+    await this.prisma.$transaction(
+      staffIds.flatMap((staffId) =>
+        workDates.map((workDate) =>
+          this.prisma.schedule.upsert({
+            where: {
+              staff_id_work_date: {
+                staff_id: staffId,
+                work_date: this.toDateOnlyUtc(workDate),
+              },
+            },
+            update: {
+              status: schedule_status.holiday,
+              note,
+            },
+            create: {
+              staff_id: staffId,
+              work_date: this.toDateOnlyUtc(workDate),
+              status: schedule_status.holiday,
+              note,
+            },
+          }),
+        ),
+      ),
+    );
+
+    return {
+      message: 'บันทึกวันหยุดรายเดือนเรียบร้อยแล้ว',
+      affectedStaffCount: staffIds.length,
+      affectedDateCount: workDates.length,
+      month,
+      weekday,
+      scope,
+    };
+  }
+
+  async deleteClinicHoliday(input: DeleteClinicHolidayDto) {
+    const month = this.normalizeMonth(input?.month);
+    const weekday = this.parseClinicHolidayWeekday(input?.weekday);
+    const scope = this.parseClinicHolidayScope(input?.scope);
+    const workDates = this.getClinicHolidayDateKeys(month, weekday);
+    const staffIds = await this.getClinicHolidayTargetStaffIds(
+      scope,
+      input?.staffId,
+    );
+
+    const deleted = await this.prisma.schedule.deleteMany({
+      where: {
+        staff_id: {
+          in: staffIds,
+        },
+        work_date: {
+          in: workDates.map((workDate) => this.toDateOnlyUtc(workDate)),
+        },
+        status: schedule_status.holiday,
+      },
+    });
+
+    if (!deleted.count) {
+      throw new BadRequestException(
+        'ยังไม่มีวันหยุดตามเงื่อนไขนี้ในเดือนที่เลือก',
+      );
+    }
+
+    return {
+      message: 'ลบวันหยุดรายเดือนเรียบร้อยแล้ว',
+      affectedStaffCount: deleted.count,
+      affectedDateCount: workDates.length,
+      month,
+      weekday,
+      scope,
+    };
+  }
+
+  private async getClinicHolidayStaffRows() {
+    return this.prisma.users.findMany({
+      where: {
+        NOT: {
+          OR: [{ role_id: 2 }, { role_id: null }],
+        },
+      },
+      select: {
+        user_id: true,
+        name: true,
+        sur_name: true,
+        info: true,
+        file_name: true,
+        roles: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: [{ name: 'asc' }, { sur_name: 'asc' }],
+    });
+  }
+
+  private async getClinicHolidayStaffIds() {
+    const staffRows = await this.prisma.users.findMany({
+      where: {
+        NOT: {
+          OR: [{ role_id: 2 }, { role_id: null }],
+        },
+      },
+      select: {
+        user_id: true,
+      },
+      orderBy: {
+        user_id: 'asc',
+      },
+    });
+
+    const staffIds = staffRows.map((staff) => staff.user_id);
+
+    if (!staffIds.length) {
+      throw new BadRequestException('ไม่พบบุคลากรสำหรับตั้งวันหยุด');
+    }
+
+    return staffIds;
+  }
+
+  private async getClinicHolidayTargetStaffIds(
+    scope: 'all' | 'individual',
+    requestedStaffId?: number | null,
+  ) {
+    if (scope === 'all') {
+      return this.getClinicHolidayStaffIds();
+    }
+
+    const staffId = Number(requestedStaffId);
+
+    if (!Number.isInteger(staffId) || staffId <= 0) {
+      throw new BadRequestException('กรุณาเลือกบุคลากร');
+    }
+
+    const staffIds = await this.getClinicHolidayStaffIds();
+
+    if (!staffIds.includes(staffId)) {
+      throw new BadRequestException('ไม่พบบุคลากรที่ต้องการตั้งวันหยุด');
+    }
+
+    return [staffId];
+  }
+
+  private parseClinicHolidayScope(value?: string | null): 'all' | 'individual' {
+    if (value === 'all' || value === 'individual') {
+      return value;
+    }
+
+    throw new BadRequestException('scope must be all or individual');
+  }
+
+  private parseClinicHolidayWeekday(
+    value: number | string | undefined,
+  ): number {
+    const weekday = Number(value);
+
+    if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6) {
+      throw new BadRequestException(
+        'weekday must be an integer between 0 and 6',
+      );
+    }
+
+    return weekday;
+  }
+
+  private getClinicHolidayDateKeys(month: string, weekday: number) {
+    const today = this.getClinicNowParts(new Date()).dateKey;
+    const { dayKeys } = this.getMonthBounds(month);
+    const matchingDates = dayKeys.filter((dateKey) => {
+      const dateValue = this.toDateOnlyUtc(dateKey);
+
+      return dateKey >= today && dateValue.getUTCDay() === weekday;
+    });
+
+    if (!matchingDates.length) {
+      throw new BadRequestException(
+        'ไม่มีวันที่ตรงกับวันในสัปดาห์นี้ที่ยังแก้ไขได้ในเดือนที่เลือก',
+      );
+    }
+
+    return matchingDates;
+  }
+
+  private getAdminReportRange(from?: string, to?: string) {
+    const clinicNow = this.getClinicNowParts(new Date());
+    const defaultFrom = `${clinicNow.monthKey}-01`;
+    const fromDate = this.normalizeDateKey(from ?? defaultFrom, 'from');
+    const toDate = this.normalizeDateKey(to ?? clinicNow.dateKey, 'to');
+
+    if (toDate < fromDate) {
+      throw new BadRequestException('to must be on or after from');
+    }
+
+    const dateKeys = this.getDateKeysBetween(fromDate, toDate);
+
+    return {
+      fromDate,
+      toDate,
+      dateKeys,
+      fromDateValue: this.toDateOnlyUtc(fromDate),
+      toDateValueExclusive: this.toDateOnlyUtc(this.addDateKeyDays(toDate, 1)),
+    };
+  }
+
+  private normalizeDateKey(value: string, fieldName: string): string {
+    const trimmed = value.trim();
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      throw new BadRequestException(`${fieldName} must be in YYYY-MM-DD format`);
+    }
+
+    const parsed = this.toDateOnlyUtc(trimmed);
+
+    if (Number.isNaN(parsed.getTime()) || this.dateToIsoDate(parsed) !== trimmed) {
+      throw new BadRequestException(`${fieldName} is invalid`);
+    }
+
+    return trimmed;
+  }
+
+  private getDateKeysBetween(fromDate: string, toDate: string) {
+    const dateKeys: string[] = [];
+    const cursor = this.toDateOnlyUtc(fromDate);
+    const endDate = this.toDateOnlyUtc(toDate);
+
+    while (cursor <= endDate) {
+      dateKeys.push(this.dateToIsoDate(cursor));
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
+    }
+
+    return dateKeys;
+  }
+
+  private addDateKeyDays(dateKey: string, amount: number) {
+    const nextDate = this.toDateOnlyUtc(dateKey);
+    nextDate.setUTCDate(nextDate.getUTCDate() + amount);
+    return this.dateToIsoDate(nextDate);
+  }
+
   private normalizeMonth(value?: string): string {
     const trimmed = value?.trim();
 
@@ -613,7 +1347,10 @@ export class StaffHomeService {
 
     const parsedDate = new Date(`${trimmed}-01T00:00:00.000Z`);
 
-    if (Number.isNaN(parsedDate.getTime()) || this.toMonthKey(parsedDate) !== trimmed) {
+    if (
+      Number.isNaN(parsedDate.getTime()) ||
+      this.toMonthKey(parsedDate) !== trimmed
+    ) {
       throw new BadRequestException('month is invalid');
     }
 
@@ -908,12 +1645,7 @@ export class StaffHomeService {
     const endHour = Number(match[3]);
     const endMinute = Number(match[4]);
 
-    if (
-      startHour > 23 ||
-      endHour > 23 ||
-      startMinute > 59 ||
-      endMinute > 59
-    ) {
+    if (startHour > 23 || endHour > 23 || startMinute > 59 || endMinute > 59) {
       return null;
     }
 
@@ -981,6 +1713,10 @@ export class StaffHomeService {
     return new Date(`${dateKey}T00:00:00.000Z`);
   }
 
+  private toClinicDateTimeStart(dateKey: string): Date {
+    return new Date(`${dateKey}T00:00:00+07:00`);
+  }
+
   private dateToIsoDate(value: Date): string {
     return [
       value.getUTCFullYear(),
@@ -994,6 +1730,72 @@ export class StaffHomeService {
       value.getUTCFullYear(),
       String(value.getUTCMonth() + 1).padStart(2, '0'),
     ].join('-');
+  }
+
+  private toClinicDateKey(value: Date): string {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: CLINIC_TIME_ZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    const parts = formatter.formatToParts(value);
+    const partMap = Object.fromEntries(
+      parts
+        .filter((part) => part.type !== 'literal')
+        .map((part) => [part.type, part.value]),
+    ) as Record<string, string>;
+
+    return `${partMap.year}-${partMap.month}-${partMap.day}`;
+  }
+
+  private toAdminReportPaymentStatusLabel(status: pay_type_enum | null): string {
+    if (status === pay_type_enum.Paid) {
+      return 'ชำระแล้ว';
+    }
+
+    if (status === pay_type_enum.Pending) {
+      return 'รอตรวจสอบ';
+    }
+
+    if (status === pay_type_enum.Not_paying) {
+      return 'ยังไม่ชำระ';
+    }
+
+    return 'ยังไม่ระบุ';
+  }
+
+  private toReceiptStatusLabel(status: receipt_status | null): string {
+    if (status === receipt_status.delivered) {
+      return 'จัดส่งแล้ว';
+    }
+
+    if (status === receipt_status.pending_delivery) {
+      return 'รอจัดส่ง';
+    }
+
+    if (status === receipt_status.pending_pickup) {
+      return 'รอรับที่คลินิก';
+    }
+
+    if (status === receipt_status.picked_up) {
+      return 'รับแล้ว';
+    }
+
+    if (status === receipt_status.cancelled) {
+      return 'ยกเลิก';
+    }
+
+    return 'ยังไม่ระบุ';
+  }
+
+  private toNumber(value: unknown): number {
+    if (value == null) {
+      return 0;
+    }
+
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
   }
 
   private getClinicNowParts(value: Date): {

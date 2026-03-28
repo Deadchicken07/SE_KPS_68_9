@@ -9,7 +9,7 @@ import {
   PHARMACIST_HOME_STATUS_RANK,
   formatPharmacistHomeDateTime,
   getPharmacistHomeErrorMessage,
-  isOutstandingPharmacistHomeStatus,
+  isPaidOutstandingPharmacistHomeConsultation,
   pharmacistHomeDisplayStatus,
 } from '@/utils/pharmacistHome'
 
@@ -38,7 +38,7 @@ export const usePharmacistHome = () => {
     }
 
     if (roleId === 1) {
-      router.replace('/staff/admin-home')
+      router.replace('/staff/admin/admin-home')
       return
     }
 
@@ -92,7 +92,7 @@ export const usePharmacistHome = () => {
   const outstandingConsultations = useMemo(
     () =>
       consultations.filter((item) =>
-        isOutstandingPharmacistHomeStatus(pharmacistHomeDisplayStatus(item)),
+        isPaidOutstandingPharmacistHomeConsultation(item),
       ),
     [consultations],
   )

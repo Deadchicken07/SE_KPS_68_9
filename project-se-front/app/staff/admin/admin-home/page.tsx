@@ -50,10 +50,7 @@ export default function StaffAdminHomePage() {
         </section>
 
         <section className="grid grid-cols-1 items-start gap-6 xl:grid-cols-2">
-          <StaffOverviewSection
-            onOpenStaffWorkModal={state.openStaffWorkModal}
-            staffOverview={state.staffOverview}
-          />
+          <StaffOverviewSection staffOverview={state.staffOverview} />
           <UpcomingAppointmentsSection
             selectedDate={state.selectedDate}
             upcomingAppointments={state.upcomingAppointments}

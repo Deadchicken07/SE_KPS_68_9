@@ -1,306 +1,382 @@
-'use client'
+"use client";
 
-import { type FormEvent, useEffect, useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '@/components/providers/AuthProvider'
+import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/providers/AuthProvider";
 import type {
+  ClinicHolidayFormState,
   ClinicScheduleResponse,
-  StaffScheduleFormState,
-} from '@/types/staffAdminHome.types'
-import { mapRoleIdToRole, roleHome } from '@/types/role.types'
+  StaffOption,
+} from "@/types/staffAdminHome.types";
+import { mapRoleIdToRole, roleHome } from "@/types/role.types";
 import {
-  createStaffScheduleFormState,
   getCurrentDateKey,
   getCurrentMonthKey,
   parseStaffAdminHomeErrorMessage,
-} from '@/utils/staffAdminHome'
+} from "@/utils/staffAdminHome";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+const WEEKDAY_LABELS = [
+  "วันอาทิตย์",
+  "วันจันทร์",
+  "วันอังคาร",
+  "วันพุธ",
+  "วันพฤหัสบดี",
+  "วันศุกร์",
+  "วันเสาร์",
+];
 
 function getFirstDateOfMonth(monthKey: string) {
-  return `${monthKey}-01`
+  return `${monthKey}-01`;
+}
+
+function getWeekdayFromDateKey(dateKey: string) {
+  return new Date(`${dateKey}T00:00:00Z`).getUTCDay();
+}
+
+function getMonthDateKeys(monthKey: string) {
+  const [yearText, monthText] = monthKey.split("-");
+  const year = Number(yearText);
+  const monthIndex = Number(monthText) - 1;
+  const nextMonth = new Date(Date.UTC(year, monthIndex + 1, 1));
+  const cursor = new Date(Date.UTC(year, monthIndex, 1));
+  const dateKeys: string[] = [];
+
+  while (cursor < nextMonth) {
+    dateKeys.push(cursor.toISOString().slice(0, 10));
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+
+  return dateKeys;
+}
+
+function getNormalizedMonthDate(monthKey: string, todayDateKey: string) {
+  return monthKey === getCurrentMonthKey()
+    ? todayDateKey
+    : getFirstDateOfMonth(monthKey);
 }
 
 export const useAdminWorkSchedule = () => {
-  const router = useRouter()
-  const { me, loading: authLoading } = useAuth()
-  const todayDateKey = getCurrentDateKey()
-  const currentMonthKey = getCurrentMonthKey()
-  const [hasAccess, setHasAccess] = useState(false)
-  const [month, setMonth] = useState(currentMonthKey)
-  const [selectedDate, setSelectedDate] = useState(todayDateKey)
-  const [data, setData] = useState<ClinicScheduleResponse | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [reloadKey, setReloadKey] = useState(0)
-  const [form, setForm] = useState<StaffScheduleFormState>(() =>
-    createStaffScheduleFormState(todayDateKey),
-  )
-  const [formError, setFormError] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
-  const [deleting, setDeleting] = useState(false)
+  const router = useRouter();
+  const { me, loading: authLoading } = useAuth();
+  const todayDateKey = getCurrentDateKey();
+  const currentMonthKey = getCurrentMonthKey();
+  const [hasAccess, setHasAccess] = useState(false);
+  const [month, setMonth] = useState(currentMonthKey);
+  const [selectedDate, setSelectedDate] = useState(todayDateKey);
+  const [data, setData] = useState<ClinicScheduleResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [form, setForm] = useState<ClinicHolidayFormState>({
+    staffId: "",
+    note: "",
+  });
+  const [formError, setFormError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (authLoading) {
-      return
+      return;
     }
 
-    const roleId = me?.role_id ?? null
+    const roleId = me?.role_id ?? null;
 
     if (!roleId) {
-      router.replace('/login')
-      return
+      router.replace("/login");
+      return;
     }
 
     if (roleId !== 1) {
-      const role = mapRoleIdToRole(roleId)
-      router.replace(role ? roleHome[role] : '/user')
-      return
+      const role = mapRoleIdToRole(roleId);
+      router.replace(role ? roleHome[role] : "/user");
+      return;
     }
 
-    setHasAccess(true)
-  }, [authLoading, me?.role_id, router])
+    setHasAccess(true);
+  }, [authLoading, me?.role_id, router]);
 
   useEffect(() => {
-    if (!hasAccess || !me?.sub) {
-      return
+    if (!hasAccess) {
+      return;
     }
 
-    let ignore = false
+    let ignore = false;
 
     async function loadDashboard() {
-      setLoading(true)
-      setError(null)
+      setLoading(true);
+      setError(null);
 
       const query = new URLSearchParams({
         month,
         date: selectedDate,
-        staffId: String(me.sub),
-      })
+      });
 
       try {
         const response = await fetch(
           `${API_URL}/staff-home/clinic-schedule?${query.toString()}`,
           {
-            credentials: 'include',
+            credentials: "include",
           },
-        )
+        );
 
-        const payload = await response.json().catch(() => null)
+        const payload = await response.json().catch(() => null);
 
         if (!response.ok) {
-          throw new Error(parseStaffAdminHomeErrorMessage(payload))
+          throw new Error(parseStaffAdminHomeErrorMessage(payload));
         }
 
         if (!ignore) {
-          setData(payload as ClinicScheduleResponse)
+          setData(payload as ClinicScheduleResponse);
         }
       } catch (caught) {
         if (ignore) {
-          return
+          return;
         }
 
         setError(
           caught instanceof Error
             ? caught.message
-            : 'โหลดตารางวันทำงานไม่สำเร็จ',
-        )
-        setData(null)
+            : "โหลดข้อมูลวันหยุดรายเดือนไม่สำเร็จ",
+        );
+        setData(null);
       } finally {
         if (!ignore) {
-          setLoading(false)
+          setLoading(false);
         }
       }
     }
 
-    void loadDashboard()
+    void loadDashboard();
 
     return () => {
-      ignore = true
-    }
-  }, [hasAccess, me?.sub, month, selectedDate, reloadKey])
+      ignore = true;
+    };
+  }, [hasAccess, month, selectedDate, reloadKey]);
 
-  const scheduleEntries = data?.scheduleEntries ?? []
+  const holidayStaffOptions = useMemo(
+    () =>
+      data?.holidayStaffOptions?.length
+        ? data.holidayStaffOptions
+        : (data?.staffOptions ?? []),
+    [data?.holidayStaffOptions, data?.staffOptions],
+  );
+
+  useEffect(() => {
+    if (form.staffId) {
+      return;
+    }
+
+    const firstStaffId = holidayStaffOptions[0]?.id;
+
+    if (!firstStaffId) {
+      return;
+    }
+
+    setForm((current) => ({
+      ...current,
+      staffId: String(firstStaffId),
+    }));
+  }, [form.staffId, holidayStaffOptions]);
+
+  const selectedStaff = useMemo<StaffOption | null>(
+    () =>
+      holidayStaffOptions.find((staff) => String(staff.id) === form.staffId) ??
+      null,
+    [form.staffId, holidayStaffOptions],
+  );
+
+  const scheduleEntries = useMemo(() => {
+    if (!selectedStaff) {
+      return [];
+    }
+
+    return (data?.scheduleEntries ?? [])
+      .filter(
+        (entry) =>
+          entry.status === "holiday" && entry.staffId === selectedStaff.id,
+      )
+      .sort((left, right) => left.workDate.localeCompare(right.workDate));
+  }, [data?.scheduleEntries, selectedStaff]);
+
   const selectedSchedule = useMemo(
     () =>
       scheduleEntries.find((entry) => entry.workDate === selectedDate) ?? null,
     [scheduleEntries, selectedDate],
-  )
+  );
+
+  const weekdayOptions = useMemo(() => {
+    const monthDateKeys = getMonthDateKeys(month);
+
+    return WEEKDAY_LABELS.map((label, value) => {
+      const matchingDates = monthDateKeys.filter(
+        (dateKey) =>
+          dateKey >= todayDateKey && getWeekdayFromDateKey(dateKey) === value,
+      );
+      const anchorDate = matchingDates[0] ?? null;
+
+      return {
+        value,
+        label,
+        anchorDate,
+        disabled: !anchorDate,
+      };
+    });
+  }, [month, todayDateKey]);
+
+  const selectedWeekday = useMemo(
+    () => getWeekdayFromDateKey(selectedDate),
+    [selectedDate],
+  );
 
   useEffect(() => {
-    if (!me?.sub) {
-      return
-    }
-
-    const nextForm = {
-      ...createStaffScheduleFormState(selectedDate, String(me.sub)),
-      status: selectedSchedule?.status ?? 'working',
-      note: selectedSchedule?.note ?? '',
-    } satisfies StaffScheduleFormState
-
     setForm((current) => {
-      if (
-        current.staffId === nextForm.staffId &&
-        current.workDate === nextForm.workDate &&
-        current.status === nextForm.status &&
-        current.note === nextForm.note
-      ) {
-        return current
+      const nextNote = selectedSchedule?.note ?? "";
+
+      if (current.note === nextNote) {
+        return current;
       }
 
-      return nextForm
-    })
-  }, [me?.sub, selectedDate, selectedSchedule])
+      return {
+        ...current,
+        note: nextNote,
+      };
+    });
+  }, [selectedSchedule]);
 
   const handleMonthChange = (nextMonth: string) => {
     if (!nextMonth) {
-      return
+      return;
     }
 
     const normalizedMonth =
-      nextMonth < currentMonthKey ? currentMonthKey : nextMonth
-    const nextDate =
-      normalizedMonth === currentMonthKey
-        ? todayDateKey
-        : getFirstDateOfMonth(normalizedMonth)
+      nextMonth < currentMonthKey ? currentMonthKey : nextMonth;
 
-    setMonth(normalizedMonth)
-    setSelectedDate(nextDate)
-    setFormError(null)
-  }
+    setMonth(normalizedMonth);
+    setSelectedDate(getNormalizedMonthDate(normalizedMonth, todayDateKey));
+    setFormError(null);
+  };
 
-  const handleSelectDate = (dateKey: string) => {
-    if (!dateKey || dateKey < todayDateKey) {
-      return
+  const handleSelectWeekday = (weekday: number) => {
+    const option = weekdayOptions.find((item) => item.value === weekday);
+
+    if (!option?.anchorDate) {
+      return;
     }
 
-    setSelectedDate(dateKey)
-    setMonth(dateKey.slice(0, 7))
-    setFormError(null)
-  }
+    setSelectedDate(option.anchorDate);
+    setFormError(null);
+  };
 
-  const handleStatusChange = (status: StaffScheduleFormState['status']) => {
+  const handleStaffChange = (staffId: string) => {
     setForm((current) => ({
       ...current,
-      status,
-    }))
-    setFormError(null)
-  }
+      staffId,
+    }));
+    setFormError(null);
+  };
 
   const handleNoteChange = (note: string) => {
     setForm((current) => ({
       ...current,
       note,
-    }))
-    setFormError(null)
-  }
+    }));
+    setFormError(null);
+  };
+
+  const buildClinicHolidayPayload = () => {
+    if (!selectedStaff) {
+      throw new Error("กรุณาเลือกบุคลากร");
+    }
+
+    return {
+      month,
+      weekday: getWeekdayFromDateKey(selectedDate),
+      scope: "individual" as const,
+      staffId: selectedStaff.id,
+    };
+  };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setFormError(null)
+    event.preventDefault();
+    setFormError(null);
 
-    if (!me?.sub) {
-      setFormError('กรุณาเข้าสู่ระบบอีกครั้ง')
-      return
+    if (selectedDate < todayDateKey) {
+      setFormError("ไม่สามารถแก้ไขวันย้อนหลังได้");
+      return;
     }
 
-    if (!form.workDate) {
-      setFormError('กรุณาเลือกวันที่')
-      return
-    }
-
-    if (form.workDate < todayDateKey) {
-      setFormError('ไม่สามารถแก้ไขวันย้อนหลังได้')
-      return
-    }
-
-    if (form.status === 'leave' && !form.note.trim()) {
-      setFormError('กรุณากรอกหมายเหตุ')
-      return
-    }
-
-    setSubmitting(true)
+    setSubmitting(true);
 
     try {
-      const response = await fetch(`${API_URL}/staff-home/schedule`, {
-        method: 'POST',
-        credentials: 'include',
+      const payload = buildClinicHolidayPayload();
+      const response = await fetch(`${API_URL}/staff-home/clinic-holiday`, {
+        method: "POST",
+        credentials: "include",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          staffId: me.sub,
-          workDate: form.workDate,
-          status: form.status,
+          ...payload,
           note: form.note.trim() || null,
         }),
-      })
+      });
 
-      const payload = await response.json().catch(() => null)
+      const responsePayload = await response.json().catch(() => null);
 
       if (!response.ok) {
-        throw new Error(parseStaffAdminHomeErrorMessage(payload))
+        throw new Error(parseStaffAdminHomeErrorMessage(responsePayload));
       }
 
-      setSelectedDate(form.workDate)
-      setMonth(form.workDate.slice(0, 7))
-      setReloadKey((current) => current + 1)
+      setReloadKey((current) => current + 1);
     } catch (caught) {
       setFormError(
         caught instanceof Error
           ? caught.message
-          : 'บันทึกตารางวันทำงานไม่สำเร็จ',
-      )
+          : "บันทึกวันหยุดรายเดือนไม่สำเร็จ",
+      );
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   const handleDelete = async () => {
-    setFormError(null)
-
-    if (!me?.sub) {
-      setFormError('กรุณาเข้าสู่ระบบอีกครั้ง')
-      return
-    }
+    setFormError(null);
 
     if (!selectedSchedule) {
-      setFormError('ยังไม่มีสถานะที่บันทึกไว้สำหรับวันนี้')
-      return
+      setFormError("ยังไม่มีวันหยุดของบุคลากรในวันที่เลือก");
+      return;
     }
 
-    setDeleting(true)
+    setDeleting(true);
 
     try {
-      const response = await fetch(`${API_URL}/staff-home/schedule`, {
-        method: 'DELETE',
-        credentials: 'include',
+      const payload = buildClinicHolidayPayload();
+      const response = await fetch(`${API_URL}/staff-home/clinic-holiday`, {
+        method: "DELETE",
+        credentials: "include",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          staffId: me.sub,
-          workDate: selectedDate,
-        }),
-      })
+        body: JSON.stringify(payload),
+      });
 
-      const payload = await response.json().catch(() => null)
+      const responsePayload = await response.json().catch(() => null);
 
       if (!response.ok) {
-        throw new Error(parseStaffAdminHomeErrorMessage(payload))
+        throw new Error(parseStaffAdminHomeErrorMessage(responsePayload));
       }
 
-      setReloadKey((current) => current + 1)
+      setReloadKey((current) => current + 1);
     } catch (caught) {
       setFormError(
-        caught instanceof Error
-          ? caught.message
-          : 'ลบสถานะวันทำงาน/วันลาไม่สำเร็จ',
-      )
+        caught instanceof Error ? caught.message : "ลบวันหยุดรายเดือนไม่สำเร็จ",
+      );
     } finally {
-      setDeleting(false)
+      setDeleting(false);
     }
-  }
+  };
 
   return {
     currentMonthKey,
@@ -311,16 +387,20 @@ export const useAdminWorkSchedule = () => {
     handleDelete,
     handleMonthChange,
     handleNoteChange,
-    handleSelectDate,
-    handleStatusChange,
+    handleSelectWeekday,
+    handleStaffChange,
     handleSubmit,
     hasAccess,
+    holidayStaffOptions,
     loading,
     month,
     scheduleEntries,
     selectedDate,
     selectedSchedule,
+    selectedStaff,
+    selectedWeekday,
     submitting,
     todayDateKey,
-  }
-}
+    weekdayOptions,
+  };
+};

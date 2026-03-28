@@ -10,6 +10,15 @@ export type Roles =
   | "psychiatrist"
   | "pharmacist";
 
+export const authPages = ["/login", "/login/regis"] as const;
+
+export const userProtectedPrefixes = [
+  "/user/appointments",
+  "/user/profile",
+  "/user/schedule",
+  "/user/payment",
+] as const;
+
 export const mapRoleIdToRole = (roleId: number | null): Roles | null => {
   switch (roleId) {
     case 1:
@@ -29,7 +38,8 @@ export const mapRoleIdToRole = (roleId: number | null): Roles | null => {
 
 export const roleLinks: Record<Roles, NavLinks[]> = {
   admin: [
-    { name: "Dashboard", href: "/staff/admin-home" },
+    { name: "Dashboard", href: "/staff/admin/admin-home" },
+    { name: "Clinic Holiday", href: "/staff/admin/admin_work" },
     { name: "Admin Report", href: "/staff/admin/admin-report" },
     { name: "Add Staff", href: "/staff/admin/add-staff" },
     { name: "Patient History", href: "/staff/admin/patient-history" },
@@ -48,8 +58,8 @@ export const roleLinks: Record<Roles, NavLinks[]> = {
     { name: "การปรึกษา", href: "/staff/consult" },
   ],
   pharmacist: [
-    { name: "Dashboard", href: "/staff/pharmacist_home" },
-    { name: "Work Schedule", href: "/staff/pharmacist_home/Phama_work" },
+    { name: "Dashboard", href: "/staff/pharmacist/pharmacist_home" },
+    { name: "Work Schedule", href: "/staff/pharmacist/Phama_work" },
     { name: "Medication Order", href: "/staff/pharmacist/order" },
     { name: "Delivery History", href: "/staff/pharmacist/delivery-history" },
     { name: "Med Inventory", href: "/staff/pharmacist" },
@@ -57,9 +67,25 @@ export const roleLinks: Record<Roles, NavLinks[]> = {
 };
 
 export const roleHome: Record<Roles, string> = {
-  admin: "/staff/admin-home",
+  admin: "/staff/admin/admin-home",
   user: "/user",
   psychologist: "/staff/patient-history",
-  psychiatrist: "/staff/appointment",
-  pharmacist: "/staff/pharmacist_home",
+  psychiatrist: "/staff/patient-history",
+  pharmacist: "/staff/pharmacist/pharmacist_home",
+};
+
+export const roleRoutePrefixes: Record<Roles, readonly string[]> = {
+  admin: ["/staff/admin"],
+  user: ["/user", ...userProtectedPrefixes],
+  psychologist: [
+    "/staff/patient-history",
+    "/staff/appointments",
+    "/staff/consult",
+  ],
+  psychiatrist: [
+    "/staff/patient-history",
+    "/staff/appointments",
+    "/staff/consult",
+  ],
+  pharmacist: ["/staff/pharmacist"],
 };
