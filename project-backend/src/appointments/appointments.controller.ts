@@ -116,6 +116,25 @@ export class AppointmentsController {
     );
   }
 
+  @Patch(':id/meet-url/delete')
+  deleteMeetUrl(
+    @Req() req,
+    @Param('id', ParseIntPipe) appointmentId: number,
+  ) {
+    const staffId = this.getUserIdFromRequest(req);
+    return this.appointmentsService.deleteMeetUrl(staffId, appointmentId);
+  }
+
+  @Patch(':id/meet-url')
+  updateMeetUrl(
+    @Req() req,
+    @Param('id', ParseIntPipe) appointmentId: number,
+    @Body() body: { meetUrl: string },
+  ) {
+    const staffId = this.getUserIdFromRequest(req);
+    return this.appointmentsService.updateMeetUrl(staffId, appointmentId, body.meetUrl);
+  }
+
   @Patch(':id/pay')
   payAppointment(
     @Req() req,
