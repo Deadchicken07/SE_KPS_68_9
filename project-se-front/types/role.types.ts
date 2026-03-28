@@ -10,6 +10,15 @@ export type Roles =
   | "psychiatrist"
   | "pharmacist";
 
+export const authPages = ["/login", "/login/regis"] as const;
+
+export const userProtectedPrefixes = [
+  "/user/appointments",
+  "/user/profile",
+  "/user/schedule",
+  "/user/payment",
+] as const;
+
 export const mapRoleIdToRole = (roleId: number | null): Roles | null => {
   switch (roleId) {
     case 1:
@@ -30,7 +39,7 @@ export const mapRoleIdToRole = (roleId: number | null): Roles | null => {
 export const roleLinks: Record<Roles, NavLinks[]> = {
   admin: [
     { name: "Dashboard", href: "/staff/admin-home" },
-    { name: "Admin Report", href: "/staff/admin-report" },
+    { name: "Admin Report", href: "/staff/admin/admin-report" },
   ],
   user: [{ name: "หน้าแรก", href: "/user" }],
   psychologist: [
@@ -55,6 +64,31 @@ export const roleHome: Record<Roles, string> = {
   admin: "/staff/admin-home",
   user: "/user",
   psychologist: "/staff/patient-history",
-  psychiatrist: "/staff/appointment",
+  psychiatrist: "/staff/patient-history",
   pharmacist: "/staff/pharmacist_home",
+};
+
+export const roleRoutePrefixes: Record<Roles, readonly string[]> = {
+  admin: [
+    "/staff/admin-home",
+    "/staff/admin",
+  ],
+  user: [
+    "/user",
+    ...userProtectedPrefixes,
+  ],
+  psychologist: [
+    "/staff/patient-history",
+    "/staff/appointments",
+    "/staff/consult",
+  ],
+  psychiatrist: [
+    "/staff/patient-history",
+    "/staff/appointments",
+    "/staff/consult",
+  ],
+  pharmacist: [
+    "/staff/pharmacist_home",
+    "/staff/pharmacist",
+  ],
 };

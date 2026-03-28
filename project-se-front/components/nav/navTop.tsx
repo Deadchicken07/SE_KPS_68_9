@@ -5,7 +5,7 @@ import { Avatar, Dropdown, Layout, Modal, Space, Typography } from "antd";
 import axios from "axios";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { PhoneOutlined, HeartFilled } from "@ant-design/icons";
+import { PhoneOutlined, HeartFilled, UserOutlined } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import type { AuthMeResponse } from "@/types/auth.types";
 import { navigateToAppointmentsWithLoginGuard } from "@/utils/guardedNavigation";
@@ -66,13 +66,14 @@ export default function ClinicLayout() {
   };
 
   const menuItems: MenuProps["items"] = [
-  
+    { key: "profile", label: "Profile" },
     { key: "logout", label: "Logout" },
   ];
 
   const isLogin = mounted && !!me;
   const displayName = buildDisplayName(me);
   const avatarLabel = buildAvatarLabel(me);
+  const avatarSrc = me?.file_name || undefined;
 
   return (
     <Layout style={{ minHeight: "auto" }}>
@@ -135,6 +136,11 @@ export default function ClinicLayout() {
                   menu={{
                     items: menuItems,
                     onClick: ({ key }) => {
+                      if (key === "profile") {
+                        router.push("/user/profile");
+                        return;
+                      }
+
                       if (key === "logout") {
                         void handleLogout();
                       }
@@ -158,13 +164,15 @@ export default function ClinicLayout() {
                   >
                     <Avatar
                       size={44}
+                      src={avatarSrc}
+                      icon={!avatarSrc ? <UserOutlined /> : undefined}
                       style={{
-                        backgroundColor: "#0f766e",
+                        backgroundColor: avatarSrc ? "transparent" : "#0f766e",
                         color: "#ffffff",
                         flexShrink: 0,
                       }}
                     >
-                      {avatarLabel}
+                      {!avatarSrc ? avatarLabel : null}
                     </Avatar>
 
                     <div style={{ minWidth: 0, textAlign: "left" }}>
@@ -178,6 +186,17 @@ export default function ClinicLayout() {
                         ellipsis
                       >
                         {displayName}
+                      </Typography.Text>
+                      <Typography.Text
+                        style={{
+                          display: "block",
+                          maxWidth: 220,
+                          color: "#4d6b63",
+                          fontSize: 12,
+                        }}
+                        ellipsis
+                      >
+                        {me?.email || "Signed in"}
                       </Typography.Text>
                     </div>
 

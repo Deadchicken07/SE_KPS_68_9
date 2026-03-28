@@ -2,8 +2,23 @@
 
 import axios from "axios";
 import { useEffect, useRef } from "react";
+import { authPages, userProtectedPrefixes } from "@/types/role.types";
 
-const AUTH_PAGES = ["/login", "/login/regis"];
+function matchesPrefix(pathname: string, prefix: string) {
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
+function isAuthPage(pathname: string) {
+  return authPages.some((page) => matchesPrefix(pathname, page));
+}
+
+function isProtectedPath(pathname: string) {
+  return (
+    pathname === "/staff" ||
+    matchesPrefix(pathname, "/staff") ||
+    userProtectedPrefixes.some((prefix) => matchesPrefix(pathname, prefix))
+  );
+}
 
 export default function AxiosSessionGuard() {
   const isRedirectingRef = useRef(false);
@@ -18,10 +33,16 @@ export default function AxiosSessionGuard() {
 
         const requestUrl = error.config?.url ?? "";
         const pathname = window.location.pathname;
-        const isAuthPage = AUTH_PAGES.some((page) => pathname.startsWith(page));
+        const onAuthPage = isAuthPage(pathname);
+        const onProtectedPath = isProtectedPath(pathname);
         const isLoginRequest = requestUrl.includes("/auth/login");
 
-        if (!isAuthPage && !isLoginRequest && !isRedirectingRef.current) {
+        if (
+          onProtectedPath &&
+          !onAuthPage &&
+          !isLoginRequest &&
+          !isRedirectingRef.current
+        ) {
           isRedirectingRef.current = true;
           localStorage.removeItem("access_token");
           window.location.replace(
