@@ -300,6 +300,11 @@
   color: #b91c1c;
 }
 
+.appt-payment__pill.is-pending {
+  background: #fef9c3;
+  color: #a16207;
+}
+
 .appt-actions {
   margin-top: 16px;
   display: grid;
@@ -359,7 +364,11 @@
   box-shadow: 0 4px 18px rgba(15, 118, 110, 0.3);
 }
 
-.appt-btn--primary:hover:not(:disabled),
+.appt-btn--primary:hover:not(:disabled) {
+  background: #f0fdf4;
+  color: #0f766e;
+}
+
 .appt-btn--join:hover:not(:disabled) {
   opacity: 0.9;
 }

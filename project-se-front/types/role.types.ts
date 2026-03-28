@@ -40,6 +40,10 @@ export const roleLinks: Record<Roles, NavLinks[]> = {
   admin: [
     { name: "Dashboard", href: "/staff/admin-home" },
     { name: "Admin Report", href: "/staff/admin/admin-report" },
+    { name: "Add Staff", href: "/staff/admin/add-staff" },
+    { name: "Patient History", href: "/staff/admin/patient-history" },
+    { name: "Payment Verification", href: "/staff/admin/payment-verification" },
+    { name: "Walk-in Appointment", href: "/staff/admin/walkin-appointment" },
   ],
   user: [{ name: "หน้าแรก", href: "/user" }],
   psychologist: [
@@ -54,6 +58,7 @@ export const roleLinks: Record<Roles, NavLinks[]> = {
   ],
   pharmacist: [
     { name: "Dashboard", href: "/staff/pharmacist_home" },
+    { name: "Work Schedule", href: "/staff/pharmacist_home/Phama_work" },
     { name: "Medication Order", href: "/staff/pharmacist/order" },
     { name: "Delivery History", href: "/staff/pharmacist/delivery-history" },
     { name: "Med Inventory", href: "/staff/pharmacist" },

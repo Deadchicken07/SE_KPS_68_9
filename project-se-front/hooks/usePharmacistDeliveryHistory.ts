@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
 import type { DeliveryHistory } from '@/types/pharmacist.types'
 
-const API_URL = 'http://localhost:4000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (axios.isAxiosError(error)) {

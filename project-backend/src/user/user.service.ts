@@ -19,14 +19,15 @@ export class UserService {
     const search = query.search?.trim() ?? '';
     const skip = (page - 1) * limit;
 
-    const where: Prisma.usersWhereInput = search
-      ? {
+    const where: Prisma.usersWhereInput = {
+      ...(search ? {
         OR: [
           { name: { contains: search, mode: 'insensitive' } },
           { email: { contains: search, mode: 'insensitive' } },
         ],
-      }
-      : {};
+      } : {}),
+      ...(query.roleId ? { role_id: Number(query.roleId) } : {})
+    };
 
     const [users, total] = await Promise.all([
       this.prisma.users.findMany({
@@ -77,7 +78,7 @@ export class UserService {
       where: {
         roles: {
           name: {
-            in: ['จิตแพทย์', 'นักจิตวิทยา'],
+            in: ['psychiatrist', 'psychologist'],
           },
         },
       },
@@ -95,13 +96,19 @@ export class UserService {
       },
     });
 
-    return staffs.map((staff) => ({
-      id: staff.user_id,
-      name: `${staff.name} ${staff.sur_name}`,
-      role: staff.roles?.name || '',
-      specialty: staff.info || '',
-      image: staff.file_name || '',
-    }));
+    return staffs.map((staff) => {
+      let roleThai = staff.roles?.name || '';
+      if (roleThai === 'psychiatrist') roleThai = 'จิตแพทย์';
+      else if (roleThai === 'psychologist') roleThai = 'นักจิตวิทยา';
+
+      return {
+        id: staff.user_id,
+        name: `${staff.name} ${staff.sur_name}`,
+        role: roleThai,
+        specialty: staff.info || '',
+        image: staff.file_name || '',
+      };
+    });
   }
   async findOne(userId: number): Promise<UserResponseDto> {
     const user = await this.prisma.users.findUnique({
@@ -225,6 +232,11 @@ export class UserService {
     const staff = await this.prisma.users.findUnique({
       where: {
         user_id: staffId,
+        roles: {
+          name: {
+            in: ['psychiatrist', 'psychologist'],
+          },
+        },
       },
       select: {
         user_id: true,
@@ -244,10 +256,14 @@ export class UserService {
       throw new NotFoundException('Staff not found');
     }
 
+    let roleThai = staff.roles?.name || '';
+    if (roleThai === 'psychiatrist') roleThai = 'จิตแพทย์';
+    else if (roleThai === 'psychologist') roleThai = 'นักจิตวิทยา';
+
     return {
       id: staff.user_id,
       name: `${staff.name} ${staff.sur_name}`,
-      role: staff.roles?.name || '',
+      role: roleThai,
       specialty: staff.info || '',
       image: staff.file_name || '',
     };

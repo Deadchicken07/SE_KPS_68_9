@@ -7,5 +7,6 @@ import { StaffHomeService } from './staff-home.service';
   imports: [PrismaModule],
   controllers: [StaffHomeController],
   providers: [StaffHomeService],
+  exports: [StaffHomeService],
 })
 export class StaffHomeModule {}

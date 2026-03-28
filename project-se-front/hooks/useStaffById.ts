@@ -6,7 +6,7 @@ import { Appointment } from "@/types/appointment.types";
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 
-export const useStaffById = (id: number | null, date: string | null) => {
+export const useStaffById = (id: number | null, date: string | null, refresh?: number) => {
   const [data, setData] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +31,7 @@ export const useStaffById = (id: number | null, date: string | null) => {
     };
 
     fetch();
-  }, [id, date]);
+  }, [id, date, refresh]);
 
   return { data, loading, error };
 };

@@ -191,12 +191,12 @@ const App = () => {
                                     <div className="staff-avatar-wrapper">
                                         <div className="staff-avatar-ring">
                                             <img
-                                                src={person.image || '/docterProfile/default.png'}
+                                                src={person.image || '/docterProfile/defaultPicture.png'}
                                                 alt={person.name}
                                                 className="staff-avatar"
                                                 onError={(e) => {
                                                     const target = e.currentTarget as HTMLImageElement;
-                                                    target.src = '/docterProfile/default.png';
+                                                    target.src = '/docterProfile/defaultPicture.png';
                                                 }}
                                             />
                                         </div>

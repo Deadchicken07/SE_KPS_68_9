@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   ForbiddenException,
   Get,
   Post,
@@ -8,6 +9,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { DeleteStaffScheduleDto } from './dto/delete-staff-schedule.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { StaffHomeQueryDto } from './dto/staff-home-query.dto';
 import { UpsertStaffScheduleDto } from './dto/upsert-staff-schedule.dto';
@@ -26,8 +28,16 @@ export class StaffHomeController {
 
   @Post('schedule')
   upsertStaffSchedule(@Req() req, @Body() body: UpsertStaffScheduleDto) {
-    this.ensureAdminAccess(req);
-    return this.staffHomeService.upsertStaffSchedule(body);
+    return this.staffHomeService.upsertStaffSchedule(
+      this.resolveScheduleWriteInput(req, body),
+    );
+  }
+
+  @Delete('schedule')
+  deleteStaffSchedule(@Req() req, @Body() body: DeleteStaffScheduleDto) {
+    return this.staffHomeService.deleteStaffSchedule(
+      this.resolveScheduleDeleteInput(req, body),
+    );
   }
 
   private ensureStaffAccess(req): void {
@@ -39,11 +49,51 @@ export class StaffHomeController {
     }
   }
 
-  private ensureAdminAccess(req): void {
-    const roleId = Number(req?.user?.role_id);
+  private resolveScheduleWriteInput(
+    req,
+    body: UpsertStaffScheduleDto,
+  ): UpsertStaffScheduleDto {
+    return {
+      ...body,
+      staffId: this.resolveScheduleStaffId(req, body?.staffId),
+    };
+  }
 
-    if (roleId !== 1) {
-      throw new ForbiddenException('Admin access only');
+  private resolveScheduleDeleteInput(
+    req,
+    body: DeleteStaffScheduleDto,
+  ): DeleteStaffScheduleDto {
+    return {
+      ...body,
+      staffId: this.resolveScheduleStaffId(req, body?.staffId),
+    };
+  }
+
+  private resolveScheduleStaffId(req, requestedStaffId?: number): number {
+    const roleId = Number(req?.user?.role_id);
+    const currentUserId = Number(req?.user?.sub);
+
+    if (roleId === 1) {
+      return Number(requestedStaffId);
     }
+
+    const selfManageRoleIds = new Set([3, 4, 5]);
+
+    if (!selfManageRoleIds.has(roleId)) {
+      throw new ForbiddenException('Staff access only');
+    }
+
+    if (!Number.isInteger(currentUserId) || currentUserId <= 0) {
+      throw new ForbiddenException('Staff access only');
+    }
+
+    if (
+      requestedStaffId != null &&
+      Number(requestedStaffId) !== currentUserId
+    ) {
+      throw new ForbiddenException('You can only update your own schedule');
+    }
+
+    return currentUserId;
   }
 }

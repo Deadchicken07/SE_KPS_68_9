@@ -9,7 +9,7 @@ import type { AuthMeResponse } from "@/types/auth.types";
 import { mapRoleIdToRole, type Roles } from "@/types/role.types";
 import { useAuth } from "@/components/providers/AuthProvider";
 
-const API_URL = "http://localhost:4000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 const roleLabelMap: Record<Roles, string> = {
   admin: "ADMIN",
