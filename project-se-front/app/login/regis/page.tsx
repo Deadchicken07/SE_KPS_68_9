@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -165,7 +165,7 @@ export default function RegisterPage() {
 
   const handleSubmit = async () => {
     const newErrors: FormErrors = {};
-    const res = await axios.post("http://localhost:4000/users/check-email", {
+    const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/users/check-email`, {
       email: form.email,
     });
 

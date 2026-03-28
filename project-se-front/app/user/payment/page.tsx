@@ -2,7 +2,8 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Button, ConfigProvider, Spin } from 'antd';
+import { Button, ConfigProvider, message, Spin, QRCode } from 'antd';
+import generatePayload from 'promptpay-qr';
 import locale from 'antd/locale/th_TH';
 import { isSupabaseConfigured, supabase } from '@/utils/supabase';
 
@@ -33,7 +34,7 @@ function PaymentContent() {
 
     useEffect(() => {
         const fetchAppointment = async () => {
-            const id = searchParams.get('id');
+            const id = searchParams.get('id') || searchParams.get('appointmentId');
             if (!id) {
                 setFetchError('Appointment id was not found.');
                 setIsLoadingData(false);
@@ -41,11 +42,9 @@ function PaymentContent() {
             }
 
             try {
-                const token = localStorage.getItem('token');
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
                 const res = await fetch(`${apiUrl}/appointments/${id}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
+                    credentials: 'include'
                 });
 
                 if (!res.ok) {
@@ -79,10 +78,8 @@ function PaymentContent() {
     const price = appointmentData?.price?.toString() || searchParams.get('price') || '0';
 
     const handleConfirmPayment = async () => {
-        if (!uploadedSlip) {
-            alert('Please attach a payment slip first.');
-            return;
-        }
+        if (!uploadedSlip) return alert('กรุณาแนบสลิปการโอนเงิน');
+        const appointmentId = searchParams.get('id') || searchParams.get('appointmentId');
 
         if (!appointmentId) {
             alert('Appointment id was not found.');
@@ -112,14 +109,15 @@ function PaymentContent() {
                 data: { publicUrl },
             } = supabase.storage.from('Paid_appointment').getPublicUrl(filePath);
 
-            const token = localStorage.getItem('token');
+            // 3. Send URL to backend
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
             const response = await fetch(`${apiUrl}/appointments/${appointmentId}/pay`, {
                 method: 'PATCH',
                 headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ slipUrl: publicUrl }),
+                credentials: 'include',
+                body: JSON.stringify({ slipUrl: publicUrl })
             });
 
             if (!response.ok) {
@@ -138,7 +136,7 @@ function PaymentContent() {
     if (isLoadingData) {
         return (
             <div className="appt-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                <Spin tip="Loading appointment..." size="large" />
+                <Spin description="กำลังโหลดข้อมูลการนัดหมาย..." size="large" />
             </div>
         );
     }
@@ -230,11 +228,13 @@ function PaymentContent() {
                                 </div>
                             </div>
 
-                            <div style={{ display: 'inline-block', marginBottom: 24 }}>
-                                <img
-                                    src={`https://promptpay.io/0928104747/${price}`}
-                                    alt="PromptPay QR code"
-                                    style={{ width: 300, height: 300, objectFit: 'contain', borderRadius: 8 }}
+                            <div style={{ display: 'inline-block', marginBottom: 24, padding: 16, background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb' }}>
+                                <QRCode 
+                                    value={generatePayload('0928104747', { amount: Number(price) })}
+                                    size={250}
+                                    color="#000"
+                                    type="svg"
+                                    errorLevel="H"
                                 />
                             </div>
 

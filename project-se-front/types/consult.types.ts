@@ -10,6 +10,7 @@ export interface Consultation {
   id: number;
   user_id: number;
   staff_id: number | null;
+  pharmacist_id: number | null;
   note: string | null;
   created_at: string | null;
   prescription_items?: ConsultationPrescriptionItem[];

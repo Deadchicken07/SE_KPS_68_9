@@ -1,4 +1,4 @@
-import { type CSSProperties } from "react";
+import { type CSSProperties, useEffect, useState } from "react";
 import type { useStaffAdminHome } from "@/hooks/useStaffAdminHome";
 import type {
   AppointmentItem,
@@ -329,6 +329,20 @@ export function ErrorPanel({
 }
 
 export function TimelineSection({ state }: { state: StaffAdminHomeState }) {
+  const [expandedDayKeys, setExpandedDayKeys] = useState<string[]>([]);
+
+  useEffect(() => {
+    setExpandedDayKeys([]);
+  }, [state.activeWeekStart, state.month]);
+
+  const toggleDayExpansion = (dateKey: string) => {
+    setExpandedDayKeys((current) =>
+      current.includes(dateKey)
+        ? current.filter((item) => item !== dateKey)
+        : [...current, dateKey],
+    );
+  };
+
   return (
     <article className={PANEL_CLASS}>
       <div className="flex flex-wrap items-start justify-between gap-4 p-[24px_24px_18px]">
@@ -400,7 +414,13 @@ export function TimelineSection({ state }: { state: StaffAdminHomeState }) {
             {state.weekRows.map((day) => {
               const tone = getDayTone(day.date);
               const isSelected = day.date === state.selectedDate;
+              const isExpanded = expandedDayKeys.includes(day.date);
+              const hasCollapsedTracks = day.trackCount > 1;
               const laneLines = state.timeMarkers.slice(0, -1);
+              const visibleLaneHeight =
+                hasCollapsedTracks && !isExpanded
+                  ? day.collapsedLaneHeight
+                  : day.laneHeight;
 
               return (
                 <div
@@ -433,9 +453,10 @@ export function TimelineSection({ state }: { state: StaffAdminHomeState }) {
                   </button>
 
                   <div
-                    className="relative cursor-pointer"
+                    className="relative cursor-pointer overflow-hidden"
                     style={{
-                      minHeight: `${day.laneHeight}px`,
+                      height: `${visibleLaneHeight}px`,
+                      minHeight: `${visibleLaneHeight}px`,
                       background: isSelected
                         ? TIMELINE_LANE_SELECTED_BACKGROUND
                         : TIMELINE_LANE_BACKGROUND,
@@ -477,8 +498,8 @@ export function TimelineSection({ state }: { state: StaffAdminHomeState }) {
                             )}
                             onClick={(clickEvent) => {
                               clickEvent.stopPropagation();
-                              state.selectAppointment(
-                                event.appointment.id,
+                              state.openAppointmentDetailModal(
+                                event.appointment,
                                 day.date,
                               );
                             }}
@@ -510,6 +531,21 @@ export function TimelineSection({ state }: { state: StaffAdminHomeState }) {
                         ยังไม่มีนัดหมายในวันนี้
                       </div>
                     )}
+                    {hasCollapsedTracks && !isExpanded ? (
+                      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[rgba(247,251,250,0.98)] via-[rgba(247,251,250,0.92)] to-transparent" />
+                    ) : null}
+                    {hasCollapsedTracks ? (
+                      <button
+                        type="button"
+                        onClick={(clickEvent) => {
+                          clickEvent.stopPropagation();
+                          toggleDayExpansion(day.date);
+                        }}
+                        className="absolute bottom-3 right-3 z-10 inline-flex min-h-[34px] items-center justify-center rounded-full border border-[rgba(15,118,110,0.18)] bg-white/95 px-3 text-[0.76rem] font-extrabold text-[#0f766e] shadow-[0_10px_20px_rgba(15,118,110,0.12)] transition hover:-translate-y-0.5"
+                      >
+                        {isExpanded ? "ย่อรายการ" : "ดูรายการซ้อน"}
+                      </button>
+                    ) : null}
                   </div>
                 </div>
               );
@@ -589,7 +625,7 @@ export function SelectedAppointmentsSection({
               state.selectedDateAppointments.map((appointment) => (
                 <article
                   key={appointment.id}
-                  onClick={() => state.selectAppointment(appointment.id)}
+                  onClick={() => state.openAppointmentDetailModal(appointment)}
                   className={cx(
                     "cursor-pointer rounded-[22px] border border-[rgba(15,118,110,0.12)] bg-white p-4",
                     appointment.id === state.selectedAppointment?.id &&
@@ -933,6 +969,90 @@ export function StaffWorkModal({ state }: { state: StaffAdminHomeState }) {
             </button>
           </div>
         </form>
+      </section>
+    </div>
+  );
+}
+
+export function AppointmentDetailModal({
+  state,
+}: {
+  state: StaffAdminHomeState;
+}) {
+  if (!state.isAppointmentDetailModalOpen || !state.appointmentDetail) {
+    return null;
+  }
+
+  const appointment = state.appointmentDetail;
+  const timeLabel =
+    appointment.timeSelect ??
+    `${appointment.startTime ?? "--"} - ${appointment.endTime ?? "--"}`;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(25,36,32,0.46)] p-4 backdrop-blur-sm"
+      onClick={state.closeAppointmentDetailModal}
+    >
+      <section
+        className="w-full max-w-3xl rounded-[30px] border border-[rgba(15,118,110,0.14)] bg-white shadow-[0_26px_70px_rgba(15,118,110,0.16)]"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-[#4b615a1c] px-6 py-5">
+          <div>
+            <span className="inline-flex rounded-full bg-[#edf3ee] px-3 py-1 text-[0.76rem] font-extrabold tracking-[0.12em] text-[#33554d]">
+              APPOINTMENT DETAIL
+            </span>
+            <h3 className="mt-3 text-[1.5rem] font-semibold text-[#173630]">
+              {appointment.patientName}
+            </h3>
+            <p className="mt-2 text-[0.95rem] leading-7 text-[#5f6b62]">
+              {appointment.staffName}
+              {appointment.staffRoleLabel
+                ? ` • ${appointment.staffRoleLabel}`
+                : ""}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={state.closeAppointmentDetailModal}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#3c524c24] bg-white text-[1.2rem] text-[#33554d] transition hover:bg-[#f6f4ed]"
+            aria-label="ปิด popup"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="space-y-4 px-6 py-6">
+          <div className="flex flex-wrap gap-3">
+            <span className="inline-flex items-center rounded-full bg-[#e6fffb] px-3 py-2 text-[0.85rem] font-extrabold text-[#0f766e]">
+              {timeLabel}
+            </span>
+            <span className={getStatusBadgeClasses(appointment.displayStatus)}>
+              {appointment.displayStatusLabel}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <InfoBox
+              label="วันนัด"
+              value={
+                appointment.appointmentDate
+                  ? formatDateLabel(appointment.appointmentDate)
+                  : "-"
+              }
+            />
+            <InfoBox label="รูปแบบ" value={appointment.appointmentTypeLabel} />
+            <InfoBox label="ชำระเงิน" value={appointment.paymentStatusLabel} />
+            <InfoBox label="เจ้าหน้าที่" value={appointment.staffName} />
+            <InfoBox
+              label="ตำแหน่ง"
+              value={appointment.staffRoleLabel || "-"}
+            />
+            <InfoBox label="ผู้รับบริการ" value={appointment.patientName} />
+            <InfoBox label="อีเมล" value={appointment.patientEmail ?? "-"} />
+            <InfoBox label="เบอร์โทร" value={appointment.patientPhone ?? "-"} />
+          </div>
+        </div>
       </section>
     </div>
   );

@@ -140,7 +140,9 @@ export type TimelineEvent = {
 
 export type TimelineWeekRow = DailyStat & {
   events: TimelineEvent[];
+  collapsedLaneHeight: number;
   laneHeight: number;
+  trackCount: number;
 };
 
 export type MonthWeekOption = {

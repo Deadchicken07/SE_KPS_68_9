@@ -8,4 +8,6 @@ export interface Appointment {
   appointmentType: "online" | "onsite";
   paymentStatus: "Paid" | "Not_paying";
   depositSlipFile: string | null;
+  meetUrl: string | null;
+  hasConsultation: boolean;
 }

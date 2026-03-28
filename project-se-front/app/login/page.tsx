@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -25,7 +25,7 @@ const LOGIN_BACKGROUND =
 const getRedirectPathByRoleId = (roleId: number | null) => {
   switch (roleId) {
     case 1:
-      return "/staff/admin-home";
+      return "/staff/admin/admin-home";
     case 2:
       return "/user";
     case 3:
@@ -33,7 +33,7 @@ const getRedirectPathByRoleId = (roleId: number | null) => {
     case 4:
       return "/staff/role-psychiatrist-psychologists/psychiatrist";
     case 5:
-      return "/staff/pharmacist_home";
+      return "/staff/pharmacist/pharmacist_home";
     default:
       return "/user";
   }
