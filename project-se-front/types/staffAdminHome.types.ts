@@ -19,7 +19,7 @@ export type StaffOption = {
   avatarUrl: string | null;
 };
 
-export type ScheduleStatus = "working" | "leave";
+export type ScheduleStatus = "working" | "leave" | "holiday";
 
 export type DailyStat = {
   date: string;
@@ -81,6 +81,8 @@ export type StaffScheduleEntry = {
   note: string | null;
 };
 
+export type ClinicHolidayScope = "all" | "individual";
+
 export type ClinicScheduleResponse = {
   month: string;
   selectedDate: string;
@@ -90,6 +92,7 @@ export type ClinicScheduleResponse = {
   };
   summary: DashboardSummary;
   staffOptions: StaffOption[];
+  holidayStaffOptions?: StaffOption[];
   dailyStats: DailyStat[];
   scheduleEntries: StaffScheduleEntry[];
   weekStats: DailyStat[];
@@ -103,6 +106,12 @@ export type StaffScheduleFormState = {
   staffId: string;
   workDate: string;
   status: ScheduleStatus;
+  note: string;
+};
+
+export type ClinicHolidayFormState = {
+  scope: ClinicHolidayScope;
+  staffId: string;
   note: string;
 };
 

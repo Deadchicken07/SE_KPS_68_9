@@ -5,8 +5,10 @@ import {
   schedule_status,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { DeleteClinicHolidayDto } from './dto/delete-clinic-holiday.dto';
 import { DeleteStaffScheduleDto } from './dto/delete-staff-schedule.dto';
 import { StaffHomeQueryDto } from './dto/staff-home-query.dto';
+import { UpsertClinicHolidayDto } from './dto/upsert-clinic-holiday.dto';
 import { UpsertStaffScheduleDto } from './dto/upsert-staff-schedule.dto';
 
 type DashboardStatus = 'pending' | 'confirmed' | 'completed';
@@ -89,8 +91,11 @@ export class StaffHomeService {
       this.getMonthBounds(month);
     const selectedDate = this.resolveSelectedDate(query.date, month, dayKeys);
     const selectedDateValue = this.toDateOnlyUtc(selectedDate);
-    const { weekStart, weekEndExclusive, dayKeys: weekDayKeys } =
-      this.getWeekBounds(selectedDate);
+    const {
+      weekStart,
+      weekEndExclusive,
+      dayKeys: weekDayKeys,
+    } = this.getWeekBounds(selectedDate);
     const staffId = this.parseStaffId(query.staffId);
 
     const appointmentWhere = {
@@ -101,7 +106,13 @@ export class StaffHomeService {
       ...(staffId ? { staff_id: staffId } : {}),
     };
 
-    const [appointments, weekAppointments, selectedDateClinicAppointments, staffRows] = await Promise.all([
+    const [
+      appointments,
+      weekAppointments,
+      selectedDateClinicAppointments,
+      staffRows,
+      holidayStaffRows,
+    ] = await Promise.all([
       this.prisma.appointments.findMany({
         where: appointmentWhere,
         orderBy: [{ appointment_date: 'asc' }, { time_select: 'asc' }],
@@ -257,29 +268,26 @@ export class StaffHomeService {
           },
         },
       }),
+      this.getClinicHolidayStaffRows(),
     ]);
 
-    const scheduleRows = staffId
-      ? await this.prisma.schedule.findMany({
-          where: {
-            staff_id: staffId,
-            work_date: {
-              gte: monthStart,
-              lt: monthEndExclusive,
-            },
-          },
-          orderBy: {
-            work_date: 'asc',
-          },
-          select: {
-            id: true,
-            staff_id: true,
-            work_date: true,
-            status: true,
-            note: true,
-          },
-        })
-      : [];
+    const scheduleRows = await this.prisma.schedule.findMany({
+      where: {
+        ...(staffId ? { staff_id: staffId } : {}),
+        work_date: {
+          gte: monthStart,
+          lt: monthEndExclusive,
+        },
+      },
+      orderBy: [{ work_date: 'asc' }, { staff_id: 'asc' }],
+      select: {
+        id: true,
+        staff_id: true,
+        work_date: true,
+        status: true,
+        note: true,
+      },
+    });
 
     const mapAppointmentRecord = (record: (typeof appointments)[number]) => {
       const appointmentDate = record.appointment_date
@@ -321,7 +329,8 @@ export class StaffHomeService {
 
     const appointmentItems = appointments.map(mapAppointmentRecord);
     const weekAppointmentItems = weekAppointments.map(mapAppointmentRecord);
-    const selectedDateClinicAppointmentItems = selectedDateClinicAppointments.map(mapAppointmentRecord);
+    const selectedDateClinicAppointmentItems =
+      selectedDateClinicAppointments.map(mapAppointmentRecord);
     const dailyStats = this.buildDailyStats(dayKeys, appointmentItems);
     const weekStats = this.buildDailyStats(weekDayKeys, weekAppointmentItems);
 
@@ -364,6 +373,15 @@ export class StaffHomeService {
       avatarUrl: staff.file_name ?? null,
     }));
 
+    const holidayStaffOptions = holidayStaffRows.map((staff) => ({
+      id: staff.user_id,
+      name: this.buildFullName(staff.name, staff.sur_name),
+      role: staff.roles?.name ?? null,
+      roleLabel: this.toRoleLabel(staff.roles?.name),
+      specialty: staff.info ?? null,
+      avatarUrl: staff.file_name ?? null,
+    }));
+
     const staffOverview = staffRows
       .map((staff) => {
         const staffAppointments = selectedDateClinicAppointmentItems
@@ -372,10 +390,13 @@ export class StaffHomeService {
             (left, right) => this.getSortValue(left) - this.getSortValue(right),
           );
         const nextAppointment =
-          staffAppointments.find((item) => !this.isPastAppointment(
-            item.appointmentDate,
-            this.tryParseTimeRange(item.timeSelect),
-          )) ?? null;
+          staffAppointments.find(
+            (item) =>
+              !this.isPastAppointment(
+                item.appointmentDate,
+                this.tryParseTimeRange(item.timeSelect),
+              ),
+          ) ?? null;
 
         return {
           staffId: staff.user_id,
@@ -399,8 +420,7 @@ export class StaffHomeService {
           ).length,
           nextAppointmentDate: nextAppointment?.appointmentDate ?? null,
           nextAppointmentTime: nextAppointment?.timeSelect ?? null,
-          scheduleStatus:
-            staff.schedule[0]?.status ?? ('unassigned' as const),
+          scheduleStatus: staff.schedule[0]?.status ?? ('unassigned' as const),
         } satisfies StaffHomeStaffSummary;
       })
       .sort((left, right) => {
@@ -413,7 +433,9 @@ export class StaffHomeService {
 
     const selectedDateAppointments = appointmentItems
       .filter((item) => item.appointmentDate === selectedDate)
-      .sort((left, right) => this.getSortValue(left) - this.getSortValue(right));
+      .sort(
+        (left, right) => this.getSortValue(left) - this.getSortValue(right),
+      );
 
     const upcomingAppointments = appointmentItems
       .filter(
@@ -448,6 +470,7 @@ export class StaffHomeService {
       },
       summary,
       staffOptions,
+      holidayStaffOptions,
       dailyStats,
       scheduleEntries,
       weekStats,
@@ -476,8 +499,10 @@ export class StaffHomeService {
       throw new BadRequestException('ไม่สามารถบันทึกตารางงานย้อนหลังได้');
     }
 
-    if (status !== 'working' && status !== 'leave') {
-      throw new BadRequestException('status must be working or leave');
+    if (status !== 'working' && status !== 'leave' && status !== 'holiday') {
+      throw new BadRequestException(
+        'status must be working, leave, or holiday',
+      );
     }
 
     if (note && note.length > 255) {
@@ -600,6 +625,205 @@ export class StaffHomeService {
     };
   }
 
+  async upsertClinicHoliday(input: UpsertClinicHolidayDto) {
+    const month = this.normalizeMonth(input?.month);
+    const weekday = this.parseClinicHolidayWeekday(input?.weekday);
+    const scope = this.parseClinicHolidayScope(input?.scope);
+    const note = input?.note?.trim() || null;
+
+    if (note && note.length > 255) {
+      throw new BadRequestException('note must not exceed 255 characters');
+    }
+
+    const workDates = this.getClinicHolidayDateKeys(month, weekday);
+    const staffIds = await this.getClinicHolidayTargetStaffIds(
+      scope,
+      input?.staffId,
+    );
+
+    await this.prisma.$transaction(
+      staffIds.flatMap((staffId) =>
+        workDates.map((workDate) =>
+          this.prisma.schedule.upsert({
+            where: {
+              staff_id_work_date: {
+                staff_id: staffId,
+                work_date: this.toDateOnlyUtc(workDate),
+              },
+            },
+            update: {
+              status: schedule_status.holiday,
+              note,
+            },
+            create: {
+              staff_id: staffId,
+              work_date: this.toDateOnlyUtc(workDate),
+              status: schedule_status.holiday,
+              note,
+            },
+          }),
+        ),
+      ),
+    );
+
+    return {
+      message: 'บันทึกวันหยุดรายเดือนเรียบร้อยแล้ว',
+      affectedStaffCount: staffIds.length,
+      affectedDateCount: workDates.length,
+      month,
+      weekday,
+      scope,
+    };
+  }
+
+  async deleteClinicHoliday(input: DeleteClinicHolidayDto) {
+    const month = this.normalizeMonth(input?.month);
+    const weekday = this.parseClinicHolidayWeekday(input?.weekday);
+    const scope = this.parseClinicHolidayScope(input?.scope);
+    const workDates = this.getClinicHolidayDateKeys(month, weekday);
+    const staffIds = await this.getClinicHolidayTargetStaffIds(
+      scope,
+      input?.staffId,
+    );
+
+    const deleted = await this.prisma.schedule.deleteMany({
+      where: {
+        staff_id: {
+          in: staffIds,
+        },
+        work_date: {
+          in: workDates.map((workDate) => this.toDateOnlyUtc(workDate)),
+        },
+        status: schedule_status.holiday,
+      },
+    });
+
+    if (!deleted.count) {
+      throw new BadRequestException(
+        'ยังไม่มีวันหยุดตามเงื่อนไขนี้ในเดือนที่เลือก',
+      );
+    }
+
+    return {
+      message: 'ลบวันหยุดรายเดือนเรียบร้อยแล้ว',
+      affectedStaffCount: deleted.count,
+      affectedDateCount: workDates.length,
+      month,
+      weekday,
+      scope,
+    };
+  }
+
+  private async getClinicHolidayStaffRows() {
+    return this.prisma.users.findMany({
+      where: {
+        NOT: {
+          OR: [{ role_id: 2 }, { role_id: null }],
+        },
+      },
+      select: {
+        user_id: true,
+        name: true,
+        sur_name: true,
+        info: true,
+        file_name: true,
+        roles: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: [{ name: 'asc' }, { sur_name: 'asc' }],
+    });
+  }
+
+  private async getClinicHolidayStaffIds() {
+    const staffRows = await this.prisma.users.findMany({
+      where: {
+        NOT: {
+          OR: [{ role_id: 2 }, { role_id: null }],
+        },
+      },
+      select: {
+        user_id: true,
+      },
+      orderBy: {
+        user_id: 'asc',
+      },
+    });
+
+    const staffIds = staffRows.map((staff) => staff.user_id);
+
+    if (!staffIds.length) {
+      throw new BadRequestException('ไม่พบบุคลากรสำหรับตั้งวันหยุด');
+    }
+
+    return staffIds;
+  }
+
+  private async getClinicHolidayTargetStaffIds(
+    scope: 'all' | 'individual',
+    requestedStaffId?: number | null,
+  ) {
+    if (scope === 'all') {
+      return this.getClinicHolidayStaffIds();
+    }
+
+    const staffId = Number(requestedStaffId);
+
+    if (!Number.isInteger(staffId) || staffId <= 0) {
+      throw new BadRequestException('กรุณาเลือกบุคลากร');
+    }
+
+    const staffIds = await this.getClinicHolidayStaffIds();
+
+    if (!staffIds.includes(staffId)) {
+      throw new BadRequestException('ไม่พบบุคลากรที่ต้องการตั้งวันหยุด');
+    }
+
+    return [staffId];
+  }
+
+  private parseClinicHolidayScope(value?: string | null): 'all' | 'individual' {
+    if (value === 'all' || value === 'individual') {
+      return value;
+    }
+
+    throw new BadRequestException('scope must be all or individual');
+  }
+
+  private parseClinicHolidayWeekday(
+    value: number | string | undefined,
+  ): number {
+    const weekday = Number(value);
+
+    if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6) {
+      throw new BadRequestException(
+        'weekday must be an integer between 0 and 6',
+      );
+    }
+
+    return weekday;
+  }
+
+  private getClinicHolidayDateKeys(month: string, weekday: number) {
+    const today = this.getClinicNowParts(new Date()).dateKey;
+    const { dayKeys } = this.getMonthBounds(month);
+    const matchingDates = dayKeys.filter((dateKey) => {
+      const dateValue = this.toDateOnlyUtc(dateKey);
+
+      return dateKey >= today && dateValue.getUTCDay() === weekday;
+    });
+
+    if (!matchingDates.length) {
+      throw new BadRequestException(
+        'ไม่มีวันที่ตรงกับวันในสัปดาห์นี้ที่ยังแก้ไขได้ในเดือนที่เลือก',
+      );
+    }
+
+    return matchingDates;
+  }
+
   private normalizeMonth(value?: string): string {
     const trimmed = value?.trim();
 
@@ -613,7 +837,10 @@ export class StaffHomeService {
 
     const parsedDate = new Date(`${trimmed}-01T00:00:00.000Z`);
 
-    if (Number.isNaN(parsedDate.getTime()) || this.toMonthKey(parsedDate) !== trimmed) {
+    if (
+      Number.isNaN(parsedDate.getTime()) ||
+      this.toMonthKey(parsedDate) !== trimmed
+    ) {
       throw new BadRequestException('month is invalid');
     }
 
@@ -908,12 +1135,7 @@ export class StaffHomeService {
     const endHour = Number(match[3]);
     const endMinute = Number(match[4]);
 
-    if (
-      startHour > 23 ||
-      endHour > 23 ||
-      startMinute > 59 ||
-      endMinute > 59
-    ) {
+    if (startHour > 23 || endHour > 23 || startMinute > 59 || endMinute > 59) {
       return null;
     }
 
