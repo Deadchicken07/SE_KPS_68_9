@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Alert,
   Button,
@@ -61,23 +61,16 @@ export default function LoginPage() {
   const emailValue = Form.useWatch("email", form);
   const passwordValue = Form.useWatch("password", form);
   const router = useRouter();
-  const [{ registered, expired, redirectTarget }] = useState(() => {
-    if (typeof window === "undefined") {
-      return {
-        registered: null,
-        expired: null,
-        redirectTarget: null,
-      };
-    }
-
-    const params = new URLSearchParams(window.location.search);
-    return {
-      registered: params.get("registered"),
-      expired: params.get("expired"),
-      redirectTarget: params.get("redirect"),
-    };
-  });
+  const searchParams = useSearchParams();
+  const [isHydrated, setIsHydrated] = useState(false);
+  const registered = isHydrated ? searchParams.get("registered") : null;
+  const expired = isHydrated ? searchParams.get("expired") : null;
+  const redirectTarget = isHydrated ? searchParams.get("redirect") : null;
   const isLoginDisabled = !emailValue?.trim() || !passwordValue?.trim();
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   useEffect(() => {
     if (registered === "success") {

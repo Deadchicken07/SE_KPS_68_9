@@ -1,0 +1,16 @@
+
+> project-se-front@0.1.0 dev
+> next dev
+
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://10.35.146.117:3000
+
+✓ Starting...
+Creating turbopack project {
+  dir: 'C:\\Users\\USER\\Documents\\dev\\project-se-front',
+  testMode: true
+}
+✓ Ready in 669ms
+ GET / 307 in 1879ms (compile: 1724ms, render: 155ms)
+ GET /user 200 in 1823ms (compile: 1600ms, render: 223ms)

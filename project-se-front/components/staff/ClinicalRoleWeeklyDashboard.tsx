@@ -393,7 +393,7 @@ export function ClinicalRoleWeeklyDashboard({
           weekRows={weekRows}
         />
 
-        <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,0.96fr)_minmax(0,1.04fr)]">
+        <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
           <SelectedAppointmentsSection
             appointments={selectedDateAppointments}
             onSelect={setSelectedAppointmentId}
