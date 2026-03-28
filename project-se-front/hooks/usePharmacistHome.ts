@@ -38,7 +38,7 @@ export const usePharmacistHome = () => {
     }
 
     if (roleId === 1) {
-      router.replace('/staff/admin-home')
+      router.replace('/staff/admin/admin-home')
       return
     }
 
