@@ -109,9 +109,7 @@ export default function SidebarNav() {
             </p>
           </div>
 
-          <p className="mt-3 truncate text-sm font-medium text-[#d7fff4]">
-            {displayName}
-          </p>
+         
         </Link>
 
         <nav className="flex flex-col gap-1.5">
