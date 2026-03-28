@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   ForbiddenException,
@@ -6,18 +7,44 @@ import {
   Param,
   ParseIntPipe,
   Patch,
+  Post,
+  Query,
   Req,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 import { AppointmentsService } from './appointments.service';
 import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
 
 @Controller('appointments')
 @UseGuards(JwtAuthGuard)
 export class AppointmentsController {
-  constructor(private readonly appointmentsService: AppointmentsService) {}
+  constructor(private readonly appointmentsService: AppointmentsService) { }
+
+  @Get('available-slots')
+  async getAvailableSlots(@Query('date') date: string) {
+    if (!date) {
+      throw new BadRequestException('date query parameter is required');
+    }
+    return this.appointmentsService.getAvailableSlots(date);
+  }
+
+  @Get('payments')
+  @UseGuards(RolesGuard)
+  @Roles(1) // Admin only
+  getAllPaidAppointments() {
+    return this.appointmentsService.getAllPaidAppointments();
+  }
+
+  @Patch(':id/confirm')
+  @UseGuards(RolesGuard)
+  @Roles(1) // Admin only
+  async confirmPayment(@Param('id', ParseIntPipe) appointmentId: number) {
+    return this.appointmentsService.confirmPayment(appointmentId);
+  }
 
   @Get('staff/me')
   getMyStaffAppointments(@Req() req) {
@@ -39,10 +66,32 @@ export class AppointmentsController {
     return this.appointmentsService.getMySchedule(userId);
   }
 
-  // @Get('staff/:staffId')
-  // findAllByStaff(@Param('staffId', ParseIntPipe) staffId : number){
-  //   return this.appointmentsService.findAllByStaff(staffId)
-  // }
+  @Post()
+  createAppointment(@Req() req, @Body() body: any) {
+    const userId = this.getUserIdFromRequest(req);
+    return this.appointmentsService.createAppointment(userId, body);
+  }
+
+  @Post('admin')
+  @UseGuards(RolesGuard)
+  @Roles(1) // Admin only
+  async createAppointmentByAdmin(@Body() body: any) {
+    let userId = body.userId;
+    if (!userId) {
+      const user = await this.appointmentsService.createWalkinUser({
+        name: body.name,
+        sur_name: body.surname,
+        phone: body.phone,
+        nation_id: body.nationId,
+        medical_condition: body.medicalCondition,
+        allergy_drug: body.allergyDrug,
+        current_address: body.currentAddress,
+        nation_address: body.nationAddress,
+      });
+      userId = user.user_id;
+    }
+    return this.appointmentsService.createAppointment(userId, body);
+  }
 
   @Get(':id')
   getAppointment(@Req() req, @Param('id', ParseIntPipe) appointmentId: number) {
@@ -100,6 +149,9 @@ export class AppointmentsController {
     );
   }
 
+
+
+
   @Get('staff/:staffId')
   findAllByStaff(@Req() req, @Param('staffId', ParseIntPipe) staffId: number) {
     const roleId = this.getRoleIdFromRequest(req);
@@ -112,6 +164,7 @@ export class AppointmentsController {
     }
 
     return this.appointmentsService.findAllByStaff(staffId);
+
   }
 
   private getUserIdFromRequest(req): number {

@@ -8,10 +8,11 @@ import { pay_type_enum } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
 
-type AppointmentStatus = 'pending' | 'confirmed' | 'completed';
+type AppointmentStatus = 'pending' | 'confirmed' | 'completed' | 'waiting';
 
 type AppointmentScheduleItem = {
   id: number;
+  staffId: number | null;
   consultantName: string;
   appointmentDate: string | null;
   timeSelect: string | null;
@@ -82,6 +83,7 @@ export class AppointmentsService {
 
       const item: AppointmentScheduleItem = {
         id: record.id,
+        staffId: record.staff_id,
         consultantName,
         appointmentDate,
         timeSelect: record.time_select ?? null,
@@ -118,6 +120,174 @@ export class AppointmentsService {
       upcoming,
       past,
     };
+  }
+
+  async createAppointment(userId: number, body: any) {
+    const { staffId, date, timeSelect } = body;
+    const dateValue = this.toDateOnlyUtc(this.normalizeDate(date));
+    const normalizedTime = this.normalizeTimeSelect(timeSelect);
+
+    await this.ensureNoConflicts({
+      appointmentId: 0,
+      userId,
+      staffId,
+      dateValue,
+      timeSelect: normalizedTime,
+    });
+
+    const appointment = await this.prisma.appointments.create({
+      data: {
+        user_id: userId,
+        staff_id: staffId,
+        appointment_date: dateValue,
+        time_select: normalizedTime,
+        status: 'Not_paying',
+        appointment_type:
+          body.appointmentType === 'onsite' ? 'onsite' : 'online',
+      },
+    });
+
+    return {
+      message: 'Appointment created successfully',
+      appointmentId: appointment.id,
+    };
+  }
+
+  async createWalkinUser(data: {
+    name: string;
+    sur_name: string;
+    phone?: string;
+    nation_id?: string;
+    medical_condition?: string;
+    allergy_drug?: string;
+    current_address?: string;
+    nation_address?: string;
+  }) {
+    if (!data.name || !data.sur_name) {
+      throw new BadRequestException(
+        'name and sur_name are required for walk-in patients',
+      );
+    }
+
+    // Create addresses if provided
+    let currentAddressId: number | null = null;
+    let nationAddressId: number | null = null;
+    if (data.current_address) {
+      const addr = await this.prisma.addresses.create({
+        data: { detail: data.current_address },
+      });
+      currentAddressId = addr.id;
+    }
+    if (data.nation_address) {
+      const addr = await this.prisma.addresses.create({
+        data: { detail: data.nation_address },
+      });
+      nationAddressId = addr.id;
+    }
+
+    return this.prisma.users.create({
+      data: {
+        name: data.name,
+        sur_name: data.sur_name,
+        phone: data.phone || null,
+        nation_id: data.nation_id || null,
+        medical_condition: data.medical_condition || null,
+        allergy_drug: data.allergy_drug || null,
+        address_id: currentAddressId,
+        address_id_nation: nationAddressId,
+        role_id: 2, // Assuming 2 is 'user' role
+      },
+    });
+  }
+
+  async getAvailableSlots(dateString: string) {
+    const trimmed = dateString?.trim();
+    if (!trimmed || !/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      throw new BadRequestException('date must be in YYYY-MM-DD format');
+    }
+    const dateValue = this.toDateOnlyUtc(trimmed);
+
+    // Every 30 minutes slots map
+    const allTimes = [
+      '09:00',
+      '09:30',
+      '10:00',
+      '10:30',
+      '11:00',
+      '11:30',
+      '13:00',
+      '13:30',
+      '14:00',
+      '14:30',
+      '15:00',
+      '15:30',
+      '16:00',
+      '16:30',
+    ];
+
+    const staffs = await this.prisma.users.findMany({
+      where: {
+        roles: { name: { in: ['psychiatrist', 'psychologist'] } },
+      },
+      select: { user_id: true },
+    });
+
+    const staffIds = staffs.map((s) => s.user_id);
+
+    const leaves = await this.prisma.schedule.findMany({
+      where: {
+        work_date: dateValue,
+        status: { in: ['leave', 'holiday'] },
+        staff_id: { in: staffIds },
+      },
+    });
+    const staffOnLeave = new Set(leaves.map((l) => l.staff_id));
+
+    const appointments = await this.prisma.appointments.findMany({
+      where: {
+        appointment_date: dateValue,
+        staff_id: { in: staffIds },
+      },
+    });
+
+    const result: Record<number, string[]> = {};
+
+    for (const staffId of staffIds) {
+      if (staffOnLeave.has(staffId)) {
+        result[staffId] = [];
+        continue;
+      }
+
+      const bookedRanges = appointments
+        .filter((a) => a.staff_id === staffId && a.time_select)
+        .map((a) => this.tryParseTimeRange(a.time_select));
+
+      // filter
+      const available = allTimes.filter((t) => {
+        const hh = parseInt(t.substring(0, 2), 10);
+        const mm = parseInt(t.substring(3, 5), 10);
+        const startMin = hh * 60 + mm;
+
+        // check if this slot is covered by any booked range
+        const isBooked = bookedRanges.some(
+          (r) => r && startMin >= r.startMinutes && startMin < r.endMinutes,
+        );
+
+        // also reject past times if it's today
+        const now = new Date();
+        const today = this.toLocalDateKey(now);
+        if (today === trimmed) {
+          const nowMinutes = now.getHours() * 60 + now.getMinutes();
+          if (startMin <= nowMinutes) return false;
+        }
+
+        return !isBooked;
+      });
+
+      result[staffId] = available;
+    }
+
+    return result;
   }
 
   async rescheduleAppointment(
@@ -177,6 +347,70 @@ export class AppointmentsService {
     };
   }
 
+  async getAllPaidAppointments() {
+    const fees = await this.prisma.fees.findMany();
+    const feeMap = new Map(
+      fees.map((f) => [
+        f.id,
+        f.price_per_hours ? Number(f.price_per_hours) : 0,
+      ]),
+    );
+
+    const records = await this.prisma.appointments.findMany({
+      where: {},
+      include: {
+        users_appointments_user_idTousers: {
+          select: {
+            name: true,
+            sur_name: true,
+          },
+        },
+        users_appointments_staff_idTousers: {
+          select: {
+            name: true,
+            sur_name: true,
+            roles: true,
+          },
+        },
+      },
+      orderBy: {
+        appointment_date: 'desc',
+      },
+    });
+
+    return records.map((r) => {
+      const role = (r.users_appointments_staff_idTousers as any)?.roles;
+      const pricePerHour =
+        role && role.fee_id ? (feeMap.get(role.fee_id) ?? 0) : 0;
+
+      const parsedRange = this.tryParseTimeRange(r.time_select);
+      let durationMinutes = 0;
+      if (parsedRange) {
+        durationMinutes = parsedRange.endMinutes - parsedRange.startMinutes;
+      }
+      const price = (durationMinutes / 60) * pricePerHour;
+
+      return {
+        id: r.id,
+        patientName: this.buildConsultantName(
+          r.users_appointments_user_idTousers?.name,
+          r.users_appointments_user_idTousers?.sur_name,
+        ),
+        staffName: this.buildConsultantName(
+          r.users_appointments_staff_idTousers?.name,
+          r.users_appointments_staff_idTousers?.sur_name,
+        ),
+        date: r.appointment_date
+          ? this.dateToIsoDate(r.appointment_date)
+          : null,
+        time: r.time_select,
+        status: r.status,
+        slipUrl: r.deposit_slip_file,
+        price: price,
+      };
+    });
+  }
+
   async getAppointmentDetails(userId: number, appointmentId: number) {
     const appointment = await this.prisma.appointments.findUnique({
       where: { id: appointmentId },
@@ -229,6 +463,29 @@ export class AppointmentsService {
     };
   }
 
+  async confirmPayment(appointmentId: number) {
+    const appointment = await this.prisma.appointments.findUnique({
+      where: { id: appointmentId },
+    });
+
+    if (!appointment) {
+      throw new NotFoundException('Appointment not found');
+    }
+
+    await this.prisma.appointments.update({
+      where: { id: appointmentId },
+      data: {
+        status: pay_type_enum.Paid,
+      },
+    });
+
+    return {
+      message: 'Payment confirmed successfully',
+      appointmentId,
+      status: pay_type_enum.Paid,
+    };
+  }
+
   async markAppointmentPaid(
     userId: number,
     appointmentId: number,
@@ -241,6 +498,14 @@ export class AppointmentsService {
         message: 'Appointment is already marked as paid',
         appointmentId,
         status: pay_type_enum.Paid,
+      };
+    }
+
+    if (appointment.status === pay_type_enum.Pending) {
+      return {
+        message: 'Appointment is already pending verification',
+        appointmentId,
+        status: pay_type_enum.Pending,
       };
     }
 
@@ -258,15 +523,15 @@ export class AppointmentsService {
     await this.prisma.appointments.update({
       where: { id: appointmentId },
       data: {
-        status: pay_type_enum.Paid,
+        status: pay_type_enum.Pending,
         deposit_slip_file: slipUrl,
       },
     });
 
     return {
-      message: 'Payment completed successfully',
+      message: 'Payment slip uploaded successfully, awaiting verification',
       appointmentId,
-      status: pay_type_enum.Paid,
+      status: pay_type_enum.Pending,
     };
   }
 
@@ -301,56 +566,76 @@ export class AppointmentsService {
     dateValue: Date;
     timeSelect: string;
   }) {
-    const [userConflict, staffConflict, leaveRecord] = await Promise.all([
-      this.prisma.appointments.findFirst({
+    const parsedNew = this.tryParseTimeRange(input.timeSelect);
+    if (!parsedNew) {
+      throw new BadRequestException('Invalid timeSelect format');
+    }
+
+    const startMin = parsedNew.startMinutes;
+    const endMin = parsedNew.endMinutes;
+
+    // Fetch overlapping appointments for the user
+    const userAppointments = await this.prisma.appointments.findMany({
+      where: {
+        user_id: input.userId,
+        appointment_date: input.dateValue,
+        NOT: { id: input.appointmentId },
+      },
+      select: { time_select: true },
+    });
+
+    const hasUserConflict = userAppointments.some((a) => {
+      const r = this.tryParseTimeRange(a.time_select);
+      if (!r) return false;
+      return startMin < r.endMinutes && endMin > r.startMinutes;
+    });
+
+    if (hasUserConflict) {
+      throw new BadRequestException(
+        'ไม่สามารถนัดหมายได้ เนื่องจากมีนัดหมายในช่วงเวลานี้แล้ว',
+      );
+    }
+
+    // Fetch overlapping appointments for the staff
+    if (input.staffId) {
+      const staffAppointments = await this.prisma.appointments.findMany({
         where: {
-          user_id: input.userId,
+          staff_id: input.staffId,
           appointment_date: input.dateValue,
-          time_select: input.timeSelect,
           NOT: { id: input.appointmentId },
         },
-        select: { id: true },
-      }),
-      input.staffId
-        ? this.prisma.appointments.findFirst({
-            where: {
-              staff_id: input.staffId,
-              appointment_date: input.dateValue,
-              time_select: input.timeSelect,
-              NOT: { id: input.appointmentId },
-            },
-            select: { id: true },
-          })
-        : Promise.resolve(null),
-      input.staffId
-        ? this.prisma.schedule.findUnique({
-            where: {
-              staff_id_work_date: {
-                staff_id: input.staffId,
-                work_date: input.dateValue,
-              },
-            },
-            select: { status: true },
-          })
-        : Promise.resolve(null),
-    ]);
+        select: { time_select: true },
+      });
 
-    if (userConflict) {
-      throw new BadRequestException(
-        'You already have an appointment in this slot',
-      );
-    }
+      const hasStaffConflict = staffAppointments.some((a) => {
+        const r = this.tryParseTimeRange(a.time_select);
+        if (!r) return false;
+        return startMin < r.endMinutes && endMin > r.startMinutes;
+      });
 
-    if (staffConflict) {
-      throw new BadRequestException(
-        'This consultant is not available in this slot',
-      );
-    }
+      if (hasStaffConflict) {
+        throw new BadRequestException(
+          'This consultant is not available in this slot',
+        );
+      }
 
-    if (leaveRecord?.status === 'leave') {
-      throw new BadRequestException(
-        'This consultant is on leave for the selected date',
-      );
+      const leaveRecord = await this.prisma.schedule.findUnique({
+        where: {
+          staff_id_work_date: {
+            staff_id: input.staffId,
+            work_date: input.dateValue,
+          },
+        },
+      });
+
+      if (
+        leaveRecord?.status === 'leave' ||
+        leaveRecord?.status === 'holiday'
+      ) {
+        throw new BadRequestException(
+          'This consultant is unavailable for the selected date',
+        );
+      }
     }
   }
 
@@ -364,6 +649,10 @@ export class AppointmentsService {
 
     if (paymentStatus === pay_type_enum.Paid) {
       return 'confirmed';
+    }
+
+    if (paymentStatus === pay_type_enum.Pending) {
+      return 'waiting';
     }
 
     return 'pending';

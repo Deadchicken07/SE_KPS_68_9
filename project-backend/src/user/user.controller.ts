@@ -1,7 +1,19 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UserService } from './user.service';
 import { UserQueryDto } from './dto/user-query.dto';
 import { CreateStaffDto } from './dto/create-staff.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Controller('users')
 export class UserController {
@@ -21,7 +33,19 @@ export class UserController {
   findUser() {
     return this.userService.findAllUser();
   }
-  
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me/profile')
+  getMyProfile(@Req() req) {
+    return this.userService.getMyProfile(req.user.sub);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('me/profile')
+  updateMyProfile(@Req() req, @Body() body: UpdateProfileDto) {
+    return this.userService.updateMyProfile(req.user.sub, body);
+  }
+
   @Get('staff/:id')
   async findStaffById(@Param('id') id: string) {
     return this.userService.findStaffById(+id);

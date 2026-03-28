@@ -35,6 +35,10 @@ const getNavIcon = (name: string) => {
   return navIconMap[normalizedName as keyof typeof navIconMap] ?? HomeOutlined;
 };
 
+const matchesLink = (pathname: string, href: string) => {
+  return pathname === href || pathname.startsWith(`${href}/`);
+};
+
 export default function SidebarNav() {
   const pathname = usePathname();
   const { me } = useAuth();
@@ -45,6 +49,11 @@ export default function SidebarNav() {
 
   const links = role ? roleLinks[role] : [];
   const homePath = role ? roleHome[role] : "/login";
+  const activeHref = useMemo(() => {
+    return [...links]
+      .filter((link) => matchesLink(pathname, link.href))
+      .sort((left, right) => right.href.length - left.href.length)[0]?.href ?? null;
+  }, [links, pathname]);
 
   return (
     <aside className="sticky top-0 h-screen w-64 max-w-[82vw] shrink-0 overflow-x-hidden overflow-y-auto bg-[#157a72] px-5 py-6 text-white md:w-72 md:px-6 md:py-7">
@@ -61,7 +70,7 @@ export default function SidebarNav() {
 
         <nav className="flex flex-col gap-1.5">
           {links.map((link) => {
-            const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
+            const isActive = activeHref === link.href;
             const Icon = getNavIcon(link.name);
 
             return (

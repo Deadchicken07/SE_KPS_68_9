@@ -1,6 +1,6 @@
 export class UpsertStaffScheduleDto {
   staffId!: number;
   workDate!: string;
-  status!: 'working' | 'leave';
+  status!: 'working' | 'leave' | 'holiday';
   note?: string | null;
 }

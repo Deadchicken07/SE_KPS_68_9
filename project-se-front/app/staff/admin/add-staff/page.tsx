@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { notification, Spin } from "antd";
+import { notification, Spin, Upload, Button } from "antd";
+import { UploadOutlined, PlusOutlined } from "@ant-design/icons";
 import styles from "./page.module.css";
+import { supabase } from "@/utils/supabase";
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 
@@ -23,7 +25,11 @@ export default function AddStaffPage() {
     info: "",
     degree: "",
     license: "",
+    fileName: "",
   });
+
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -33,12 +39,44 @@ export default function AddStaffPage() {
     }));
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setProfileImage(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      await axios.post(`${API}/users/staff`, form, {
+      let imageUrl = "";
+
+      // 1. Upload image to Supabase if exists
+      if (profileImage) {
+        const fileExt = profileImage.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `avatars/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('Paid_appointment') // Reuse existing bucket or use a specific one if known
+          .upload(filePath, profileImage);
+
+        if (uploadError) {
+          console.error("Upload error:", uploadError);
+          throw new Error('ไม่สามารถอัปโหลดรูปภาพโปรไฟล์ได้');
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('Paid_appointment')
+          .getPublicUrl(filePath);
+        
+        imageUrl = publicUrl;
+      }
+
+      await axios.post(`${API}/users/staff`, { ...form, fileName: imageUrl }, {
         withCredentials: true,
       });
 
@@ -70,6 +108,30 @@ export default function AddStaffPage() {
         <div className={styles.header}>
           <h1 className={styles.title}>เพิ่มบุคลากรใหม่</h1>
           <p className={styles.subtitle}>กรอกข้อมูลเพื่อสร้างบัญชีสำหรับ จิตแพทย์ นักจิตวิทยา หรือ เภสัชกร</p>
+        </div>
+
+        <div className={styles.profileUploadSection}>
+          <div className={styles.avatarPreviewContainer}>
+            {previewUrl ? (
+              <img src={previewUrl} alt="Preview" className={styles.avatarPreview} />
+            ) : (
+              <div className={styles.avatarPlaceholder}>
+                <PlusOutlined style={{ fontSize: 24, color: "#999" }} />
+              </div>
+            )}
+          </div>
+          <div className={styles.uploadControls}>
+            <label className={styles.uploadLabel}>
+              รูปภาพโปรไฟล์
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className={styles.fileInput}
+              />
+            </label>
+            <p className={styles.uploadHint}>รองรับไฟล์ JPG, PNG (ขนาดไม่ควรเกิน 2MB)</p>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.formGrid}>

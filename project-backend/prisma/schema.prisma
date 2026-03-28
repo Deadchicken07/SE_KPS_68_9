@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model addresses {
@@ -246,6 +247,7 @@ model schedule {
 enum schedule_status {
   working
   leave
+  holiday
 }
 
 enum appointments_type_enum {
@@ -263,6 +265,7 @@ enum item_type_enum {
 enum pay_type_enum {
   Paid
   Not_paying @map("Not paying")
+  Pending
 }
 
 enum questionnaires_type_enum {

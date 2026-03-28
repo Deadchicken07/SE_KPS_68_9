@@ -3,6 +3,7 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/AuthProvider'
+import { roleHome } from '@/types/role.types'
 import type {
   ClinicScheduleResponse,
   StaffScheduleFormState,
@@ -52,7 +53,7 @@ export const usePharmacistWorkSchedule = () => {
     }
 
     if (roleId === 1) {
-      router.replace('/staff/admin-home')
+      router.replace(roleHome.admin)
       return
     }
 
