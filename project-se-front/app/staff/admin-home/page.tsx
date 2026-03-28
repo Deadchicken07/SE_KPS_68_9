@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  AppointmentDetailModal,
   DashboardSummarySection,
   ErrorPanel,
   FilterSection,
@@ -60,6 +61,7 @@ export default function StaffAdminHomePage() {
         </section>
 
         <StaffWorkModal state={state} />
+        <AppointmentDetailModal state={state} />
       </div>
     </main>
   );
