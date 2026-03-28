@@ -3,7 +3,6 @@
 import { CSSProperties, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import "./schedule-ui.css";
-import { createMockSchedule } from "./mockData";
 import Badge from "@/components/ui/Badge";
 
 type TabKey = "upcoming" | "past";
@@ -394,9 +393,33 @@ export default function AppointmentSchedulePage() {
       setLoading(true);
     }
 
-    // ใช้ mock data เสมอ (สำหรับ demo / development)
-    setSchedule(createMockSchedule());
-    setLoading(false);
+    try {
+      const response = await fetch(`${API_BASE_URL}/appointments/me`, {
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          setIsAuthRequired(true);
+        }
+
+        throw new Error(await parseErrorMessage(response));
+      }
+
+      const payload = (await response.json()) as AppointmentScheduleApiResponse;
+
+      setSchedule({
+        upcoming: normalizeApiItems(payload.upcoming),
+        past: normalizeApiItems(payload.past),
+      });
+    } catch (err: unknown) {
+      setSchedule(defaultSchedule);
+      setError(
+        err instanceof Error ? err.message : "ไม่สามารถโหลดข้อมูลนัดหมายได้",
+      );
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   const openRescheduleDialog = useCallback((item: AppointmentItem) => {

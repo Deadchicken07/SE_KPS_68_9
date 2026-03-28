@@ -18,6 +18,7 @@ import {
   Typography,
   message,
 } from "antd";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { usePharmacistOrders } from "@/hooks/usePharmacistOrders";
 import {
@@ -67,9 +68,21 @@ export default function PharmacistOrderPage() {
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm<OrderFormValues>();
   const [selectedConsultationId, setSelectedConsultationId] = useState<number | null>(null);
+  const searchParams = useSearchParams();
   const { me } = useAuth();
   const { consultations, loading, saving, consultationOptions, createOrder } =
     usePharmacistOrders();
+
+  const requestedConsultationId = useMemo(() => {
+    const value = searchParams.get("consultationId");
+
+    if (!value) {
+      return null;
+    }
+
+    const parsed = Number(value);
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+  }, [searchParams]);
 
   const selectedConsultation = useMemo(
     () =>
@@ -106,6 +119,12 @@ export default function PharmacistOrderPage() {
         (consultation) => consultation.consultationId === selectedConsultationId,
       )
         ? selectedConsultationId
+        : requestedConsultationId &&
+            consultations.some(
+              (consultation) =>
+                consultation.consultationId === requestedConsultationId,
+            )
+          ? requestedConsultationId
         : consultations[0].consultationId;
 
     setSelectedConsultationId(nextConsultationId);
@@ -113,7 +132,7 @@ export default function PharmacistOrderPage() {
       consultationId: nextConsultationId,
       tracking: "",
     });
-  }, [consultations, form, selectedConsultationId]);
+  }, [consultations, form, requestedConsultationId, selectedConsultationId]);
 
   const handleConsultationChange = (consultationId: number) => {
     setSelectedConsultationId(consultationId);

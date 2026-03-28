@@ -1,120 +1,199 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { Button, Card, DatePicker, Input, Modal, Tag, Typography } from "antd";
+import { useState } from 'react'
+import {
+  Avatar,
+  Card,
+  DatePicker,
+  Spin,
+  Tag,
+  Typography,
+} from 'antd'
 import {
   ClockCircleOutlined,
-  InfoCircleOutlined,
-  PlusCircleOutlined,
-  UserOutlined,
-  WifiOutlined,
+  MailOutlined,
   EnvironmentOutlined,
-} from "@ant-design/icons";
-import type { Dayjs } from "dayjs";
-import { mockAppointments } from "@/hooks/useAppointment";
-import { useRouter } from "next/navigation";
+  WifiOutlined,
+} from '@ant-design/icons'
+import type { Dayjs } from 'dayjs'
+import { useAppointment } from '@/hooks/useAppointment'
 
-const MOCK_STAFF_ID = 5;
+const statusText = {
+  pending: 'รอชำระเงิน',
+  confirmed: 'ยืนยันแล้ว',
+  completed: 'เสร็จสิ้นแล้ว',
+} as const
 
-export default function PsychiatistPage() {
-  const router = useRouter()
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [link, setLink] = useState("");
+const statusColor = {
+  pending: 'gold',
+  confirmed: 'green',
+  completed: 'default',
+} as const
 
-  const appointments = mockAppointments.filter(
-    (a) =>
-      a.staff_id === MOCK_STAFF_ID &&
-      (selectedDate ? a.appointment_date.startsWith(selectedDate) : true),
-  );
+export default function AppointmentPage() {
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const { error, filteredAppointments, hasAccess, loading } =
+    useAppointment(selectedDate)
+
+  if (!hasAccess) {
+    return null
+  }
 
   return (
-    <>
-    <div style={{ display: "flex", justifyContent: "center", padding: 24 }}>
+    <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}>
       <div
         style={{
-          width: "80%",
-          display: "flex",
-          flexDirection: "column",
+          width: '80%',
+          display: 'flex',
+          flexDirection: 'column',
           gap: 16,
         }}
       >
-      <Card style={{ boxShadow: "0 4px 12px rgba(0,0,0,0.1)", borderRadius: 12 }} styles={{ body: { display: "flex", flexDirection: "column", gap: 16 } }}>
-        <DatePicker
-          onChange={(date: Dayjs | null) =>
-            setSelectedDate(date ? date.format("YYYY-MM-DD") : null)
-          }
-          placeholder="เลือกวันที่"
-          style={{ width: 200 }}
-        />
-        {appointments.map((a) => (
-          <Card key={a.id} hoverable style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.08)", borderRadius: 8 ,borderWidth : 2,}}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <UserOutlined style={{ color: "#1677ff" }} />
-                  <Typography.Text strong style={{ fontSize: 16 }}>
-                    ผู้ป่วย #{a.user_id}
-                  </Typography.Text>
-                </div>
-              </div>
+        <Card
+          style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.1)', borderRadius: 12 }}
+          styles={{
+            body: {
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 16,
+            },
+          }}
+        >
+          <DatePicker
+            onChange={(date: Dayjs | null) =>
+              setSelectedDate(date ? date.format('YYYY-MM-DD') : null)
+            }
+            placeholder="เลือกวันที่"
+            style={{ width: 200 }}
+          />
 
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <ClockCircleOutlined style={{ color: "#8c8c8c", gap: 6 }} />
-                <Typography.Text type="secondary">
-                  {a.time_select}
-                </Typography.Text>
-                <Tag
-                  icon={
-                    a.appointment_type === "online" ? (
-                      <WifiOutlined />
-                    ) : (
-                      <EnvironmentOutlined />
-                    )
-                  }
-                  color={a.appointment_type === "online" ? "blue" : "grey"}
-                >
-                  {a.appointment_type}
-                </Tag>
-                <InfoCircleOutlined
-                  style={{ fontSize: 18, color: "#1677ff", cursor: "pointer" }}
-                  onClick={() => router.push(`/staff/consult`)}
-                />
-                {a.appointment_type === "online" && (
-                  <PlusCircleOutlined
-                    style={{ fontSize: 18, color: "#52c41a", cursor: "pointer" }}
-                    onClick={() => setModalOpen(true)}
-                  />
-                )}
-              </div>
+          {error ? (
+            <Typography.Text type="danger">{error}</Typography.Text>
+          ) : null}
+
+          {loading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}>
+              <Spin size="large" />
             </div>
-          </Card>
-        ))}
+          ) : null}
+
+          {!loading && !filteredAppointments.length ? (
+            <Typography.Text type="secondary">
+              {selectedDate
+                ? 'ไม่พบข้อมูลการนัดหมายในวันที่เลือก'
+                : 'ยังไม่มีข้อมูลการนัดหมายของผู้ใช้ที่ล็อกอินอยู่'}
+            </Typography.Text>
+          ) : null}
+
+          {!loading
+            ? filteredAppointments.map((appointment) => (
+                <Card
+                  key={appointment.id}
+                  hoverable
+                  style={{
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                    borderRadius: 8,
+                    borderWidth: 2,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      gap: 16,
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12,
+                      }}
+                    >
+                      <Avatar
+                        size={52}
+                        src={appointment.avatarUrl ?? undefined}
+                        style={{ backgroundColor: '#0f766e', fontSize: 18 }}
+                      >
+                        {appointment.avatarLabel}
+                      </Avatar>
+
+                      <div
+                        style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
+                      >
+                        <Typography.Text strong style={{ fontSize: 16 }}>
+                          {appointment.consultantName}
+                        </Typography.Text>
+
+                        <Typography.Text type="secondary">
+                          วันที่ {appointment.appointmentDate ?? '-'}
+                        </Typography.Text>
+
+                        <Typography.Text type="secondary">
+                          <MailOutlined style={{ marginRight: 6 }} />
+                          {appointment.contact || '-'}
+                        </Typography.Text>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12,
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      <Typography.Text type="secondary">
+                        <ClockCircleOutlined style={{ marginRight: 6 }} />
+                        {appointment.timeSelect ?? '-'}
+                      </Typography.Text>
+
+                      <Tag
+                        icon={
+                          appointment.appointmentType === 'online' ? (
+                            <WifiOutlined />
+                          ) : (
+                            <EnvironmentOutlined />
+                          )
+                        }
+                        color={
+                          appointment.appointmentType === 'online'
+                            ? 'blue'
+                            : 'default'
+                        }
+                      >
+                        {appointment.appointmentType === 'online'
+                          ? 'ออนไลน์'
+                          : appointment.appointmentType === 'onsite'
+                            ? 'ที่คลินิก'
+                            : '-'}
+                      </Tag>
+
+                      <Tag
+                        color={statusColor[appointment.status]}
+                      >
+                        {statusText[appointment.status]}
+                      </Tag>
+
+                      <Tag
+                        color={
+                          appointment.paymentStatus === 'Paid' ? 'green' : 'gold'
+                        }
+                      >
+                        {appointment.paymentStatus === 'Paid'
+                          ? 'ชำระแล้ว'
+                          : 'รอชำระ'}
+                      </Tag>
+                    </div>
+                  </div>
+                </Card>
+              ))
+            : null}
         </Card>
       </div>
     </div>
-
-    <Modal
-      title="เพิ่มลิ้งค์"
-      open={modalOpen}
-      onCancel={() => { setModalOpen(false); setLink(""); }}
-      footer={[
-        <Button key="cancel" onClick={() => { setModalOpen(false); setLink(""); }}>ยกเลิก</Button>,
-        <Button key="submit" type="primary" onClick={() => { setModalOpen(false); setLink(""); }}>เพิ่ม</Button>,
-      ]}
-    >
-      <Input
-        placeholder="วางลิ้งค์ที่นี่"
-        value={link}
-        onChange={(e) => setLink(e.target.value)}
-      />
-    </Modal>
-    </>
-  );
+  )
 }
