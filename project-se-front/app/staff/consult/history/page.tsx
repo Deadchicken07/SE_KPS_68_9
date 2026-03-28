@@ -14,8 +14,7 @@ import {
   Tooltip,
   Typography,
 } from "antd";
-import { InfoCircleOutlined, PlusOutlined } from "@ant-design/icons";
-import { BookUser } from "lucide-react";
+import { InfoCircleOutlined, PlusOutlined, ReadOutlined } from "@ant-design/icons";
 import { Consultation } from "@/types/consult.types";
 import { useUserResponses, useResponseDetail } from "@/hooks/useResponse";
 import axios from "axios";
@@ -118,7 +117,7 @@ export default function ConsultHistoryPage() {
                       : "-"}
                   </Typography.Text>
                   <Tooltip title="ดูรายละเอียดการปรึกษา">
-                    <BookUser
+                    <ReadOutlined
                       style={{ color: "grey", cursor: "pointer" }}
                       onClick={() => handleOpen(consult)}
                     />
@@ -233,10 +232,11 @@ export default function ConsultHistoryPage() {
         </Typography.Paragraph>
         <Divider style={{ paddingTop: 32 }}>ยาที่สั่ง</Divider>
         <Table
-          dataSource={[]}
+          dataSource={selected?.prescription_items ?? []}
+          rowKey="id"
           pagination={false}
           columns={[
-            { title: "ชื่อยา", dataIndex: "medication_id", key: "medication_id" },
+            { title: "ชื่อยา", key: "name", render: (_, record) => record.medications?.name ?? "-" },
             { title: "จำนวน", dataIndex: "quantity", key: "quantity" },
             { title: "หมายเหตุ", dataIndex: "comment", key: "comment" },
           ]}

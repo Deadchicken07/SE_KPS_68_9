@@ -4,7 +4,8 @@
       "Bash(python3 -c \":*)",
       "Bash(node -e \":*)",
       "Bash(xargs grep:*)",
-      "Bash(python3 -:*)"
+      "Bash(python3 -:*)",
+      "Bash(find c:/Users/deadc/SE_KPS_68_9 -type d -name consult*)"
     ]
   }
 }
