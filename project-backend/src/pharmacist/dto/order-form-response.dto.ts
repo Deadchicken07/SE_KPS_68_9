@@ -18,6 +18,7 @@ export class OrderFormConsultationDto {
   pharmacistName: string;
   note: string | null;
   createdAt: string | null;
+  latestPaymentStatus: string | null;
   latestReceiptStatus: string | null;
   receiptCount: number;
   suggestedItems: OrderFormConsultationItemDto[];

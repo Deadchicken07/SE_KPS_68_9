@@ -91,89 +91,91 @@ export default function UserProfilePage() {
 
   return (
     <main className={styles.page}>
-      <header className={styles.pageHeader}>
-        <span className={styles.pageKicker}>USER AREA</span>
-        <h1 className={styles.pageTitle}>หน้า Profile</h1>
-      </header>
-
-      {error ? (
-        <div className={`${styles.feedback} ${styles.feedbackError}`} role="alert">
-          {error}
-        </div>
-      ) : null}
-
       {isLoading ? (
         <div className={styles.feedback}>กำลังโหลดข้อมูลโปรไฟล์...</div>
       ) : (
-        <div className={styles.contentGrid}>
-          <section className={styles.panel}>
-            <div className={styles.panelHeader}>
-              <div>
-                <p className={styles.panelEyebrow}>Contact</p>
-                <h2 className={styles.panelTitle}>ข้อมูลติดต่อ</h2>
+        <>
+          <header className={styles.pageHeader}>
+            {/* <span className={styles.pageKicker}>USER AREA</span> */}
+            <h1 className={styles.pageTitle}>Profile</h1>
+          </header>
+
+          {error ? (
+            <div className={`${styles.feedback} ${styles.feedbackError}`} role="alert">
+              {error}
+            </div>
+          ) : null}
+
+          <div className={styles.contentGrid}>
+            <section className={styles.panel}>
+              <div className={styles.panelHeader}>
+                <div>
+                  <p className={styles.panelEyebrow}>Contact</p>
+                  <h2 className={styles.panelTitle}>ข้อมูลติดต่อ</h2>
+                </div>
               </div>
-            </div>
 
-            <div className={styles.fieldGrid}>
-              <article className={styles.fieldCard}>
-                <span className={styles.fieldLabel}>ชื่อ</span>
-                <p className={styles.fieldValue}>{displayValue(savedProfile.firstName)}</p>
-              </article>
-              <article className={styles.fieldCard}>
-                <span className={styles.fieldLabel}>นามสกุล</span>
-                <p className={styles.fieldValue}>{displayValue(savedProfile.lastName)}</p>
-              </article>
-              <article className={styles.fieldCard}>
-                <span className={styles.fieldLabel}>เบอร์โทรศัพท์</span>
-                <p className={styles.fieldValue}>{displayValue(savedProfile.phone)}</p>
-              </article>
-              <article className={styles.fieldCard}>
-                <span className={styles.fieldLabel}>อีเมล</span>
-                <p className={styles.fieldValue}>{displayValue(savedProfile.email)}</p>
-              </article>
-            </div>
-          </section>
-
-          <section className={styles.panel}>
-            <div className={styles.panelHeader}>
-              <div>
-                <p className={styles.panelEyebrow}>Health</p>
-                <h2 className={styles.panelTitle}>ข้อมูลสุขภาพเบื้องต้น</h2>
+              <div className={styles.fieldGrid}>
+                <article className={styles.fieldCard}>
+                  <span className={styles.fieldLabel}>ชื่อ</span>
+                  <p className={styles.fieldValue}>{displayValue(savedProfile.firstName)}</p>
+                </article>
+                <article className={styles.fieldCard}>
+                  <span className={styles.fieldLabel}>นามสกุล</span>
+                  <p className={styles.fieldValue}>{displayValue(savedProfile.lastName)}</p>
+                </article>
+                <article className={styles.fieldCard}>
+                  <span className={styles.fieldLabel}>เบอร์โทรศัพท์</span>
+                  <p className={styles.fieldValue}>{displayValue(savedProfile.phone)}</p>
+                </article>
+                <article className={styles.fieldCard}>
+                  <span className={styles.fieldLabel}>อีเมล</span>
+                  <p className={styles.fieldValue}>{displayValue(savedProfile.email)}</p>
+                </article>
               </div>
-            </div>
+            </section>
 
-            <div className={styles.fieldGrid}>
-              <article className={styles.fieldCard}>
-                <span className={styles.fieldLabel}>โรคประจำตัว</span>
-                <p className={styles.fieldValue}>{displayValue(savedProfile.chronicDisease)}</p>
-              </article>
-              <article className={styles.fieldCard}>
-                <span className={styles.fieldLabel}>ประวัติแพ้ยา</span>
-                <p className={styles.fieldValue}>{displayValue(savedProfile.allergies)}</p>
-              </article>
-            </div>
-          </section>
-
-          <section className={`${styles.panel} ${styles.panelWide}`}>
-            <div className={styles.panelHeader}>
-              <div>
-                <p className={styles.panelEyebrow}>Address</p>
-                <h2 className={styles.panelTitle}>ข้อมูลที่อยู่</h2>
+            <section className={styles.panel}>
+              <div className={styles.panelHeader}>
+                <div>
+                  <p className={styles.panelEyebrow}>Health</p>
+                  <h2 className={styles.panelTitle}>ข้อมูลสุขภาพเบื้องต้น</h2>
+                </div>
               </div>
-            </div>
 
-            <div className={styles.addressGrid}>
-              <article className={styles.addressCard}>
-                <span className={styles.fieldLabel}>ที่อยู่ปัจจุบัน</span>
-                <p className={styles.addressValue}>{displayValue(savedProfile.currentAddress)}</p>
-              </article>
-              <article className={styles.addressCard}>
-                <span className={styles.fieldLabel}>ที่อยู่ตามทะเบียนบ้าน</span>
-                <p className={styles.addressValue}>{displayValue(savedProfile.shippingAddress)}</p>
-              </article>
-            </div>
-          </section>
-        </div>
+              <div className={styles.fieldGrid}>
+                <article className={styles.fieldCard}>
+                  <span className={styles.fieldLabel}>โรคประจำตัว</span>
+                  <p className={styles.fieldValue}>{displayValue(savedProfile.chronicDisease)}</p>
+                </article>
+                <article className={styles.fieldCard}>
+                  <span className={styles.fieldLabel}>ประวัติแพ้ยา</span>
+                  <p className={styles.fieldValue}>{displayValue(savedProfile.allergies)}</p>
+                </article>
+              </div>
+            </section>
+
+            <section className={`${styles.panel} ${styles.panelWide}`}>
+              <div className={styles.panelHeader}>
+                <div>
+                  <p className={styles.panelEyebrow}>Address</p>
+                  <h2 className={styles.panelTitle}>ข้อมูลที่อยู่</h2>
+                </div>
+              </div>
+
+              <div className={styles.addressGrid}>
+                <article className={styles.addressCard}>
+                  <span className={styles.fieldLabel}>ที่อยู่ปัจจุบัน</span>
+                  <p className={styles.addressValue}>{displayValue(savedProfile.currentAddress)}</p>
+                </article>
+                <article className={styles.addressCard}>
+                  <span className={styles.fieldLabel}>ที่อยู่ตามทะเบียนบ้าน</span>
+                  <p className={styles.addressValue}>{displayValue(savedProfile.shippingAddress)}</p>
+                </article>
+              </div>
+            </section>
+          </div>
+        </>
       )}
     </main>
   );

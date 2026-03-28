@@ -73,6 +73,27 @@ export default function PharmacistOrderPage() {
   const { consultations, loading, saving, consultationOptions, createOrder } =
     usePharmacistOrders();
 
+  const paidConsultations = useMemo(
+    () =>
+      consultations.filter(
+        (consultation) =>
+          consultation.latestPaymentStatus === "Paid" &&
+          (consultation.latestReceiptStatus === "pending_delivery" ||
+            consultation.latestReceiptStatus === "pending_pickup"),
+      ),
+    [consultations],
+  );
+
+  const paidConsultationOptions = useMemo(
+    () =>
+      consultationOptions.filter((option) =>
+        paidConsultations.some(
+          (consultation) => consultation.consultationId === option.value,
+        ),
+      ),
+    [consultationOptions, paidConsultations],
+  );
+
   const requestedConsultationId = useMemo(() => {
     const value = searchParams.get("consultationId");
 
@@ -86,10 +107,10 @@ export default function PharmacistOrderPage() {
 
   const selectedConsultation = useMemo(
     () =>
-      consultations.find(
+      paidConsultations.find(
         (consultation) => consultation.consultationId === selectedConsultationId,
       ) ?? null,
-    [consultations, selectedConsultationId],
+    [paidConsultations, selectedConsultationId],
   );
 
   const currentStatus = (selectedConsultation?.latestReceiptStatus ??
@@ -107,7 +128,7 @@ export default function PharmacistOrderPage() {
   );
 
   useEffect(() => {
-    if (consultations.length === 0) {
+    if (paidConsultations.length === 0) {
       if (selectedConsultationId !== null) {
         setSelectedConsultationId(null);
       }
@@ -117,17 +138,17 @@ export default function PharmacistOrderPage() {
 
     const nextConsultationId =
       selectedConsultationId &&
-      consultations.some(
+      paidConsultations.some(
         (consultation) => consultation.consultationId === selectedConsultationId,
       )
         ? selectedConsultationId
         : requestedConsultationId &&
-            consultations.some(
+            paidConsultations.some(
               (consultation) =>
                 consultation.consultationId === requestedConsultationId,
             )
           ? requestedConsultationId
-        : consultations[0].consultationId;
+        : paidConsultations[0].consultationId;
 
     if (selectedConsultationId !== nextConsultationId) {
       setSelectedConsultationId(nextConsultationId);
@@ -141,7 +162,7 @@ export default function PharmacistOrderPage() {
     if (form.getFieldValue("consultationId") !== nextConsultationId) {
       form.setFieldValue("consultationId", nextConsultationId);
     }
-  }, [consultations, form, requestedConsultationId, selectedConsultationId]);
+  }, [form, paidConsultations, requestedConsultationId, selectedConsultationId]);
 
   const handleConsultationChange = (consultationId: number) => {
     setSelectedConsultationId(consultationId);
@@ -203,10 +224,10 @@ export default function PharmacistOrderPage() {
                 <Select
                   showSearch
                   placeholder="เลือก consultation"
-                  options={consultationOptions}
+                  options={paidConsultationOptions}
                   onChange={handleConsultationChange}
                   optionFilterProp="label"
-                  disabled={consultations.length === 0}
+                  disabled={paidConsultations.length === 0}
                 />
               </Form.Item>
 
@@ -215,7 +236,7 @@ export default function PharmacistOrderPage() {
                   <Input
                     placeholder="เช่น TH1234567890"
                     className="input"
-                    disabled={consultations.length === 0}
+                    disabled={paidConsultations.length === 0}
                   />
                 </Form.Item>
               ) : null}
@@ -241,7 +262,7 @@ export default function PharmacistOrderPage() {
                     type="primary"
                     block
                     loading={saving}
-                    disabled={consultations.length === 0}
+                    disabled={paidConsultations.length === 0}
                     onClick={() => void handleSubmit("delivered")}
                   >
                     บันทึกการส่ง
@@ -253,7 +274,7 @@ export default function PharmacistOrderPage() {
                     type="primary"
                     block
                     loading={saving}
-                    disabled={consultations.length === 0}
+                    disabled={paidConsultations.length === 0}
                     onClick={() => void handleSubmit("picked_up")}
                   >
                     ยืนยันรับยาแล้ว
@@ -268,7 +289,7 @@ export default function PharmacistOrderPage() {
                   onConfirm={() => void handleSubmit("cancelled")}
                   disabled={!selectedConsultation}
                 >
-                  <Button block disabled={consultations.length === 0}>
+                  <Button block disabled={paidConsultations.length === 0}>
                     ยกเลิกรายการ
                   </Button>
                 </Popconfirm>
@@ -279,7 +300,7 @@ export default function PharmacistOrderPage() {
 
         <Col xs={24} xl={16}>
           <Card className="staff-content-card" variant="borderless" loading={loading}>
-            {consultations.length === 0 ? (
+            {paidConsultations.length === 0 ? (
               <Empty description="ไม่มีรายการที่ต้องจัดการในตอนนี้" />
             ) : selectedConsultation ? (
               <>
