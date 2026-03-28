@@ -7,9 +7,10 @@ import {
   Input,
   Button,
   Typography,
-  Spin,
+  Skeleton,
   InputNumber,
   Divider,
+  Switch,
   message,
 } from "antd";
 import {
@@ -46,6 +47,7 @@ export default function ConsultPage() {
   const [selectedUser, setSelectedUser] = useState<number | null>(
     userIdFromQuery,
   );
+  const [isOnline, setIsOnline] = useState(false);
 
   const userOptions = user.map((u) => ({
     value: u.user_id,
@@ -81,6 +83,7 @@ export default function ConsultPage() {
       user_id: selectedUser,
       staff_id: me.sub,
       note,
+      is_online: isOnline,
       prescription_item: prescriptions.map((p) => ({
         medication_id: p.medication_id!,
         quantity: p.quantity!,
@@ -124,6 +127,10 @@ export default function ConsultPage() {
             บันทึกการปรึกษา
           </Typography.Title>
 
+          {loading ? (
+            <Skeleton active paragraph={{ rows: 6 }} />
+          ) : (
+            <>
           <Typography.Text style={{ fontWeight: 500, color: "#374151" }}>
             เลือกผู้ป่วย
           </Typography.Text>
@@ -137,13 +144,19 @@ export default function ConsultPage() {
             placeholder="ค้นหาหรือเลือกผู้ป่วย"
             style={{ width: "100%" }}
             options={userOptions}
-            loading={loading}
             onChange={(val) => setSelectedUser(val)}
             value={selectedUser}
             disabled={!!userIdFromQuery}
-            notFoundContent={loading ? <Spin size="small" /> : "ไม่พบข้อมูล"}
+            notFoundContent="ไม่พบข้อมูล"
             size="large"
           />
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <Switch checked={isOnline} onChange={setIsOnline} />
+            <Typography.Text style={{ color: "#374151" }}>
+              {isOnline ? "ออนไลน์ (จัดส่ง)" : "มาพบด้วยตนเอง (รับที่คลินิก)"}
+            </Typography.Text>
+          </div>
 
           <Typography.Text style={{ fontWeight: 500, color: "#374151" }}>
             บันทึก / Note
@@ -286,6 +299,8 @@ export default function ConsultPage() {
               ส่ง
             </Button>
           </div>
+          </>
+          )}
         </Card>
       </div>
     </div>

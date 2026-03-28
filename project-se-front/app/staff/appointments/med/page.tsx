@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from "react";
-import { Button, Card, DatePicker, Input, Modal, Spin, Tag, Typography } from "antd";
+import { Button, Card, DatePicker, Input, Modal, Skeleton, Tag, Typography } from "antd";
 import {
   InfoCircleOutlined,
   PlusCircleOutlined,
@@ -93,7 +93,7 @@ export default function PsychiatistPage() {
               style={{ width: 200 }}
             />
 
-            {loading && <Spin />}
+            {loading && <Skeleton active paragraph={{ rows: 4 }} />}
             {error && <Typography.Text type="danger">{error}</Typography.Text>}
 
             {!loading && appointments.map((a) => (

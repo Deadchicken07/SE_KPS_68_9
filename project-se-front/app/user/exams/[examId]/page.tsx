@@ -2,12 +2,15 @@
 
 import { useQuestionnaires } from "@/hooks/useQuestionnaire";
 import { useSubmitResponse } from "@/hooks/useSubmitResponse";
-import { Button, Card, Flex, Modal, Pagination, Radio, Spin, Tag, Typography } from "antd";
+import { App, Button, Card, Flex, Modal, Pagination, Radio, Spin, Tag, Typography } from "antd";
 import { useParams } from "next/navigation";
 import styles from "./page.module.css";
 import { useState } from "react";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 export default function QuestionsPage() {
+  const { modal } = App.useApp();
+  const { me } = useAuth();
   const { examId } = useParams();
   const [page, setPage] = useState(1);
   const [answers, setAnswers] = useState<Record<number, number>>({});
@@ -26,7 +29,7 @@ export default function QuestionsPage() {
 
   const handleSubmit = async () => {
     if (Object.keys(answers).length < (meta?.total ?? 0)) {
-      Modal.warning({
+      modal.warning({
         title: "ตอบไม่ครบ",
         content: `กรุณาตอบให้ครบทุกข้อ (ตอบแล้ว ${Object.keys(answers).length}/${meta?.total} ข้อ)`,
         centered: true,
@@ -35,7 +38,7 @@ export default function QuestionsPage() {
     }
     await submit({
       questionnaire_id: Number(examId),
-      user_id: null,
+      user_id: me?.sub ?? null,
       answers: Object.entries(answers).map(([question_id, choice_id]) => ({
         question_id: Number(question_id),
         choice_id,
