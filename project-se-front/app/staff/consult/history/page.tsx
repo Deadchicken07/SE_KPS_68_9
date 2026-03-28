@@ -1,6 +1,6 @@
 "use client";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useConsultations } from "@/hooks/useConsultation";
 import {
   Button,
@@ -33,19 +33,37 @@ export default function ConsultHistoryPage() {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Consultation | null>(null);
   const [staffName, setStaffName] = useState<string | null>(null);
+  const [patientName, setPatientName] = useState<string | null>(null);
+  const [pharmacistName, setPharmacistName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!userId) return;
+    axios.get(`${API}/users/${userId}`, { withCredentials: true })
+      .then((res) => setPatientName([res.data.name, res.data.sur_name].filter(Boolean).join(" ")))
+      .catch(() => setPatientName(null));
+  }, [userId]);
 
   const handleOpen = async (consult: Consultation) => {
     setSelected(consult);
     setStaffName(null);
+    setPharmacistName(null);
     setOpen(true);
+    const fetches: Promise<void>[] = [];
     if (consult.staff_id) {
-      try {
-        const res = await axios.get(`${API}/users/staff/${consult.staff_id}`, { withCredentials: true });
-        setStaffName(res.data.name);
-      } catch {
-        setStaffName(null);
-      }
+      fetches.push(
+        axios.get(`${API}/users/staff/${consult.staff_id}`, { withCredentials: true })
+          .then((res) => setStaffName([res.data.name, res.data.sur_name].filter(Boolean).join(" ")))
+          .catch(() => setStaffName(null))
+      );
     }
+    if (consult.pharmacist_id) {
+      fetches.push(
+        axios.get(`${API}/users/staff/${consult.pharmacist_id}`, { withCredentials: true })
+          .then((res) => setPharmacistName([res.data.name, res.data.sur_name].filter(Boolean).join(" ")))
+          .catch(() => setPharmacistName(null))
+      );
+    }
+    await Promise.all(fetches);
   };
 
   // --- questionnaire responses ---
@@ -206,12 +224,6 @@ export default function ConsultHistoryPage() {
             }}
           >
             <span>รายละเอียดการปรึกษา</span>
-            <Typography.Text
-              type="secondary"
-              style={{ fontSize: 14, fontWeight: "normal" }}
-            >
-              แพทย์: {staffName ?? "-"}
-            </Typography.Text>
           </div>
         }
         open={open}
@@ -226,6 +238,17 @@ export default function ConsultHistoryPage() {
           },
         }}
       >
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 8 }}>
+          <Typography.Text type="secondary">
+            ผู้ป่วย: <Typography.Text strong>{patientName ?? "-"}</Typography.Text>
+          </Typography.Text>
+          <Typography.Text type="secondary">
+            เเพทย์: <Typography.Text strong>{staffName ?? "-"}</Typography.Text>
+          </Typography.Text>
+          <Typography.Text type="secondary">
+            เภสัชกร: <Typography.Text strong>{pharmacistName ?? "-"}</Typography.Text>
+          </Typography.Text>
+        </div>
         <Divider style={{ paddingTop: 32 }}>บันทึกการปรึกษา</Divider>
         <Typography.Paragraph>
           {selected?.note ?? "ไม่มีบันทึก"}
