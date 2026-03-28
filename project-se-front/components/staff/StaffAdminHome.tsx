@@ -688,8 +688,10 @@ export function SelectedAppointmentsSection({
 }
 
 export function StaffOverviewSection({
+  onOpenStaffWorkModal,
   staffOverview,
 }: {
+  onOpenStaffWorkModal: () => void;
   staffOverview: StaffOverviewItem[];
 }) {
   return (
@@ -701,6 +703,13 @@ export function StaffOverviewSection({
           </h2>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onOpenStaffWorkModal}
+            className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[#0f766e] px-4 text-[0.9rem] font-extrabold text-white shadow-[0_10px_24px_rgba(15,118,110,0.18)] transition hover:bg-[#115e59]"
+          >
+            แก้ไข
+          </button>
           <span className={PANEL_META_CLASS}>{staffOverview.length} คน</span>
         </div>
       </div>
