@@ -50,7 +50,7 @@ type TimeRange = {
 
 @Injectable()
 export class AppointmentsService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async getMySchedule(userId: number): Promise<AppointmentScheduleResponse> {
     const clinicMeetUrl = process.env.CLINIC_MEET_URL ?? null;
@@ -122,7 +122,7 @@ export class AppointmentsService {
   }
 
   async createAppointment(userId: number, body: any) {
-    const { staffId, date, timeSelect, duration, note } = body;
+    const { staffId, date, timeSelect } = body;
     const dateValue = this.toDateOnlyUtc(this.normalizeDate(date));
     const normalizedTime = this.normalizeTimeSelect(timeSelect);
 
@@ -141,13 +141,14 @@ export class AppointmentsService {
         appointment_date: dateValue,
         time_select: normalizedTime,
         status: 'Not_paying',
-        appointment_type: body.appointmentType === 'onsite' ? 'onsite' : 'online',
-      }
+        appointment_type:
+          body.appointmentType === 'onsite' ? 'onsite' : 'online',
+      },
     });
 
     return {
       message: 'Appointment created successfully',
-      appointmentId: appointment.id
+      appointmentId: appointment.id,
     };
   }
 
@@ -162,18 +163,24 @@ export class AppointmentsService {
     nation_address?: string;
   }) {
     if (!data.name || !data.sur_name) {
-      throw new BadRequestException('name and sur_name are required for walk-in patients');
+      throw new BadRequestException(
+        'name and sur_name are required for walk-in patients',
+      );
     }
 
     // Create addresses if provided
     let currentAddressId: number | null = null;
     let nationAddressId: number | null = null;
     if (data.current_address) {
-      const addr = await this.prisma.addresses.create({ data: { detail: data.current_address } });
+      const addr = await this.prisma.addresses.create({
+        data: { detail: data.current_address },
+      });
       currentAddressId = addr.id;
     }
     if (data.nation_address) {
-      const addr = await this.prisma.addresses.create({ data: { detail: data.nation_address } });
+      const addr = await this.prisma.addresses.create({
+        data: { detail: data.nation_address },
+      });
       nationAddressId = addr.id;
     }
 
@@ -188,7 +195,7 @@ export class AppointmentsService {
         address_id: currentAddressId,
         address_id_nation: nationAddressId,
         role_id: 2, // Assuming 2 is 'user' role
-      }
+      },
     });
   }
 
@@ -201,33 +208,45 @@ export class AppointmentsService {
 
     // Every 30 minutes slots map
     const allTimes = [
-      '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-      '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'
+      '09:00',
+      '09:30',
+      '10:00',
+      '10:30',
+      '11:00',
+      '11:30',
+      '13:00',
+      '13:30',
+      '14:00',
+      '14:30',
+      '15:00',
+      '15:30',
+      '16:00',
+      '16:30',
     ];
 
     const staffs = await this.prisma.users.findMany({
       where: {
         roles: { name: { in: ['psychiatrist', 'psychologist'] } },
       },
-      select: { user_id: true }
+      select: { user_id: true },
     });
 
-    const staffIds = staffs.map(s => s.user_id);
+    const staffIds = staffs.map((s) => s.user_id);
 
     const leaves = await this.prisma.schedule.findMany({
       where: {
         work_date: dateValue,
-        status: 'leave',
-        staff_id: { in: staffIds }
-      }
+        status: { in: ['leave', 'holiday'] },
+        staff_id: { in: staffIds },
+      },
     });
-    const staffOnLeave = new Set(leaves.map(l => l.staff_id));
+    const staffOnLeave = new Set(leaves.map((l) => l.staff_id));
 
     const appointments = await this.prisma.appointments.findMany({
       where: {
         appointment_date: dateValue,
-        staff_id: { in: staffIds }
-      }
+        staff_id: { in: staffIds },
+      },
     });
 
     const result: Record<number, string[]> = {};
@@ -239,17 +258,19 @@ export class AppointmentsService {
       }
 
       const bookedRanges = appointments
-        .filter(a => a.staff_id === staffId && a.time_select)
-        .map(a => this.tryParseTimeRange(a.time_select));
+        .filter((a) => a.staff_id === staffId && a.time_select)
+        .map((a) => this.tryParseTimeRange(a.time_select));
 
       // filter
-      const available = allTimes.filter(t => {
+      const available = allTimes.filter((t) => {
         const hh = parseInt(t.substring(0, 2), 10);
         const mm = parseInt(t.substring(3, 5), 10);
         const startMin = hh * 60 + mm;
 
         // check if this slot is covered by any booked range
-        const isBooked = bookedRanges.some(r => r && startMin >= r.startMinutes && startMin < r.endMinutes);
+        const isBooked = bookedRanges.some(
+          (r) => r && startMin >= r.startMinutes && startMin < r.endMinutes,
+        );
 
         // also reject past times if it's today
         const now = new Date();
@@ -327,7 +348,12 @@ export class AppointmentsService {
 
   async getAllPaidAppointments() {
     const fees = await this.prisma.fees.findMany();
-    const feeMap = new Map(fees.map(f => [f.id, f.price_per_hours ? Number(f.price_per_hours) : 0]));
+    const feeMap = new Map(
+      fees.map((f) => [
+        f.id,
+        f.price_per_hours ? Number(f.price_per_hours) : 0,
+      ]),
+    );
 
     const records = await this.prisma.appointments.findMany({
       where: {},
@@ -336,24 +362,25 @@ export class AppointmentsService {
           select: {
             name: true,
             sur_name: true,
-          }
+          },
         },
         users_appointments_staff_idTousers: {
           select: {
             name: true,
             sur_name: true,
-            roles: true
-          }
-        }
+            roles: true,
+          },
+        },
       },
       orderBy: {
-        appointment_date: 'desc'
-      }
+        appointment_date: 'desc',
+      },
     });
 
-    return records.map(r => {
+    return records.map((r) => {
       const role = (r.users_appointments_staff_idTousers as any)?.roles;
-      const pricePerHour = role && role.fee_id ? (feeMap.get(role.fee_id) ?? 0) : 0;
+      const pricePerHour =
+        role && role.fee_id ? (feeMap.get(role.fee_id) ?? 0) : 0;
 
       const parsedRange = this.tryParseTimeRange(r.time_select);
       let durationMinutes = 0;
@@ -364,13 +391,21 @@ export class AppointmentsService {
 
       return {
         id: r.id,
-        patientName: this.buildConsultantName(r.users_appointments_user_idTousers?.name, r.users_appointments_user_idTousers?.sur_name),
-        staffName: this.buildConsultantName(r.users_appointments_staff_idTousers?.name, r.users_appointments_staff_idTousers?.sur_name),
-        date: r.appointment_date ? this.dateToIsoDate(r.appointment_date) : null,
+        patientName: this.buildConsultantName(
+          r.users_appointments_user_idTousers?.name,
+          r.users_appointments_user_idTousers?.sur_name,
+        ),
+        staffName: this.buildConsultantName(
+          r.users_appointments_staff_idTousers?.name,
+          r.users_appointments_staff_idTousers?.sur_name,
+        ),
+        date: r.appointment_date
+          ? this.dateToIsoDate(r.appointment_date)
+          : null,
         time: r.time_select,
         status: r.status,
         slipUrl: r.deposit_slip_file,
-        price: price
+        price: price,
       };
     });
   }
@@ -466,12 +501,12 @@ export class AppointmentsService {
     }
 
     if (appointment.status === pay_type_enum.Pending) {
-        return {
-          message: 'Appointment is already pending verification',
-          appointmentId,
-          status: pay_type_enum.Pending,
-        };
-      }
+      return {
+        message: 'Appointment is already pending verification',
+        appointmentId,
+        status: pay_type_enum.Pending,
+      };
+    }
 
     const appointmentDate = appointment.appointment_date
       ? this.dateToIsoDate(appointment.appointment_date)
@@ -555,7 +590,9 @@ export class AppointmentsService {
     });
 
     if (hasUserConflict) {
-      throw new BadRequestException('ไม่สามารถนัดหมายได้ เนื่องจากมีนัดหมายในช่วงเวลานี้แล้ว');
+      throw new BadRequestException(
+        'ไม่สามารถนัดหมายได้ เนื่องจากมีนัดหมายในช่วงเวลานี้แล้ว',
+      );
     }
 
     // Fetch overlapping appointments for the staff
@@ -576,7 +613,9 @@ export class AppointmentsService {
       });
 
       if (hasStaffConflict) {
-        throw new BadRequestException('This consultant is not available in this slot');
+        throw new BadRequestException(
+          'This consultant is not available in this slot',
+        );
       }
 
       const leaveRecord = await this.prisma.schedule.findUnique({
@@ -588,8 +627,13 @@ export class AppointmentsService {
         },
       });
 
-      if (leaveRecord?.status === 'leave') {
-        throw new BadRequestException('This consultant is on leave for the selected date');
+      if (
+        leaveRecord?.status === 'leave' ||
+        leaveRecord?.status === 'holiday'
+      ) {
+        throw new BadRequestException(
+          'This consultant is unavailable for the selected date',
+        );
       }
     }
   }
@@ -607,8 +651,8 @@ export class AppointmentsService {
     }
 
     if (paymentStatus === pay_type_enum.Pending) {
-        return 'waiting';
-      }
+      return 'waiting';
+    }
 
     return 'pending';
   }
@@ -870,6 +914,5 @@ export class AppointmentsService {
     }
 
     return 'ผู้ป่วย';
-
   }
 }

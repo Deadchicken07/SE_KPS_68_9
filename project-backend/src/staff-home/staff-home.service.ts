@@ -89,8 +89,11 @@ export class StaffHomeService {
       this.getMonthBounds(month);
     const selectedDate = this.resolveSelectedDate(query.date, month, dayKeys);
     const selectedDateValue = this.toDateOnlyUtc(selectedDate);
-    const { weekStart, weekEndExclusive, dayKeys: weekDayKeys } =
-      this.getWeekBounds(selectedDate);
+    const {
+      weekStart,
+      weekEndExclusive,
+      dayKeys: weekDayKeys,
+    } = this.getWeekBounds(selectedDate);
     const staffId = this.parseStaffId(query.staffId);
 
     const appointmentWhere = {
@@ -101,7 +104,12 @@ export class StaffHomeService {
       ...(staffId ? { staff_id: staffId } : {}),
     };
 
-    const [appointments, weekAppointments, selectedDateClinicAppointments, staffRows] = await Promise.all([
+    const [
+      appointments,
+      weekAppointments,
+      selectedDateClinicAppointments,
+      staffRows,
+    ] = await Promise.all([
       this.prisma.appointments.findMany({
         where: appointmentWhere,
         orderBy: [{ appointment_date: 'asc' }, { time_select: 'asc' }],
@@ -321,7 +329,8 @@ export class StaffHomeService {
 
     const appointmentItems = appointments.map(mapAppointmentRecord);
     const weekAppointmentItems = weekAppointments.map(mapAppointmentRecord);
-    const selectedDateClinicAppointmentItems = selectedDateClinicAppointments.map(mapAppointmentRecord);
+    const selectedDateClinicAppointmentItems =
+      selectedDateClinicAppointments.map(mapAppointmentRecord);
     const dailyStats = this.buildDailyStats(dayKeys, appointmentItems);
     const weekStats = this.buildDailyStats(weekDayKeys, weekAppointmentItems);
 
@@ -372,10 +381,13 @@ export class StaffHomeService {
             (left, right) => this.getSortValue(left) - this.getSortValue(right),
           );
         const nextAppointment =
-          staffAppointments.find((item) => !this.isPastAppointment(
-            item.appointmentDate,
-            this.tryParseTimeRange(item.timeSelect),
-          )) ?? null;
+          staffAppointments.find(
+            (item) =>
+              !this.isPastAppointment(
+                item.appointmentDate,
+                this.tryParseTimeRange(item.timeSelect),
+              ),
+          ) ?? null;
 
         return {
           staffId: staff.user_id,
@@ -399,8 +411,7 @@ export class StaffHomeService {
           ).length,
           nextAppointmentDate: nextAppointment?.appointmentDate ?? null,
           nextAppointmentTime: nextAppointment?.timeSelect ?? null,
-          scheduleStatus:
-            staff.schedule[0]?.status ?? ('unassigned' as const),
+          scheduleStatus: staff.schedule[0]?.status ?? ('unassigned' as const),
         } satisfies StaffHomeStaffSummary;
       })
       .sort((left, right) => {
@@ -413,7 +424,9 @@ export class StaffHomeService {
 
     const selectedDateAppointments = appointmentItems
       .filter((item) => item.appointmentDate === selectedDate)
-      .sort((left, right) => this.getSortValue(left) - this.getSortValue(right));
+      .sort(
+        (left, right) => this.getSortValue(left) - this.getSortValue(right),
+      );
 
     const upcomingAppointments = appointmentItems
       .filter(
@@ -476,8 +489,10 @@ export class StaffHomeService {
       throw new BadRequestException('ไม่สามารถบันทึกตารางงานย้อนหลังได้');
     }
 
-    if (status !== 'working' && status !== 'leave') {
-      throw new BadRequestException('status must be working or leave');
+    if (status !== 'working' && status !== 'leave' && status !== 'holiday') {
+      throw new BadRequestException(
+        'status must be working, leave, or holiday',
+      );
     }
 
     if (note && note.length > 255) {
@@ -613,7 +628,10 @@ export class StaffHomeService {
 
     const parsedDate = new Date(`${trimmed}-01T00:00:00.000Z`);
 
-    if (Number.isNaN(parsedDate.getTime()) || this.toMonthKey(parsedDate) !== trimmed) {
+    if (
+      Number.isNaN(parsedDate.getTime()) ||
+      this.toMonthKey(parsedDate) !== trimmed
+    ) {
       throw new BadRequestException('month is invalid');
     }
 
@@ -908,12 +926,7 @@ export class StaffHomeService {
     const endHour = Number(match[3]);
     const endMinute = Number(match[4]);
 
-    if (
-      startHour > 23 ||
-      endHour > 23 ||
-      startMinute > 59 ||
-      endMinute > 59
-    ) {
+    if (startHour > 23 || endHour > 23 || startMinute > 59 || endMinute > 59) {
       return null;
     }
 

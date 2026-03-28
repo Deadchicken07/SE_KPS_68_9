@@ -83,6 +83,13 @@
   transition: all 0.2s ease;
 }
 
+.actions button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 .editButton {
   background: #f0fdf4;
   color: #0f766e;
@@ -154,6 +161,18 @@
   opacity: 0;
   visibility: hidden;
   transform: translateY(-15px);
+}
+
+.errorText {
+  margin: 12px 0 0;
+  color: #fee2e2;
+  font-weight: 700;
+}
+
+.loadingText {
+  margin: 0 0 18px;
+  color: #475569;
+  font-weight: 600;
 }
 
 .formGrid {
