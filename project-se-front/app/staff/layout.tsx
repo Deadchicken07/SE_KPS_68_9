@@ -2,15 +2,15 @@ import { ReactNode } from "react"
 import SlideBar from "@/components/nav/slideBar";
 import StaffTopBar from "@/components/nav/staffTopBar";
 
-export default function StaffLayout({ 
-    children 
-}:{
-    children : ReactNode
+export default function StaffLayout({
+  children
+}: {
+  children: ReactNode
 }) {
   return (
-    <div style={{ display: "flex", minHeight: "100vh", width: "100%" }}>
-      <SlideBar/>
-      <main style={{ flex: 1, minWidth: 0, overflowX: "hidden" }}>
+    <div className="flex min-h-screen">
+      <SlideBar />
+      <main className="flex-1 overflow-auto bg-gray-50">
         <StaffTopBar />
         {children}
       </main>

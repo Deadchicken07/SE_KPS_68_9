@@ -31,11 +31,10 @@ export default function SidebarNav() {
             <Link
               key={link.href}
               href={link.href}
-              className={`rounded p-2 ${
-                isActive
+              className={`rounded p-2 ${isActive
                   ? "bg-[#065f46] text-white"
                   : "text-[#d1fae5] hover:bg-[#065f46] hover:text-white"
-              }`}
+                }`}
             >
               {link.name}
             </Link>

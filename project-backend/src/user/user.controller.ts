@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserQueryDto } from './dto/user-query.dto';
+import { CreateStaffDto } from './dto/create-staff.dto';
 
 @Controller('users')
 export class UserController {
@@ -14,6 +15,11 @@ export class UserController {
   @Get('staff')
   findStaffs() {
     return this.userService.findStaffs();
+  }
+
+  @Get('all')
+  findUser() {
+    return this.userService.findAllUser();
   }
   
   @Get('staff/:id')
@@ -38,5 +44,9 @@ export class UserController {
   async checkEmail(@Body('email') email: string) {
     return this.userService.checkEmail(email);
   }
-  
+
+  @Post('staff')
+  async createStaff(@Body() body: CreateStaffDto) {
+    return this.userService.createStaff(body);
+  }
 }

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AppointmentsModule } from './appointments/appointments.module';
@@ -15,6 +16,7 @@ import { StaffHomeModule } from './staff-home/staff-home.module';
 import { PhamaHomeModule } from './phama-home/phama-home.module';
 import { PharmacistModule } from './pharmacist/pharmacist.module';
 
+
 @Module({
   imports: [
     UserModule,
@@ -30,8 +32,10 @@ import { PharmacistModule } from './pharmacist/pharmacist.module';
     StaffHomeModule,
     PhamaHomeModule,
     PharmacistModule,
+    ResponsesModule,
+    ConsultationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

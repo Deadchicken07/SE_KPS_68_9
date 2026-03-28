@@ -6,6 +6,8 @@ import {
 } from './dto/user-response.dto';
 import { UserQueryDto } from './dto/user-query.dto';
 import { Prisma } from '@prisma/client';
+import { CreateStaffDto } from './dto/create-staff.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
@@ -53,6 +55,21 @@ export class UserService {
         lastPage: Math.ceil(total / limit),
       },
     };
+  }
+
+  async findAllUser(){
+    const user = await this.prisma.users.findMany({
+      where: {
+        role_id : 2
+      },
+      select: {
+        user_id : true,
+        name: true,
+        sur_name: true,
+      }
+    })
+
+    return user;
   }
 
   async findStaffs() {
@@ -238,6 +255,32 @@ export class UserService {
       role: staff.roles?.name || '',
       specialty: staff.info || '',
       image: staff.file_name || '',
+    };
+  }
+
+  async createStaff(body: CreateStaffDto, adminId?: number) {
+    const hashedPassword = await bcrypt.hash(body.password, 10);
+
+    const staff = await this.prisma.users.create({
+      data: {
+        email: body.email,
+        name: body.name,
+        sur_name: body.surName,
+        password_hash: hashedPassword,
+        role_id: body.roleId,
+        phone: body.phone,
+        info: body.info,
+        degree: body.degree,
+        license: body.license,
+        file_name: body.fileName,
+        status: 'ACTIVE',
+        created_by: adminId,
+      },
+    });
+
+    return {
+      message: 'Staff created successfully',
+      staffId: staff.user_id,
     };
   }
 }
