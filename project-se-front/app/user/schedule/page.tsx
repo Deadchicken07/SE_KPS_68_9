@@ -436,26 +436,28 @@ export default function AppointmentSchedulePage() {
 
     try {
       const response = await fetch(`${API_BASE_URL}/appointments/me`, {
-        credentials: "include"
+        credentials: "include",
       });
 
-      if (response.status === 401 || response.status === 403) {
-        setIsAuthRequired(true);
-        throw new Error("กรุณาเข้าสู่ระบบก่อนดูลายละเอียดนัดหมาย");
-      }
-
       if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          setIsAuthRequired(true);
+        }
+
         throw new Error(await parseErrorMessage(response));
       }
 
-      const data = await response.json() as AppointmentScheduleApiResponse;
+      const payload = (await response.json()) as AppointmentScheduleApiResponse;
+
       setSchedule({
-        upcoming: normalizeApiItems(data.upcoming),
-        past: normalizeApiItems(data.past),
+        upcoming: normalizeApiItems(payload.upcoming),
+        past: normalizeApiItems(payload.past),
       });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "ไม่สามารถโหลดข้อมูลนัดหมายได้";
-      setError(message);
+      setSchedule(defaultSchedule);
+      setError(
+        err instanceof Error ? err.message : "ไม่สามารถโหลดข้อมูลนัดหมายได้",
+      );
     } finally {
       setLoading(false);
     }

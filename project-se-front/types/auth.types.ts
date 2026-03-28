@@ -7,6 +7,7 @@ export interface AuthMeResponse {
   sub: number;
   email: string | null;
   role_id: number | null;
+  role?: string | null;
   name?: string | null;
   sur_name?: string | null;
   file_name?: string | null;

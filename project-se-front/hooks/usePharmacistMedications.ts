@@ -73,6 +73,7 @@ export const usePharmacistMedications = () => {
     try {
       const response = await axios.get<Medication[]>(`${API_URL}/pharmacist/medications`, {
         params: search.trim() ? { search: search.trim() } : undefined,
+        withCredentials: true,
       })
       setMedications(response.data)
       return { ok: true as const }

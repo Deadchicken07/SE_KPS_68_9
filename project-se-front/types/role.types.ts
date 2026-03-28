@@ -29,6 +29,7 @@ export const mapRoleIdToRole = (roleId: number | null): Roles | null => {
 
 export const roleLinks: Record<Roles, NavLinks[]> = {
   admin: [
+    { name: "Dashboard", href: "/staff/admin-home" },
     { name: "Admin Report", href: "/staff/admin/admin-report" },
     { name: "Add Staff", href: "/staff/admin/add-staff" },
     { name: "Patient History", href: "/staff/admin/patient-history" },
@@ -36,23 +37,29 @@ export const roleLinks: Record<Roles, NavLinks[]> = {
     { name: "Walk-in Appointment", href: "/staff/admin/walkin-appointment" },
   ],
   user: [{ name: "หน้าแรก", href: "/user" }],
-  psychologist: [{ name: "Patient History", href: "/staff/patient-history" }],
+  psychologist: [
+    { name: "Patient History", href: "/staff/patient-history" },
+    { name: "การนัดหมาย", href: "/staff/appointments/med" },
+    { name: "การปรึกษา", href: "/staff/consult" },
+  ],
   psychiatrist: [
     { name: "Patient History", href: "/staff/patient-history" },
-    { name: "การนัดหมาย", href: "/staff/appointments" },
+    { name: "การนัดหมาย", href: "/staff/appointments/med" },
     { name: "การปรึกษา", href: "/staff/consult" },
   ],
   pharmacist: [
-    { name: "Pharmacist", href: "/staff/pharmacist" },
+    { name: "Dashboard", href: "/staff/pharmacist_home" },
+    { name: "Work Schedule", href: "/staff/pharmacist_home/Phama_work" },
     { name: "Medication Order", href: "/staff/pharmacist/order" },
     { name: "Delivery History", href: "/staff/pharmacist/delivery-history" },
+    { name: "Med Inventory", href: "/staff/pharmacist" },
   ],
 };
 
 export const roleHome: Record<Roles, string> = {
-  admin: "/staff/admin/admin-report",
+  admin: "/staff/admin-home",
   user: "/user",
   psychologist: "/staff/patient-history",
-  psychiatrist: "/staff/patient-history",
-  pharmacist: "/staff/pharmacist",
+  psychiatrist: "/staff/appointment",
+  pharmacist: "/staff/pharmacist_home",
 };

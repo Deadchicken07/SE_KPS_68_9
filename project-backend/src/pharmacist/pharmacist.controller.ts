@@ -2,13 +2,18 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   ParseIntPipe,
   Patch,
   Post,
   Query,
+  Req,
+  UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { CreateMedicationDto } from './dto/create-medication.dto';
 import { DeliveryHistoryQueryDto } from './dto/delivery-history-query.dto';
@@ -49,8 +54,11 @@ export class PharmacistController {
   }
 
   @Post('orders')
-  createOrder(@Body() dto: CreateOrderDto) {
-    return this.pharmacistService.createOrder(dto);
+  @UseGuards(JwtAuthGuard)
+  createOrder(@Req() req, @Body() dto: CreateOrderDto) {
+    const auth = this.getAuthContext(req);
+    this.ensurePharmacistAccess(auth.roleId);
+    return this.pharmacistService.createOrder(dto, auth.userId);
   }
 
   @Get('delivery-history')
@@ -61,5 +69,28 @@ export class PharmacistController {
   @Get('patient-history')
   findPatientHistory(@Query() query: PatientHistoryQueryDto) {
     return this.pharmacistService.findPatientHistory(query);
+  }
+
+  private getAuthContext(req): { userId: number; roleId: number } {
+    const userId = Number(req?.user?.sub);
+    const roleId = Number(req?.user?.role_id);
+
+    if (!Number.isInteger(userId) || userId <= 0) {
+      throw new UnauthorizedException('Invalid token payload');
+    }
+
+    if (!Number.isInteger(roleId) || roleId <= 0) {
+      throw new UnauthorizedException('Invalid role payload');
+    }
+
+    return { userId, roleId };
+  }
+
+  private ensurePharmacistAccess(roleId: number) {
+    const allowedRoleIds = new Set([1, 5]);
+
+    if (!allowedRoleIds.has(roleId)) {
+      throw new ForbiddenException('Pharmacist access only');
+    }
   }
 }

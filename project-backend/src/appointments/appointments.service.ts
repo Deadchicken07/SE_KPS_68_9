@@ -30,6 +30,18 @@ type AppointmentScheduleResponse = {
   past: AppointmentScheduleItem[];
 };
 
+type StaffAppointmentItem = {
+  id: number;
+  staffId: number | null;
+  patientId: number | null;
+  patientName: string;
+  appointmentDate: string | null;
+  timeSelect: string | null;
+  appointmentType: 'online' | 'onsite' | null;
+  paymentStatus: string | null;
+  depositSlipFile: string | null;
+};
+
 type TimeRange = {
   startMinutes: number;
   endMinutes: number;
@@ -747,13 +759,70 @@ export class AppointmentsService {
     ].join('-');
   }
 
-  async findAllByStaff(staffId: number) {
-    const appointment = await this.prisma.appointments.findMany({
+
+
+
+  async findAllByStaff(staffId: number): Promise<StaffAppointmentItem[]> {
+    const records = await this.prisma.appointments.findMany({
       where: {
         staff_id: staffId,
-      }
-    })
+      },
+      include: {
+        users_appointments_user_idTousers: {
+          select: {
+            user_id: true,
+            name: true,
+            sur_name: true,
+          },
+        },
+      },
+      orderBy: [
+        {
+          appointment_date: 'asc',
+        },
+        {
+          time_select: 'asc',
+        },
+      ],
+    });
 
-    return appointment;
+    return records.map((record) => ({
+      id: record.id,
+      staffId: record.staff_id ?? null,
+      patientId: record.user_id ?? null,
+      patientName: this.buildPatientName(
+        record.users_appointments_user_idTousers?.name,
+        record.users_appointments_user_idTousers?.sur_name,
+        record.users_appointments_user_idTousers?.user_id ??
+          record.user_id ??
+          null,
+      ),
+      appointmentDate: record.appointment_date
+        ? this.dateToIsoDate(record.appointment_date)
+        : null,
+      timeSelect: record.time_select ?? null,
+      appointmentType: record.appointment_type ?? null,
+      paymentStatus: record.status ?? null,
+      depositSlipFile: record.deposit_slip_file ?? null,
+    }));
+  }
+
+  private buildPatientName(
+    firstName?: string | null,
+    lastName?: string | null,
+    patientId?: number | null,
+  ): string {
+    const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
+
+    if (fullName) {
+      return fullName;
+    }
+
+    if (patientId) {
+      return `ผู้ป่วย #${patientId}`;
+    }
+
+    return 'ผู้ป่วย';
+
   }
 }

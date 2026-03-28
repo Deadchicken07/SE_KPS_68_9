@@ -18,6 +18,7 @@ import {
   Typography,
   message,
 } from "antd";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { usePharmacistOrders } from "@/hooks/usePharmacistOrders";
 import {
@@ -67,9 +68,21 @@ export default function PharmacistOrderPage() {
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm<OrderFormValues>();
   const [selectedConsultationId, setSelectedConsultationId] = useState<number | null>(null);
+  const searchParams = useSearchParams();
   const { me } = useAuth();
   const { consultations, loading, saving, consultationOptions, createOrder } =
     usePharmacistOrders();
+
+  const requestedConsultationId = useMemo(() => {
+    const value = searchParams.get("consultationId");
+
+    if (!value) {
+      return null;
+    }
+
+    const parsed = Number(value);
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+  }, [searchParams]);
 
   const selectedConsultation = useMemo(
     () =>
@@ -95,7 +108,9 @@ export default function PharmacistOrderPage() {
 
   useEffect(() => {
     if (consultations.length === 0) {
-      setSelectedConsultationId(null);
+      if (selectedConsultationId !== null) {
+        setSelectedConsultationId(null);
+      }
       form.resetFields();
       return;
     }
@@ -106,14 +121,27 @@ export default function PharmacistOrderPage() {
         (consultation) => consultation.consultationId === selectedConsultationId,
       )
         ? selectedConsultationId
+        : requestedConsultationId &&
+            consultations.some(
+              (consultation) =>
+                consultation.consultationId === requestedConsultationId,
+            )
+          ? requestedConsultationId
         : consultations[0].consultationId;
 
-    setSelectedConsultationId(nextConsultationId);
-    form.setFieldsValue({
-      consultationId: nextConsultationId,
-      tracking: "",
-    });
-  }, [consultations, form, selectedConsultationId]);
+    if (selectedConsultationId !== nextConsultationId) {
+      setSelectedConsultationId(nextConsultationId);
+      form.setFieldsValue({
+        consultationId: nextConsultationId,
+        tracking: "",
+      });
+      return;
+    }
+
+    if (form.getFieldValue("consultationId") !== nextConsultationId) {
+      form.setFieldValue("consultationId", nextConsultationId);
+    }
+  }, [consultations, form, requestedConsultationId, selectedConsultationId]);
 
   const handleConsultationChange = (consultationId: number) => {
     setSelectedConsultationId(consultationId);
@@ -260,11 +288,6 @@ export default function PharmacistOrderPage() {
                   column={2}
                   colon={false}
                   items={[
-                    {
-                      key: "consultationId",
-                      label: "Consultation",
-                      children: `#${selectedConsultation.consultationId}`,
-                    },
                     {
                       key: "patientName",
                       label: "ผู้ป่วย",

@@ -58,6 +58,21 @@ export class UserService {
     };
   }
 
+  async findAllUser(){
+    const user = await this.prisma.users.findMany({
+      where: {
+        role_id : 2
+      },
+      select: {
+        user_id : true,
+        name: true,
+        sur_name: true,
+      }
+    })
+
+    return user;
+  }
+
   async findStaffs() {
     const staffs = await this.prisma.users.findMany({
       where: {

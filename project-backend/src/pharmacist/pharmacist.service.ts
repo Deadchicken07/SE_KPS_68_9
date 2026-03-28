@@ -24,7 +24,7 @@ import { UpdateMedicationDto } from './dto/update-medication.dto';
 
 @Injectable()
 export class PharmacistService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async findMedications(search?: string): Promise<MedicationResponseDto[]> {
     const normalizedSearch = search?.trim();
@@ -32,11 +32,11 @@ export class PharmacistService {
     const medications = await this.prisma.medications.findMany({
       where: normalizedSearch
         ? {
-          name: {
-            contains: normalizedSearch,
-            mode: 'insensitive',
-          },
-        }
+            name: {
+              contains: normalizedSearch,
+              mode: 'insensitive',
+            },
+          }
         : undefined,
       orderBy: [{ name: 'asc' }, { id: 'asc' }],
     });
@@ -94,9 +94,12 @@ export class PharmacistService {
   }
 
   async getOrderForm(): Promise<OrderFormResponseDto> {
-    await this.ensureReceiptsForConsultations();
-
     const consultations = await this.prisma.consultations.findMany({
+      where: {
+        receipts: {
+          some: {},
+        },
+      },
       include: {
         users_consultations_user_idTousers: {
           select: {
@@ -160,48 +163,70 @@ export class PharmacistService {
     };
   }
 
-  async createOrder(dto: CreateOrderDto): Promise<OrderResponseDto> {
-    await this.ensureReceiptForConsultation(dto.consultationId);
+  async createOrder(
+    dto: CreateOrderDto,
+    pharmacistId: number,
+  ): Promise<OrderResponseDto> {
+    const tracking = dto.tracking?.trim() || null;
+    const status = this.resolveReceiptStatus(
+      tracking,
+      dto.status?.trim() || null,
+    );
 
-    const existingReceipt = await this.prisma.receipts.findFirst({
-      where: { consultation_id: dto.consultationId },
-      orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
-      select: { id: true },
-    });
+    const updatedReceipt = await this.prisma.$transaction(async (tx) => {
+      const consultation = await tx.consultations.findUnique({
+        where: { id: dto.consultationId },
+        select: { id: true, pharmacist_id: true },
+      });
 
-    if (!existingReceipt) {
-      throw new NotFoundException('Receipt not found');
-    }
+      if (!consultation) {
+        throw new NotFoundException('Consultation not found');
+      }
 
-    const updatedReceipt = await this.prisma.receipts.update({
-      where: { id: existingReceipt.id },
-      data: {
-        tracking: dto.tracking?.trim() || null,
-        status: this.resolveReceiptStatus(
-          dto.tracking?.trim() || null,
-          dto.status?.trim() || null,
-        ),
-      },
-      include: {
-        users: {
-          select: {
-            user_id: true,
-            name: true,
-            sur_name: true,
-          },
+      const existingReceipt = await tx.receipts.findFirst({
+        where: { consultation_id: dto.consultationId },
+        orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
+        select: { id: true },
+      });
+
+      if (!existingReceipt) {
+        throw new NotFoundException('Receipt not found');
+      }
+
+      if (consultation.pharmacist_id !== pharmacistId) {
+        await tx.consultations.update({
+          where: { id: consultation.id },
+          data: { pharmacist_id: pharmacistId },
+        });
+      }
+
+      return tx.receipts.update({
+        where: { id: existingReceipt.id },
+        data: {
+          tracking,
+          status,
         },
-        receipt_details: {
-          orderBy: { id: 'asc' },
-          include: {
-            medications: {
-              select: {
-                id: true,
-                name: true,
+        include: {
+          users: {
+            select: {
+              user_id: true,
+              name: true,
+              sur_name: true,
+            },
+          },
+          receipt_details: {
+            orderBy: { id: 'asc' },
+            include: {
+              medications: {
+                select: {
+                  id: true,
+                  name: true,
+                },
               },
             },
           },
         },
-      },
+      });
     });
 
     return this.mapOrderReceipt(updatedReceipt);
@@ -218,44 +243,44 @@ export class PharmacistService {
         ...this.buildDeliveryHistoryStatusFilter(status),
         ...(search
           ? {
-            OR: [
-              { tracking: { contains: search, mode: 'insensitive' } },
-              {
-                users: {
-                  is: {
-                    OR: [
-                      { name: { contains: search, mode: 'insensitive' } },
-                      { sur_name: { contains: search, mode: 'insensitive' } },
-                    ],
+              OR: [
+                { tracking: { contains: search, mode: 'insensitive' } },
+                {
+                  users: {
+                    is: {
+                      OR: [
+                        { name: { contains: search, mode: 'insensitive' } },
+                        { sur_name: { contains: search, mode: 'insensitive' } },
+                      ],
+                    },
                   },
                 },
-              },
-              {
-                receipt_details: {
-                  some: {
-                    OR: [
-                      {
-                        item_name: {
-                          contains: search,
-                          mode: 'insensitive',
+                {
+                  receipt_details: {
+                    some: {
+                      OR: [
+                        {
+                          item_name: {
+                            contains: search,
+                            mode: 'insensitive',
+                          },
                         },
-                      },
-                      {
-                        medications: {
-                          is: {
-                            name: {
-                              contains: search,
-                              mode: 'insensitive',
+                        {
+                          medications: {
+                            is: {
+                              name: {
+                                contains: search,
+                                mode: 'insensitive',
+                              },
                             },
                           },
                         },
-                      },
-                    ],
+                      ],
+                    },
                   },
                 },
-              },
-            ],
-          }
+              ],
+            }
           : {}),
       },
       include: {
@@ -330,16 +355,16 @@ export class PharmacistService {
     const consultations = await this.prisma.consultations.findMany({
       where: search
         ? {
-          users_consultations_user_idTousers: {
-            is: {
-              OR: [
-                { name: { contains: search, mode: 'insensitive' } },
-                { sur_name: { contains: search, mode: 'insensitive' } },
-                { phone: { contains: search, mode: 'insensitive' } },
-              ],
+            users_consultations_user_idTousers: {
+              is: {
+                OR: [
+                  { name: { contains: search, mode: 'insensitive' } },
+                  { sur_name: { contains: search, mode: 'insensitive' } },
+                  { phone: { contains: search, mode: 'insensitive' } },
+                ],
+              },
             },
-          },
-        }
+          }
         : undefined,
       include: {
         users_consultations_user_idTousers: {
@@ -606,12 +631,12 @@ export class PharmacistService {
   private buildAddress(
     address:
       | {
-        detail?: string | null;
-        sub_districts?: { name?: string | null } | null;
-        districts?: { name?: string | null } | null;
-        provinces?: { name?: string | null } | null;
-        zip_codes?: { code?: string | null } | null;
-      }
+          detail?: string | null;
+          sub_districts?: { name?: string | null } | null;
+          districts?: { name?: string | null } | null;
+          provinces?: { name?: string | null } | null;
+          zip_codes?: { code?: string | null } | null;
+        }
       | null
       | undefined,
   ) {
