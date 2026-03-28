@@ -75,7 +75,9 @@ const consultationArgs = Prisma.validator<Prisma.consultationsDefaultArgs>()({
   },
 });
 
-type ConsultationRecord = Prisma.consultationsGetPayload<typeof consultationArgs>;
+type ConsultationRecord = Prisma.consultationsGetPayload<
+  typeof consultationArgs
+>;
 type ReceiptRow = {
   id: number;
   consultation_id: number | null;

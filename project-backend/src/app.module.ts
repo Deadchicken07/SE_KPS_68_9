@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AppointmentsModule } from './appointments/appointments.module';
@@ -16,7 +16,6 @@ import { StaffHomeModule } from './staff-home/staff-home.module';
 import { PhamaHomeModule } from './phama-home/phama-home.module';
 import { ResponsesModule } from './responses/responses.module';
 import { ConsultationsModule } from './consultations/consultations.module';
-
 
 @Module({
   imports: [
@@ -38,4 +37,4 @@ import { ConsultationsModule } from './consultations/consultations.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

@@ -25,7 +25,9 @@ export class AppointmentsController {
     const roleId = this.getRoleIdFromRequest(req);
 
     if (![3, 4].includes(roleId)) {
-      throw new ForbiddenException('Only clinical staff can access staff appointments');
+      throw new ForbiddenException(
+        'Only clinical staff can access staff appointments',
+      );
     }
 
     return this.appointmentsService.findAllByStaff(userId);
@@ -80,15 +82,14 @@ export class AppointmentsController {
   }
 
   @Get('staff/:staffId')
-  findAllByStaff(
-    @Req() req,
-    @Param('staffId', ParseIntPipe) staffId: number,
-  ) {
+  findAllByStaff(@Req() req, @Param('staffId', ParseIntPipe) staffId: number) {
     const roleId = this.getRoleIdFromRequest(req);
     const userId = this.getUserIdFromRequest(req);
 
     if (roleId !== 1 && userId !== staffId) {
-      throw new ForbiddenException('You do not have access to this staff schedule');
+      throw new ForbiddenException(
+        'You do not have access to this staff schedule',
+      );
     }
 
     return this.appointmentsService.findAllByStaff(staffId);

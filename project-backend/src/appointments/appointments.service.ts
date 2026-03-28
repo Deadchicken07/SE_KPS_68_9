@@ -545,7 +545,9 @@ export class AppointmentsService {
       patientName: this.buildPatientName(
         record.users_appointments_user_idTousers?.name,
         record.users_appointments_user_idTousers?.sur_name,
-        record.users_appointments_user_idTousers?.user_id ?? record.user_id ?? null,
+        record.users_appointments_user_idTousers?.user_id ??
+          record.user_id ??
+          null,
       ),
       appointmentDate: record.appointment_date
         ? this.dateToIsoDate(record.appointment_date)
