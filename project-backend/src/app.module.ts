@@ -15,6 +15,7 @@ import { StaffHomeModule } from './staff-home/staff-home.module';
 import { PhamaHomeModule } from './phama-home/phama-home.module';
 import { ResponsesModule } from './responses/responses.module';
 import { ConsultationsModule } from './consultations/consultations.module';
+import { PharmacistModule } from './pharmacist/pharmacist.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { ConsultationsModule } from './consultations/consultations.module';
     PhamaHomeModule,
     ResponsesModule,
     ConsultationsModule,
+    PharmacistModule,
   ],
   controllers: [AppController],
   providers: [AppService],
