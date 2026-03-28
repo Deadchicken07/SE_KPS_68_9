@@ -41,6 +41,10 @@ function parseApiError(payload: ApiError | null, fallbackMessage: string) {
   return payload?.message || fallbackMessage;
 }
 
+function displayValue(value: string) {
+  return value.trim() || "-";
+}
+
 export default function UserProfilePage() {
   const [savedProfile, setSavedProfile] = useState<PatientProfile>(defaultProfile);
   const [error, setError] = useState("");
@@ -87,58 +91,90 @@ export default function UserProfilePage() {
 
   return (
     <main className={styles.page}>
-      <section className={styles.card}>
-        <div className={styles.header}>
-          <div>
-            <h1>ข้อมูลส่วนตัวผู้ป่วย</h1>
-            {error ? <p className={styles.errorText}>{error}</p> : null}
-          </div>
+      <header className={styles.pageHeader}>
+        <span className={styles.pageKicker}>USER AREA</span>
+        <h1 className={styles.pageTitle}>หน้า Profile</h1>
+      </header>
+
+      {error ? (
+        <div className={`${styles.feedback} ${styles.feedbackError}`} role="alert">
+          {error}
         </div>
+      ) : null}
 
-        {isLoading ? <p className={styles.loadingText}>กำลังโหลดข้อมูลโปรไฟล์...</p> : null}
+      {isLoading ? (
+        <div className={styles.feedback}>กำลังโหลดข้อมูลโปรไฟล์...</div>
+      ) : (
+        <div className={styles.contentGrid}>
+          <section className={styles.panel}>
+            <div className={styles.panelHeader}>
+              <div>
+                <p className={styles.panelEyebrow}>Contact</p>
+                <h2 className={styles.panelTitle}>ข้อมูลติดต่อ</h2>
+              </div>
+            </div>
 
-        <div className={styles.formGrid}>
-          <label>
-            ชื่อ
-            <input name="firstName" value={savedProfile.firstName} disabled />
-          </label>
+            <div className={styles.fieldGrid}>
+              <article className={styles.fieldCard}>
+                <span className={styles.fieldLabel}>ชื่อ</span>
+                <p className={styles.fieldValue}>{displayValue(savedProfile.firstName)}</p>
+              </article>
+              <article className={styles.fieldCard}>
+                <span className={styles.fieldLabel}>นามสกุล</span>
+                <p className={styles.fieldValue}>{displayValue(savedProfile.lastName)}</p>
+              </article>
+              <article className={styles.fieldCard}>
+                <span className={styles.fieldLabel}>เบอร์โทรศัพท์</span>
+                <p className={styles.fieldValue}>{displayValue(savedProfile.phone)}</p>
+              </article>
+              <article className={styles.fieldCard}>
+                <span className={styles.fieldLabel}>อีเมล</span>
+                <p className={styles.fieldValue}>{displayValue(savedProfile.email)}</p>
+              </article>
+            </div>
+          </section>
 
-          <label>
-            นามสกุล
-            <input name="lastName" value={savedProfile.lastName} disabled />
-          </label>
+          <section className={styles.panel}>
+            <div className={styles.panelHeader}>
+              <div>
+                <p className={styles.panelEyebrow}>Health</p>
+                <h2 className={styles.panelTitle}>ข้อมูลสุขภาพเบื้องต้น</h2>
+              </div>
+            </div>
 
-          <label>
-            เบอร์โทรศัพท์
-            <input name="phone" value={savedProfile.phone} disabled />
-          </label>
+            <div className={styles.fieldGrid}>
+              <article className={styles.fieldCard}>
+                <span className={styles.fieldLabel}>โรคประจำตัว</span>
+                <p className={styles.fieldValue}>{displayValue(savedProfile.chronicDisease)}</p>
+              </article>
+              <article className={styles.fieldCard}>
+                <span className={styles.fieldLabel}>ประวัติแพ้ยา</span>
+                <p className={styles.fieldValue}>{displayValue(savedProfile.allergies)}</p>
+              </article>
+            </div>
+          </section>
 
-          <label>
-            อีเมล
-            <input name="email" value={savedProfile.email} disabled />
-          </label>
+          <section className={`${styles.panel} ${styles.panelWide}`}>
+            <div className={styles.panelHeader}>
+              <div>
+                <p className={styles.panelEyebrow}>Address</p>
+                <h2 className={styles.panelTitle}>ข้อมูลที่อยู่</h2>
+              </div>
+            </div>
 
-          <label>
-            โรคประจำตัว
-            <input name="chronicDisease" value={savedProfile.chronicDisease} disabled />
-          </label>
-
-          <label>
-            ประวัติแพ้ยา
-            <input name="allergies" value={savedProfile.allergies} disabled />
-          </label>
-
-          <label className={styles.fullWidth}>
-            ที่อยู่ปัจจุบัน
-            <textarea name="currentAddress" value={savedProfile.currentAddress} rows={3} disabled />
-          </label>
-
-          <label className={styles.fullWidth}>
-            ที่อยู่การจัดส่งยา
-            <textarea name="shippingAddress" value={savedProfile.shippingAddress} rows={3} disabled />
-          </label>
+            <div className={styles.addressGrid}>
+              <article className={styles.addressCard}>
+                <span className={styles.fieldLabel}>ที่อยู่ปัจจุบัน</span>
+                <p className={styles.addressValue}>{displayValue(savedProfile.currentAddress)}</p>
+              </article>
+              <article className={styles.addressCard}>
+                <span className={styles.fieldLabel}>ที่อยู่ตามทะเบียนบ้าน</span>
+                <p className={styles.addressValue}>{displayValue(savedProfile.shippingAddress)}</p>
+              </article>
+            </div>
+          </section>
         </div>
-      </section>
+      )}
     </main>
   );
 }
