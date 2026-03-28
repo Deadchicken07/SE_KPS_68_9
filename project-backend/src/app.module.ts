@@ -16,7 +16,6 @@ import { PhamaHomeModule } from './phama-home/phama-home.module';
 import { ResponsesModule } from './responses/responses.module';
 import { ConsultationsModule } from './consultations/consultations.module';
 
-
 @Module({
   imports: [
     UserModule,
@@ -37,4 +36,4 @@ import { ConsultationsModule } from './consultations/consultations.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

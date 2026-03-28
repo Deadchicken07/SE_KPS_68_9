@@ -62,19 +62,32 @@ export default function SidebarNav() {
             const isActive = pathname === link.href;
             const Icon = getNavIcon(link.name);
 
-          return (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`rounded p-2 ${isActive
-                  ? "bg-[#065f46] text-white"
-                  : "text-[#d1fae5] hover:bg-[#065f46] hover:text-white"
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`group flex items-center gap-3 rounded-2xl px-3.5 py-3 transition-all duration-200 md:px-4 ${
+                  isActive
+                    ? "bg-[#0f655d] text-white"
+                    : "text-[#e7fcf7] hover:bg-white/10 hover:text-white"
                 }`}
-            >
-              {link.name}
-            </Link>
-          );
-        })}
+              >
+                <span
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-all duration-200 ${
+                    isActive
+                      ? "bg-white/12 text-white"
+                      : "bg-transparent text-[#d1fae5] group-hover:bg-white/10"
+                  }`}
+                >
+                  <Icon />
+                </span>
+                <span className="min-w-0 truncate text-[0.97rem] font-medium md:text-[1rem]">
+                  {link.name}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
       </div>
     </aside>
   );
