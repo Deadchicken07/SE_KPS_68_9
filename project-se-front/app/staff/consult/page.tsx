@@ -10,6 +10,7 @@ import {
   Spin,
   InputNumber,
   Divider,
+  Switch,
   message,
 } from "antd";
 import {
@@ -46,6 +47,7 @@ export default function ConsultPage() {
   const [selectedUser, setSelectedUser] = useState<number | null>(
     userIdFromQuery,
   );
+  const [isOnline, setIsOnline] = useState(false);
 
   const userOptions = user.map((u) => ({
     value: u.user_id,
@@ -81,6 +83,7 @@ export default function ConsultPage() {
       user_id: selectedUser,
       staff_id: me.sub,
       note,
+      is_online: isOnline,
       prescription_item: prescriptions.map((p) => ({
         medication_id: p.medication_id!,
         quantity: p.quantity!,
@@ -144,6 +147,13 @@ export default function ConsultPage() {
             notFoundContent={loading ? <Spin size="small" /> : "ไม่พบข้อมูล"}
             size="large"
           />
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <Switch checked={isOnline} onChange={setIsOnline} />
+            <Typography.Text style={{ color: "#374151" }}>
+              {isOnline ? "ออนไลน์ (จัดส่ง)" : "มาพบด้วยตนเอง (รับที่คลินิก)"}
+            </Typography.Text>
+          </div>
 
           <Typography.Text style={{ fontWeight: 500, color: "#374151" }}>
             บันทึก / Note

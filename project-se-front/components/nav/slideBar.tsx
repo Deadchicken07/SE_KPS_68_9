@@ -59,7 +59,7 @@ export default function SidebarNav() {
 
         <nav className="flex flex-col gap-1.5">
           {links.map((link) => {
-            const isActive = pathname === link.href;
+            const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
             const Icon = getNavIcon(link.name);
 
             return (

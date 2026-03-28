@@ -33,10 +33,14 @@ export const roleLinks: Record<Roles, NavLinks[]> = {
     { name: "Admin Report", href: "/staff/admin-report" },
   ],
   user: [{ name: "หน้าแรก", href: "/user" }],
-  psychologist: [{ name: "Patient History", href: "/staff/patient-history" }],
+  psychologist: [
+    { name: "Patient History", href: "/staff/patient-history" },
+    { name: "การนัดหมาย", href: "/staff/appointments/med" },
+    { name: "การปรึกษา", href: "/staff/consult" },
+  ],
   psychiatrist: [
     { name: "Patient History", href: "/staff/patient-history" },
-    { name: "การนัดหมาย", href: "/staff/appointments" },
+    { name: "การนัดหมาย", href: "/staff/appointments/med" },
     { name: "การปรึกษา", href: "/staff/consult" },
   ],
   pharmacist: [
