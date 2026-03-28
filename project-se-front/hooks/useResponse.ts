@@ -18,7 +18,8 @@ export const useUserResponses = (userId: number) => {
         setLoading(true);
         setError(null);
         const res = await axios.get<ResponseSummary[]>(
-          `${API}/responses/user/${userId}`
+          `${API}/responses/user/${userId}`,
+          { withCredentials: true }
         );
         setData(res.data);
       } catch {
@@ -39,7 +40,7 @@ export const useResponseDetail = () => {
   const getResponseDetail = async (id: number): Promise<ResponseDetail | null> => {
     try {
       setLoading(true);
-      const res = await axios.get<ResponseDetail>(`${API}/responses/${id}`);
+      const res = await axios.get<ResponseDetail>(`${API}/responses/${id}`, { withCredentials: true });
       return res.data;
     } catch {
       return null;

@@ -23,19 +23,9 @@ import { useConsultation } from "@/hooks/useConsultation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { PrescriptionFormItem } from "@/types/consult.types";
 import { useSearchParams } from "next/navigation";
+import { usePharmacistMedications } from "@/hooks/usePharmacistMedications";
 
 const { TextArea } = Input;
-
-const mockMedications = [
-  { value: 1, label: "Amoxicillin 500mg" },
-  { value: 2, label: "Paracetamol 500mg" },
-  { value: 3, label: "Ibuprofen 400mg" },
-  { value: 4, label: "Omeprazole 20mg" },
-  { value: 5, label: "Cetirizine 10mg" },
-  { value: 6, label: "Metformin 500mg" },
-  { value: 7, label: "Amlodipine 5mg" },
-  { value: 8, label: "Atorvastatin 20mg" },
-];
 
 let nextId = 1;
 
@@ -50,6 +40,7 @@ export default function ConsultPage() {
   const { me } = useAuth();
   const canPrescribe = me?.role !== 'psychologist';
   const { createConsultation } = useConsultation();
+  const { medications, medicationsLoading } = usePharmacistMedications();
   const searchParams = useSearchParams();
   const userIdFromQuery = Number(searchParams.get("userId")) || null;
   const [selectedUser, setSelectedUser] = useState<number | null>(
@@ -232,7 +223,8 @@ export default function ConsultPage() {
                     }}
                     placeholder="ค้นหายา"
                     style={{ flex: 3 }}
-                    options={mockMedications}
+                    options={medications.map((m) => ({ value: m.id, label: m.name }))}
+                    loading={medicationsLoading}
                     value={item.medication_id}
                     onChange={(val) =>
                       updatePrescription(item.id, "medication_id", val)

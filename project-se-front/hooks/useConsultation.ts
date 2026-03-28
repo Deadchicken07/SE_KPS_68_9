@@ -14,7 +14,7 @@ export const useConsultation = () => {
       setLoading(true);
       setError(null);
       setSuccess(false);
-      await axios.post(`${API}/consultations`, data);
+      await axios.post(`${API}/consultations`, data, { withCredentials: true });
 
       setSuccess(true);
       return true;
@@ -56,7 +56,7 @@ export const useConsultations = (userId: number, page: number = 1, limit: number
         setError(null);
         const res = await axios.get<{ data: Consultation[]; meta: ConsultationMeta }>(
           `${API_URL}/consultations`,
-          { params: { userId, page, limit } }
+          { params: { userId, page, limit }, withCredentials: true }
         );
         setData(res.data.data);
         setMeta(res.data.meta);

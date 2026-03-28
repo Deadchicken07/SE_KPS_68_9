@@ -7,12 +7,18 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class ConsultationsService {
   constructor(private prisma: PrismaService){}
 
-  async findAll(userId : number){
-    const consults  = await this.prisma.consultations.findMany({
-      where : {
-        user_id : userId
-      }
-    })
+  async findAll(userId: number, page: number, limit: number) {
+    const skip = (page - 1) * limit;
+    const [data, total] = await Promise.all([
+      this.prisma.consultations.findMany({
+        where: { user_id: userId },
+        orderBy: { created_at: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.consultations.count({ where: { user_id: userId } }),
+    ]);
+    return { data, meta: { page, limit, total } };
   }
 
   async create(dto : CreateConsultationDto){

@@ -17,9 +17,10 @@ import {
 import { InfoCircleOutlined, PlusOutlined } from "@ant-design/icons";
 import { BookUser } from "lucide-react";
 import { Consultation } from "@/types/consult.types";
-import { useStaff } from "@/hooks/useStaff";
-import { Staff } from "@/types/staff.types";
 import { useUserResponses, useResponseDetail } from "@/hooks/useResponse";
+import axios from "axios";
+
+const API = process.env.NEXT_PUBLIC_API_URL;
 import { ResponseDetail, ResponseSummary } from "@/types/response.types";
 
 export default function ConsultHistoryPage() {
@@ -32,15 +33,19 @@ export default function ConsultHistoryPage() {
   const { data, meta, loading, error } = useConsultations(userId, page, 10);
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Consultation | null>(null);
-  const { getStaffById } = useStaff();
-  const [staffInfo, setSaffInfo] = useState<Staff | null>(null);
+  const [staffName, setStaffName] = useState<string | null>(null);
 
   const handleOpen = async (consult: Consultation) => {
     setSelected(consult);
+    setStaffName(null);
     setOpen(true);
     if (consult.staff_id) {
-      const staff = await getStaffById(consult.staff_id);
-      setSaffInfo(staff);
+      try {
+        const res = await axios.get(`${API}/users/staff/${consult.staff_id}`, { withCredentials: true });
+        setStaffName(res.data.name);
+      } catch {
+        setStaffName(null);
+      }
     }
   };
 
@@ -206,7 +211,7 @@ export default function ConsultHistoryPage() {
               type="secondary"
               style={{ fontSize: 14, fontWeight: "normal" }}
             >
-              แพทย์: {staffInfo?.name}
+              แพทย์: {staffName ?? "-"}
             </Typography.Text>
           </div>
         }

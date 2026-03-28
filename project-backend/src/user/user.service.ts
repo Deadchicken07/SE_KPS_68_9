@@ -225,11 +225,6 @@ export class UserService {
     const staff = await this.prisma.users.findUnique({
       where: {
         user_id: staffId,
-        roles: {
-          name: {
-            in: ['จิตแพทย์', 'นักจิตวิทยา'],
-          },
-        },
       },
       select: {
         user_id: true,

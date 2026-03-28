@@ -5,12 +5,12 @@ import { Button, Card, DatePicker, Input, Modal, Spin, Tag, Typography } from "a
 import {
   InfoCircleOutlined,
   PlusCircleOutlined,
-  UserOutlined,
   WifiOutlined,
   EnvironmentOutlined,
 } from "@ant-design/icons";
 import type { Dayjs } from "dayjs";
-import { useAppointment } from "@/hooks/useAppointment";
+import { useStaffById } from "@/hooks/useStaffById";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { useRouter } from "next/navigation";
 
 function AppointmentCard({ a, onConsult, onAddLink }: {
@@ -18,8 +18,8 @@ function AppointmentCard({ a, onConsult, onAddLink }: {
   onConsult: () => void
   onAddLink: () => void
 }) {
-  const date = a.appointment_date
-    ? new Date(a.appointment_date).toLocaleDateString("th-TH", { day: "2-digit", month: "long", year: "numeric" })
+  const date = a.appointmentDate
+    ? new Date(a.appointmentDate).toLocaleDateString("th-TH", { day: "2-digit", month: "long", year: "numeric" })
     : "-"
 
   return (
@@ -28,35 +28,27 @@ function AppointmentCard({ a, onConsult, onAddLink }: {
       style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.08)", borderRadius: 8, borderWidth: 2 }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <UserOutlined style={{ color: "#1677ff" }} />
-            <Typography.Text strong style={{ fontSize: 16 }}>
-              {a.user ? `${a.user.name} ${a.user.sur_name}` : `ผู้ป่วย #${a.user_id}`}
-            </Typography.Text>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Typography.Text  style={{ fontWeight: 600, color :  'grey' }}>
-              {date}
-            </Typography.Text>
-            <Typography.Text  style={{ fontWeight: 600,  color : 'grey'}}>
-              {a.time_select ?? "-"}
-            </Typography.Text>
-          </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Typography.Text style={{ fontWeight: 600, color: 'grey' }}>
+            {date}
+          </Typography.Text>
+          <Typography.Text style={{ fontWeight: 600, color: 'grey' }}>
+            {a.time_select ?? "-"}
+          </Typography.Text>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <Tag
-            icon={a.appointment_type === "online" ? <WifiOutlined /> : <EnvironmentOutlined />}
-            color={a.appointment_type === "online" ? "blue" : "grey"}
+            icon={a.appointmentType === "online" ? <WifiOutlined /> : <EnvironmentOutlined />}
+            color={a.appointmentType === "online" ? "blue" : "grey"}
           >
-            {a.appointment_type}
+            {a.appointmentType}
           </Tag>
           <InfoCircleOutlined
             style={{ fontSize: 18, color: "#1677ff", cursor: "pointer" }}
             onClick={onConsult}
           />
-          {a.appointment_type === "online" && (
+          {a.appointmentType === "online" && (
             <PlusCircleOutlined
               style={{ fontSize: 18, color: "#52c41a", cursor: "pointer" }}
               onClick={onAddLink}
@@ -70,12 +62,20 @@ function AppointmentCard({ a, onConsult, onAddLink }: {
 
 export default function PsychiatistPage() {
   const router = useRouter();
+  const { me } = useAuth();
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [link, setLink] = useState("");
-  const { data, loading, error } = useAppointment(selectedDate);
+  const { data, loading, error } = useStaffById(me?.sub ?? null, selectedDate);
 
-  const appointments = data ?? [];
+  const appointments = (data ?? []).filter((a) => {
+    if (!selectedDate) return true;
+    const [, selMonth, selDay] = selectedDate.split("-");
+    const d = new Date(a.appointmentDate);
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return month === selMonth && day === selDay;
+  });
 
   return (
     <>
@@ -100,7 +100,7 @@ export default function PsychiatistPage() {
               <AppointmentCard
                 key={a.id}
                 a={a}
-                onConsult={() => router.push(`/staff/consult/history?userId=${a.user_id}`)}
+                onConsult={() => router.push(`/staff/consult/history?userId=${a.patientId}`)}
                 onAddLink={() => setModalOpen(true)}
               />
             ))}

@@ -1,7 +1,6 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, ParseIntPipe } from '@nestjs/common';
 import { ResponsesService } from './responses.service';
 import { CreateResponseDto } from './dto/create-response.dto';
-import { UpdateResponseDto } from './dto/update-response.dto';
 
 @Controller('responses')
 export class ResponsesController {
@@ -10,5 +9,15 @@ export class ResponsesController {
   @Post()
   create(@Body() createResponseDto: CreateResponseDto) {
     return this.responsesService.create(createResponseDto);
+  }
+
+  @Get('user/:userId')
+  findByUser(@Param('userId', ParseIntPipe) userId: number) {
+    return this.responsesService.findByUser(userId);
+  }
+
+  @Get(':id')
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.responsesService.findOne(id);
   }
 }
