@@ -67,7 +67,7 @@ export const useStaffAdminHome = () => {
     }
 
     if (roleId === 5) {
-      router.replace("/staff/pharmacist_home");
+      router.replace("/staff/pharmacist/pharmacist_home");
       return;
     }
 

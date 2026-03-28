@@ -38,7 +38,8 @@ export const mapRoleIdToRole = (roleId: number | null): Roles | null => {
 
 export const roleLinks: Record<Roles, NavLinks[]> = {
   admin: [
-    { name: "Dashboard", href: "/staff/admin-home" },
+    { name: "Dashboard", href: "/staff/admin/admin-home" },
+    { name: "Work Schedule", href: "/staff/admin/admin_work" },
     { name: "Admin Report", href: "/staff/admin/admin-report" },
     { name: "Add Staff", href: "/staff/admin/add-staff" },
     { name: "Patient History", href: "/staff/admin/patient-history" },
@@ -57,8 +58,8 @@ export const roleLinks: Record<Roles, NavLinks[]> = {
     { name: "การปรึกษา", href: "/staff/consult" },
   ],
   pharmacist: [
-    { name: "Dashboard", href: "/staff/pharmacist_home" },
-    { name: "Work Schedule", href: "/staff/pharmacist_home/Phama_work" },
+    { name: "Dashboard", href: "/staff/pharmacist/pharmacist_home" },
+    { name: "Work Schedule", href: "/staff/pharmacist/Phama_work" },
     { name: "Medication Order", href: "/staff/pharmacist/order" },
     { name: "Delivery History", href: "/staff/pharmacist/delivery-history" },
     { name: "Med Inventory", href: "/staff/pharmacist" },
@@ -66,16 +67,15 @@ export const roleLinks: Record<Roles, NavLinks[]> = {
 };
 
 export const roleHome: Record<Roles, string> = {
-  admin: "/staff/admin-home",
+  admin: "/staff/admin/admin-home",
   user: "/user",
   psychologist: "/staff/patient-history",
   psychiatrist: "/staff/patient-history",
-  pharmacist: "/staff/pharmacist_home",
+  pharmacist: "/staff/pharmacist/pharmacist_home",
 };
 
 export const roleRoutePrefixes: Record<Roles, readonly string[]> = {
   admin: [
-    "/staff/admin-home",
     "/staff/admin",
   ],
   user: [
@@ -93,7 +93,6 @@ export const roleRoutePrefixes: Record<Roles, readonly string[]> = {
     "/staff/consult",
   ],
   pharmacist: [
-    "/staff/pharmacist_home",
     "/staff/pharmacist",
   ],
 };

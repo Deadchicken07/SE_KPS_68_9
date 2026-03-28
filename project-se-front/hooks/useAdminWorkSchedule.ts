@@ -66,6 +66,7 @@ export const useAdminWorkSchedule = () => {
       return
     }
 
+    const staffId = me.sub
     let ignore = false
 
     async function loadDashboard() {
@@ -75,7 +76,7 @@ export const useAdminWorkSchedule = () => {
       const query = new URLSearchParams({
         month,
         date: selectedDate,
-        staffId: String(me.sub),
+        staffId: String(staffId),
       })
 
       try {
