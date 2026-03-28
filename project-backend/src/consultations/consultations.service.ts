@@ -15,6 +15,11 @@ export class ConsultationsService {
         orderBy: { created_at: 'desc' },
         skip,
         take: limit,
+        include: {
+          prescription_items: {
+            include: { medications: true },
+          },
+        },
       }),
       this.prisma.consultations.count({ where: { user_id: userId } }),
     ]);
