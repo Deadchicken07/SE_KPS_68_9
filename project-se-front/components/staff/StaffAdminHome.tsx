@@ -4,7 +4,6 @@ import { type CSSProperties } from "react";
 import { useStaffAdminHome } from "@/hooks/useStaffAdminHome";
 import type {
   AppointmentItem,
-  KpiCard,
   StaffOverviewItem,
   StaffScheduleFormState,
 } from "@/types/staffAdminHome.types";
@@ -116,6 +115,45 @@ function getScheduleBadgeClasses(value: string) {
   );
 }
 
+function shouldShowStaffAppointmentMetrics(staff: StaffOverviewItem) {
+  const normalizedRole = staff.role?.trim().toLowerCase() ?? "";
+  const roleLabel = staff.roleLabel.trim();
+
+  return (
+    normalizedRole === "psychiatrist" ||
+    normalizedRole === "psychologist" ||
+    roleLabel === "จิตแพทย์" ||
+    roleLabel === "นักจิตวิทยา"
+  );
+}
+
+function buildDashboardSummaryCards(
+  summary: NonNullable<StaffAdminHomeState["summary"]>,
+) {
+  return [
+    {
+      label: "นัดหมายทั้งหมด",
+      value: summary.totalAppointments,
+    },
+    {
+      label: "ผู้รับบริการ",
+      value: summary.uniquePatients,
+    },
+    {
+      label: "บุคลากรที่มีนัด",
+      value: summary.activeStaffCount,
+    },
+    {
+      label: "ชำระแล้ว",
+      value: summary.paidAppointments,
+    },
+    {
+      label: "ออนไลน์",
+      value: summary.onlineAppointments,
+    },
+  ];
+}
+
 export function StaffAdminHome() {
   const state = useStaffAdminHome();
 
@@ -141,7 +179,20 @@ export function StaffAdminHome() {
             onLogin={state.goToLogin}
           />
         ) : null}
-        <KpiSection cards={state.kpiCards} />
+        {state.summary ? (
+          <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+            {buildDashboardSummaryCards(state.summary).map((card) => (
+              <article key={card.label} className={cx(PANEL_CLASS, "p-5")}>
+                <span className="mb-2 block text-[0.78rem] font-bold text-[#68756c]">
+                  {card.label}
+                </span>
+                <strong className="block text-[1.95rem] leading-none">
+                  {card.value}
+                </strong>
+              </article>
+            ))}
+          </section>
+        ) : null}
         <section className="grid grid-cols-1 gap-6">
           <TimelineSection state={state} />
           <SelectedAppointmentsSection state={state} />
@@ -182,9 +233,6 @@ function HeroSection({
           <h1 className="mt-4 text-[clamp(2rem,3vw,3.1rem)] font-semibold leading-[1.08]">
             ตารางงานทั้งคลินิกแบบรายสัปดาห์
           </h1>
-          <p className="mt-3 leading-7 text-[rgba(255,253,248,0.82)]">
-            มุมมองรายสัปดาห์ตามช่วงเวลาในแต่ละวัน กดที่บล็อกนัดหมายเพื่อดูรายละเอียดในรายการด้านล่างได้ทันที
-          </p>
         </div>
 
         <div className="flex flex-wrap gap-3.5">
@@ -219,7 +267,7 @@ function FilterSection({ state }: { state: StaffAdminHomeState }) {
     <section
       className={cx(
         PANEL_CLASS,
-        "grid grid-cols-1 gap-4 p-[22px] md:grid-cols-2 xl:grid-cols-4",
+        "grid grid-cols-1 gap-4 p-[22px] md:grid-cols-2 xl:grid-cols-3",
       )}
     >
       <div className="grid gap-2">
@@ -274,16 +322,6 @@ function FilterSection({ state }: { state: StaffAdminHomeState }) {
         </select>
       </div>
 
-      <div className="flex items-end">
-        <button
-          type="button"
-          onClick={state.reloadDashboard}
-          disabled={state.loading}
-          className="min-h-[46px] w-full rounded-[14px] bg-gradient-to-br from-[#0f766e] to-[#115e59] px-4 font-bold text-white shadow-[0_14px_28px_rgba(15,118,110,0.18)] transition hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-70 disabled:hover:translate-y-0"
-        >
-          {state.loading ? "กำลังโหลด..." : "รีเฟรชข้อมูล"}
-        </button>
-      </div>
     </section>
   );
 }
@@ -315,24 +353,6 @@ function ErrorPanel({
         </button>
       ) : null}
     </div>
-  );
-}
-
-function KpiSection({ cards }: { cards: KpiCard[] }) {
-  return (
-    <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
-      {cards.map((card) => (
-        <article key={card.label} className={cx(PANEL_CLASS, "p-5")}>
-          <span className="mb-2 block text-[0.78rem] font-bold text-[#68756c]">
-            {card.label}
-          </span>
-          <strong className="block text-[1.95rem] leading-none">
-            {card.value}
-          </strong>
-          <p className="mt-2 text-[0.84rem] leading-6 text-[#6d776f]">{card.note}</p>
-        </article>
-      ))}
-    </section>
   );
 }
 
@@ -618,16 +638,8 @@ function SelectedAppointmentsSection({
             )}
           </div>
 
-          <div className="px-[22px] pb-[22px] text-[0.84rem] leading-6 text-[#6d776f]">
-            ภาพรวมวันนี้: ชำระแล้ว {state.selectedDayStats?.paidAppointments ?? 0} นัด • ออนไลน์{" "}
-            {state.selectedDayStats?.onlineAppointments ?? 0} นัด
-          </div>
         </>
-      ) : (
-        <div className="px-[22px] pb-[22px] text-[0.88rem] leading-7 text-[#6d776f]">
-          ย่อรายละเอียดไว้แล้ว • วันนี้มี {state.selectedDateAppointments.length} รายการ
-        </div>
-      )}
+      ) : null}
     </article>
   );
 }
@@ -681,12 +693,14 @@ function StaffOverviewSection({
                 </span>
               </div>
 
-              <div className="mt-4 grid grid-cols-2 gap-2.5 xl:grid-cols-4">
-                <InfoBox label="นัดทั้งหมด" value={staff.totalAppointments} />
-                <InfoBox label="ชำระแล้ว" value={staff.paidAppointments} />
-                <InfoBox label="ออนไลน์" value={staff.onlineAppointments} />
-                <InfoBox label="นัดถัดไป" value={staff.nextAppointmentTime ?? "-"} />
-              </div>
+              {shouldShowStaffAppointmentMetrics(staff) ? (
+                <div className="mt-4 grid grid-cols-2 gap-2.5 xl:grid-cols-4">
+                  <InfoBox label="นัดทั้งหมด" value={staff.totalAppointments} />
+                  <InfoBox label="ชำระแล้ว" value={staff.paidAppointments} />
+                  <InfoBox label="ออนไลน์" value={staff.onlineAppointments} />
+                  <InfoBox label="นัดถัดไป" value={staff.nextAppointmentTime ?? "-"} />
+                </div>
+              ) : null}
             </article>
           ))
         ) : (

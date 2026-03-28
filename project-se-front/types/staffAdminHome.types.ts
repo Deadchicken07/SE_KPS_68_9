@@ -19,6 +19,8 @@ export type StaffOption = {
   avatarUrl: string | null;
 };
 
+export type ScheduleStatus = "working" | "leave";
+
 export type DailyStat = {
   date: string;
   totalAppointments: number;
@@ -71,6 +73,14 @@ export type StaffOverviewItem = {
   scheduleStatus: string;
 };
 
+export type StaffScheduleEntry = {
+  id: number;
+  staffId: number;
+  workDate: string;
+  status: ScheduleStatus;
+  note: string | null;
+};
+
 export type ClinicScheduleResponse = {
   month: string;
   selectedDate: string;
@@ -80,6 +90,8 @@ export type ClinicScheduleResponse = {
   };
   summary: DashboardSummary;
   staffOptions: StaffOption[];
+  dailyStats: DailyStat[];
+  scheduleEntries: StaffScheduleEntry[];
   weekStats: DailyStat[];
   weekAppointments: AppointmentItem[];
   selectedDateAppointments: AppointmentItem[];
@@ -90,7 +102,7 @@ export type ClinicScheduleResponse = {
 export type StaffScheduleFormState = {
   staffId: string;
   workDate: string;
-  status: "working" | "leave";
+  status: ScheduleStatus;
   note: string;
 };
 
@@ -142,10 +154,4 @@ export type StaffScheduleOption = {
   id: number;
   name: string;
   roleLabel: string;
-};
-
-export type KpiCard = {
-  label: string;
-  value: number;
-  note: string;
 };

@@ -5,7 +5,6 @@ import {
   PHARMACIST_HOME_STATUS_META,
   formatPharmacistHomeDateTime,
   formatPharmacistHomeMoney,
-  latestPharmacistHomeReceipt,
   pharmacistHomeConsultationTotal,
   pharmacistHomeDeliveryModeLabel,
   pharmacistHomeDisplayStatus,
@@ -69,7 +68,7 @@ export function PharmacistHomeQueueCard({
               active ? 'text-[#0f766e]' : PHARMA_MUTED
             }`}
           >
-            Case #{consultation.id}
+            การปรึกษาที่ {consultation.id}
           </p>
           <p className="mt-2 truncate text-base font-semibold">
             {pharmacistHomeFullName(consultation.patient)}
@@ -87,7 +86,7 @@ export function PharmacistHomeQueueCard({
 
         <div className="grid flex-1 gap-2 sm:grid-cols-2 2xl:grid-cols-4">
           <QueueMeta
-            label="รูปแบบ"
+            label="สถานะ"
             value={pharmacistHomeDeliveryModeLabel(status)}
             active={active}
           />
@@ -136,13 +135,11 @@ export function PharmacistHomeQueueCard({
 
 export function PharmacistHomeDetailModal({
   consultation,
-  currentUserId,
   isOpen,
   onClose,
   onGoToOrder,
 }: {
   consultation: PharmacistHomeConsultation | null
-  currentUserId?: number | null
   isOpen: boolean
   onClose: () => void
   onGoToOrder: (consultationId: number) => void
@@ -152,8 +149,6 @@ export function PharmacistHomeDetailModal({
   }
 
   const status = pharmacistHomeDisplayStatus(consultation)
-  const receipt = latestPharmacistHomeReceipt(consultation)
-  const ownerLabel = pharmacistHomeQueueOwnerLabel(consultation, currentUserId)
 
   return (
     <section
@@ -170,29 +165,16 @@ export function PharmacistHomeDetailModal({
               <p
                 className={`text-xs font-semibold uppercase tracking-[0.18em] ${PHARMA_MUTED}`}
               >
-                Case #{consultation.id}
+                การปรึกษาที่ #{consultation.id}
               </p>
               <h2 className={`mt-2 text-2xl font-semibold ${PHARMA_TEXT}`}>
                 {pharmacistHomeFullName(consultation.patient)}
               </h2>
-              <p className={`mt-3 text-sm ${PHARMA_MUTED}`}>
-                รายละเอียดด้านขวานี้จะแสดงตามเคสที่คุณเลือกจากลิสต์ทางซ้าย
-              </p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <span
                   className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${PHARMA_SOFT_SURFACE} ${PHARMA_SECONDARY}`}
                 >
                   {pharmacistHomeDeliveryModeLabel(status)}
-                </span>
-                <span
-                  className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${PHARMA_SOFT_SURFACE} ${PHARMA_SECONDARY}`}
-                >
-                  {ownerLabel}
-                </span>
-                <span
-                  className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${PHARMA_SOFT_SURFACE} ${PHARMA_SECONDARY}`}
-                >
-                  {pharmacistHomeFullName(consultation.staff)}
                 </span>
               </div>
             </div>
@@ -227,79 +209,27 @@ export function PharmacistHomeDetailModal({
         </div>
 
         <div className="space-y-4 px-6 py-6">
-          <div className="grid gap-4 xl:grid-cols-3">
-            <SurfaceCard
-              title="ข้อมูลผู้ป่วย"
-              subtitle="ข้อมูลติดต่อและข้อมูลพื้นฐาน"
-            >
-              <InfoRow
-                label="ชื่อผู้ป่วย"
-                value={pharmacistHomeFullName(consultation.patient)}
-              />
-              <InfoRow label="เบอร์ติดต่อ" value={consultation.patient?.phone} />
-              <InfoRow label="อีเมล" value={consultation.patient?.email} />
-              <InfoRow
-                label="ประวัติแพ้ยา"
-                value={consultation.patient?.allergy_drug || 'ไม่พบข้อมูล'}
-              />
-            </SurfaceCard>
+          <SurfaceCard title="ข้อมูลผู้ป่วย">
+            <InfoRow
+              label="ชื่อผู้ป่วย"
+              value={pharmacistHomeFullName(consultation.patient)}
+            />
+            <InfoRow label="เบอร์ติดต่อ" value={consultation.patient?.phone} />
+            <InfoRow label="อีเมล" value={consultation.patient?.email} />
+            <InfoRow
+              label="ประวัติแพ้ยา"
+              value={consultation.patient?.allergy_drug || 'ไม่พบข้อมูล'}
+            />
+          </SurfaceCard>
 
-            <SurfaceCard
-              title="สถานะการทำงาน"
-              subtitle="ข้อมูลที่ใช้ตัดสินใจงานถัดไป"
-            >
-              <InfoRow
-                label="รูปแบบรับยา"
-                value={pharmacistHomeDeliveryModeLabel(status)}
-              />
-              <InfoRow label="ผู้รับคิว" value={ownerLabel} />
-              <InfoRow
-                label="ผู้ให้คำปรึกษา"
-                value={pharmacistHomeFullName(consultation.staff)}
-              />
-              <InfoRow
-                label="เวลาที่บันทึก"
-                value={formatPharmacistHomeDateTime(consultation.created_at)}
-              />
-            </SurfaceCard>
-
-            <SurfaceCard
-              title="การติดตามคำสั่งยา"
-              subtitle="สรุปสถานะล่าสุดของเคสนี้"
-            >
-              <InfoRow
-                label="สถานะล่าสุด"
-                value={PHARMACIST_HOME_STATUS_META[status].label}
-              />
-              <InfoRow label="Tracking" value={receipt?.tracking || 'ยังไม่มีเลขพัสดุ'} />
-              <InfoRow
-                label="ยอดรวม"
-                value={formatPharmacistHomeMoney(
-                  pharmacistHomeConsultationTotal(consultation),
-                )}
-              />
-              <InfoRow
-                label="อัปเดตใบเสร็จ"
-                value={
-                  receipt
-                    ? formatPharmacistHomeDateTime(receipt.created_at)
-                    : 'ยังไม่มีใบเสร็จ'
-                }
-              />
-            </SurfaceCard>
-          </div>
-
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-            <SurfaceCard title="หมายเหตุเคส" subtitle="ข้อความจากการปรึกษา">
+          <div className="grid gap-4 xl:grid-cols-2">
+            <SurfaceCard title="หมายเหตุเคส">
               <p className={`text-sm leading-7 ${PHARMA_SECONDARY}`}>
                 {consultation.note?.trim() || 'ไม่มีหมายเหตุเพิ่มเติมจากการปรึกษา'}
               </p>
             </SurfaceCard>
 
-            <SurfaceCard
-              title="รายการยา"
-              subtitle={`${consultation.prescription_items.length} รายการในเคสนี้`}
-            >
+            <SurfaceCard title="รายการยา">
               {consultation.prescription_items.length ? (
                 <div className="divide-y divide-slate-200">
                   {consultation.prescription_items.map((item) => (

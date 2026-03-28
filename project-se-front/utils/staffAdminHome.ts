@@ -1,8 +1,5 @@
 import type {
   AppointmentItem,
-  DailyStat,
-  DashboardSummary,
-  KpiCard,
   MonthWeekOption,
   ParsedTimeRange,
   StaffScheduleFormState,
@@ -21,18 +18,6 @@ const DEFAULT_TIMELINE_START = 8 * 60
 const DEFAULT_TIMELINE_END = 18 * 60
 const TIMELINE_EVENT_ROW_HEIGHT = 68
 const TIMELINE_EVENT_TOP_OFFSET = 10
-
-export const EMPTY_SUMMARY: DashboardSummary = {
-  totalAppointments: 0,
-  uniquePatients: 0,
-  activeStaffCount: 0,
-  registeredStaffCount: 0,
-  paidAppointments: 0,
-  pendingPayments: 0,
-  onlineAppointments: 0,
-  onsiteAppointments: 0,
-  daysWithAppointments: 0,
-}
 
 export function createStaffScheduleFormState(
   dateKey: string,
@@ -72,15 +57,6 @@ export function getDefaultSelectedDate() {
   return today.slice(0, 7) === getCurrentMonthKey()
     ? today
     : `${getCurrentMonthKey()}-01`
-}
-
-function formatDateLabel(dateKey: string) {
-  return new Date(`${dateKey}T00:00:00`).toLocaleDateString('th-TH', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
 }
 
 export function parseStaffAdminHomeErrorMessage(payload: unknown) {
@@ -305,43 +281,4 @@ export function getTimelineEvents(
       92,
     ),
   }
-}
-
-export function getStaffAdminHomeKpiCards(
-  summary: DashboardSummary,
-  selectedDate: string,
-  selectedDayStats: DailyStat | null,
-): KpiCard[] {
-  return [
-    {
-      label: 'นัดหมายทั้งหมด',
-      value: summary.totalAppointments,
-      note: `${summary.daysWithAppointments} วันที่มีการนัด`,
-    },
-    {
-      label: 'ผู้รับบริการ',
-      value: summary.uniquePatients,
-      note: 'นับตามคนไข้ไม่ซ้ำ',
-    },
-    {
-      label: 'บุคลากรที่มีนัด',
-      value: summary.activeStaffCount,
-      note: `จากในระบบทั้งหมด ${summary.registeredStaffCount} คน`,
-    },
-    {
-      label: 'ชำระแล้ว',
-      value: summary.paidAppointments,
-      note: `รอชำระ ${summary.pendingPayments} นัด`,
-    },
-    {
-      label: 'ออนไลน์',
-      value: summary.onlineAppointments,
-      note: `ที่คลินิก ${summary.onsiteAppointments} นัด`,
-    },
-    {
-      label: 'วันที่เลือก',
-      value: selectedDayStats?.totalAppointments ?? 0,
-      note: formatDateLabel(selectedDate),
-    },
-  ]
 }
