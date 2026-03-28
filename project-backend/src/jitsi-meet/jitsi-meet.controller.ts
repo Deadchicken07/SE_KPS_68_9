@@ -3,10 +3,6 @@ import { JitsiMeetService } from './jitsi-meet.service';
 
 type CreateJitsiMeetBody = {
   roomName?: string;
-  summary?: string;
-  description?: string;
-  startDateTime: string;
-  endDateTime: string;
 };
 
 @Controller('jitsi-meet')
