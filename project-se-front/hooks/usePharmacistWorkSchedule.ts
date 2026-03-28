@@ -11,6 +11,7 @@ import {
   createStaffScheduleFormState,
   getCurrentDateKey,
   getCurrentMonthKey,
+  normalizeScheduleNoteText,
   parseStaffAdminHomeErrorMessage,
 } from '@/utils/staffAdminHome'
 
@@ -150,7 +151,7 @@ export const usePharmacistWorkSchedule = () => {
     const nextForm = {
       ...createStaffScheduleFormState(selectedDate, String(me.sub)),
       status: selectedSchedule?.status === 'leave' ? 'leave' : 'working',
-      note: selectedSchedule?.note ?? '',
+      note: normalizeScheduleNoteText(selectedSchedule?.note),
     } satisfies StaffScheduleFormState
 
     setForm((current) => {

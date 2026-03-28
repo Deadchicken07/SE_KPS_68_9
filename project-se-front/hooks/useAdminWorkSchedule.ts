@@ -12,6 +12,7 @@ import { mapRoleIdToRole, roleHome } from "@/types/role.types";
 import {
   getCurrentDateKey,
   getCurrentMonthKey,
+  normalizeScheduleNoteText,
   parseStaffAdminHomeErrorMessage,
 } from "@/utils/staffAdminHome";
 
@@ -232,7 +233,7 @@ export const useAdminWorkSchedule = () => {
 
   useEffect(() => {
     setForm((current) => {
-      const nextNote = selectedSchedule?.note ?? "";
+      const nextNote = normalizeScheduleNoteText(selectedSchedule?.note);
 
       if (current.note === nextNote) {
         return current;

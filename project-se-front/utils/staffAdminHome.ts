@@ -77,6 +77,18 @@ export function parseStaffAdminHomeErrorMessage(payload: unknown) {
   return "โหลดข้อมูลไม่สำเร็จ";
 }
 
+export function normalizeScheduleNoteText(note?: string | null) {
+  const trimmed = note?.trim();
+
+  if (!trimmed) {
+    return "";
+  }
+
+  const readableText = trimmed.replace(/[?]/g, "").trim();
+
+  return readableText ? trimmed : "";
+}
+
 function toDateKey(value: Date) {
   return [
     value.getUTCFullYear(),

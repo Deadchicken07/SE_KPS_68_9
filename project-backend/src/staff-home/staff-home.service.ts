@@ -496,7 +496,7 @@ export class StaffHomeService {
         staffId: schedule.staff_id,
         workDate: this.dateToIsoDate(schedule.work_date),
         status: schedule.status ?? schedule_status.working,
-        note: schedule.note,
+        note: this.normalizeScheduleNote(schedule.note),
       }),
     );
 
@@ -1029,7 +1029,7 @@ export class StaffHomeService {
         staffRoleLabel: this.toRoleLabel(staff.roles?.name),
         workDate: this.dateToIsoDate(schedule.work_date),
         status: schedule.status,
-        note: schedule.note,
+        note: this.normalizeScheduleNote(schedule.note),
       },
     };
   }
@@ -1796,6 +1796,18 @@ export class StaffHomeService {
 
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  private normalizeScheduleNote(note?: string | null): string | null {
+    const trimmed = note?.trim();
+
+    if (!trimmed) {
+      return null;
+    }
+
+    const readableText = trimmed.replace(/[?]/g, '').trim();
+
+    return readableText ? trimmed : null;
   }
 
   private getClinicNowParts(value: Date): {
