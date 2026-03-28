@@ -99,6 +99,10 @@ function getScheduleStatusLabel(value: string) {
     return "ลา";
   }
 
+  if (value === "holiday") {
+    return "วันหยุด";
+  }
+
   return "ยังไม่ลงตาราง";
 }
 
@@ -107,7 +111,11 @@ function getScheduleBadgeClasses(value: string) {
     "inline-flex items-center gap-2 rounded-full px-3 py-2 text-[0.8rem] font-extrabold",
     value === "working" && "bg-[#e6fffb] text-[#115e59]",
     value === "leave" && "bg-[#fff1f2] text-[#be123c]",
-    value !== "working" && value !== "leave" && "bg-[#edf4f2] text-[#47655e]",
+    value === "holiday" && "bg-[#fff7d6] text-[#9a6700]",
+    value !== "working" &&
+      value !== "leave" &&
+      value !== "holiday" &&
+      "bg-[#edf4f2] text-[#47655e]",
   );
 }
 

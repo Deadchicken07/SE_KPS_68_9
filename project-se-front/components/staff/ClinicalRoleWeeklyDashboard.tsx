@@ -466,7 +466,7 @@ function HeroSection({
         </div>
 
         <div className="flex flex-wrap gap-3.5">
-          <div className="min-w-[170px] rounded-[20px] border border-white/15 bg-white/10 px-4 py-3.5 backdrop-blur-[10px]">
+          <div className="w-[170px] rounded-[20px] border border-white/15 bg-white/10 px-4 py-3.5 backdrop-blur-[10px]">
             <span className="block text-[0.82rem] text-[rgba(255,253,248,0.7)]">
               สัปดาห์ที่กำลังดู
             </span>
@@ -478,11 +478,11 @@ function HeroSection({
                 : "-"}
             </strong>
           </div>
-          <div className="min-w-[170px] rounded-[20px] border border-white/15 bg-white/10 px-4 py-3.5 backdrop-blur-[10px]">
+          <div className="w-[170px] rounded-[20px] border border-white/15 bg-white/10 px-4 py-3.5 backdrop-blur-[10px]">
             <span className="block text-[0.82rem] text-[rgba(255,253,248,0.7)]">
               บุคลากรที่กำลังดู
             </span>
-            <strong className="mt-2 block text-[1.1rem] leading-[1.4]">
+            <strong className="mt-2 block break-words text-[1.1rem] leading-[1.4]">
               {selectedStaffName}
             </strong>
           </div>

@@ -19,7 +19,8 @@ export type StaffOption = {
   avatarUrl: string | null;
 };
 
-export type ScheduleStatus = "working" | "leave";
+export type ScheduleStatus = "working" | "leave" | "holiday";
+export type EditableScheduleStatus = "working" | "leave";
 
 export type DailyStat = {
   date: string;
@@ -102,7 +103,7 @@ export type ClinicScheduleResponse = {
 export type StaffScheduleFormState = {
   staffId: string;
   workDate: string;
-  status: ScheduleStatus;
+  status: EditableScheduleStatus;
   note: string;
 };
 

@@ -6,6 +6,7 @@ import { useAdminWorkSchedule } from '@/hooks/useAdminWorkSchedule'
 import type {
   ScheduleStatus,
   StaffScheduleEntry,
+  StaffScheduleFormState,
 } from '@/types/staffAdminHome.types'
 
 type CalendarCell =
@@ -55,6 +56,10 @@ function getStatusLabel(status: ScheduleStatus | null) {
     return 'ลา'
   }
 
+  if (status === 'holiday') {
+    return 'วันหยุด'
+  }
+
   return 'ยังไม่ลงตาราง'
 }
 
@@ -67,6 +72,10 @@ function getCalendarStatusLabel(status: ScheduleStatus | null) {
     return 'ลา'
   }
 
+  if (status === 'holiday') {
+    return 'วันหยุด'
+  }
+
   return 'ยังไม่ลงตาราง'
 }
 
@@ -75,6 +84,7 @@ function getStatusBadgeClass(status: ScheduleStatus | null) {
     'inline-flex max-w-full items-center justify-center rounded-full px-2.5 py-1 text-[11px] font-bold leading-none sm:px-3 sm:py-1.5 sm:text-xs',
     status === 'working' && 'bg-[#e6fffb] text-[#0f766e]',
     status === 'leave' && 'bg-[#fff1f2] text-[#be123c]',
+    status === 'holiday' && 'bg-[#fff7d6] text-[#9a6700]',
     !status && 'bg-[#eef4f2] text-[#53655f]',
   )
 }
@@ -285,7 +295,9 @@ export default function AdminWorkSchedulePage() {
                 <select
                   value={form.status}
                   onChange={(event) =>
-                    handleStatusChange(event.target.value as ScheduleStatus)
+                    handleStatusChange(
+                      event.target.value as StaffScheduleFormState['status'],
+                    )
                   }
                   className={INPUT_CLASS}
                 >

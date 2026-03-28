@@ -217,6 +217,8 @@ export class PsychiatristDashboardService {
         item.note ??
         (item.status === 'leave'
           ? 'วันลา ไม่เปิดรับนัดใหม่'
+          : item.status === 'holiday'
+            ? 'วันหยุด ไม่เปิดรับนัดใหม่'
           : 'เปิดตารางตรวจตามเวลางานปกติ'),
     }));
 

@@ -15,7 +15,6 @@ type ClinicalLeavePlannerProps = {
   role: ClinicalRole;
   kicker: string;
   title: string;
-  description: string;
 };
 
 type CalendarCell =
@@ -40,18 +39,22 @@ const INPUT_CLASS =
   'min-h-[46px] w-full rounded-2xl border border-[rgba(15,118,110,0.18)] bg-[#f8fcfb] px-4 text-[#173630] outline-none transition focus:border-[#0f766e] focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]';
 const TEXTAREA_CLASS =
   'min-h-[144px] w-full rounded-2xl border border-[rgba(15,118,110,0.18)] bg-[#f8fcfb] px-4 py-3 text-[#173630] outline-none transition focus:border-[#0f766e] focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]';
-const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const WEEKDAY_LABELS = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
 
 function getStatusLabel(status: ScheduleStatus | null) {
   if (status === 'working') {
-    return 'Working';
+    return 'ทำงาน';
   }
 
   if (status === 'leave') {
-    return 'Leave';
+    return 'ลา';
   }
 
-  return 'No entry';
+  if (status === 'holiday') {
+    return 'ลา';
+  }
+
+  return 'ยังไม่ลงตาราง';
 }
 
 function getStatusBadgeClass(status: ScheduleStatus | null) {
@@ -59,6 +62,7 @@ function getStatusBadgeClass(status: ScheduleStatus | null) {
     'inline-flex max-w-full items-center justify-center rounded-full px-2.5 py-1 text-[11px] font-bold leading-none sm:px-3 sm:py-1.5 sm:text-xs',
     status === 'working' && 'bg-[#e6fffb] text-[#0f766e]',
     status === 'leave' && 'bg-[#fff1f2] text-[#be123c]',
+    status === 'holiday' && 'bg-[#fff7d6] text-[#9a6700]',
     !status && 'bg-[#eef4f2] text-[#53655f]',
   );
 }
@@ -108,7 +112,6 @@ export function ClinicalLeavePlanner({
   role,
   kicker,
   title,
-  description,
 }: ClinicalLeavePlannerProps) {
   const {
     currentMonthKey,
@@ -154,9 +157,6 @@ export function ClinicalLeavePlanner({
           <Typography.Title level={2} style={{ marginTop: 8, marginBottom: 8 }}>
             {title}
           </Typography.Title>
-          <Typography.Paragraph style={{ marginBottom: 0, maxWidth: 760 }}>
-            {description}
-          </Typography.Paragraph>
         </section>
 
         {error ? (
@@ -175,17 +175,13 @@ export function ClinicalLeavePlanner({
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <h2 className="text-[1.35rem] font-semibold text-[#173630]">
-                  Monthly Leave Calendar
+                  ปฏิทินการลางานรายเดือน
                 </h2>
-                <p className="mt-2 max-w-[520px] text-sm leading-7 text-[#51625d]">
-                  Select a date, mark it as working or leave, and keep a short
-                  note for your clinic schedule.
-                </p>
               </div>
 
               <div className="min-w-[220px]">
                 <label className="mb-2 block text-sm font-bold text-[#33554d]">
-                  Month
+                  เดือน
                 </label>
                 <input
                   type="month"
@@ -252,24 +248,30 @@ export function ClinicalLeavePlanner({
 
           <article className={cx(PANEL_CLASS, 'p-5 md:p-6')}>
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h2 className="text-[1.35rem] font-semibold text-[#173630]">
-                  Leave Entry
-                </h2>
-                <p className="mt-2 text-sm leading-7 text-[#51625d]">
-                  {formatDateLabel(selectedDate)}
-                </p>
-              </div>
+              <h2 className="text-[1.35rem] font-semibold text-[#173630]">
+                จัดการวันลา
+              </h2>
 
               <span className={getStatusBadgeClass(selectedSchedule?.status ?? null)}>
-                {selectedSchedule ? getStatusLabel(selectedSchedule.status) : 'Draft'}
+                {selectedSchedule
+                  ? getStatusLabel(selectedSchedule.status)
+                  : 'ยังไม่ลงตาราง'}
               </span>
+            </div>
+
+            <div className="mt-5 rounded-[24px] border border-[rgba(15,118,110,0.12)] bg-[#f7fbfa] p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#6a736c]">
+                วันที่เลือก
+              </p>
+              <strong className="mt-2 block text-lg text-[#173630]">
+                {formatDateLabel(selectedDate)}
+              </strong>
             </div>
 
             <form className="mt-6 space-y-5" onSubmit={(event) => void handleSubmit(event)}>
               <div>
                 <label className="mb-2 block text-sm font-bold text-[#33554d]">
-                  Schedule status
+                  สถานะตารางงาน
                 </label>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <button
@@ -282,10 +284,7 @@ export function ClinicalLeavePlanner({
                         : 'border-[rgba(15,118,110,0.12)] bg-white text-[#173630]',
                     )}
                   >
-                    <strong className="block text-sm">Working</strong>
-                    <span className="mt-1 block text-xs text-[#5d6c67]">
-                      Keep the selected day available for clinic work.
-                    </span>
+                    <strong className="block text-sm">ทำงาน</strong>
                   </button>
 
                   <button
@@ -298,23 +297,20 @@ export function ClinicalLeavePlanner({
                         : 'border-[rgba(15,118,110,0.12)] bg-white text-[#173630]',
                     )}
                   >
-                    <strong className="block text-sm">Leave</strong>
-                    <span className="mt-1 block text-xs text-[#5d6c67]">
-                      Mark the selected day as leave and provide a short note.
-                    </span>
+                    <strong className="block text-sm">ลา</strong>
                   </button>
                 </div>
               </div>
 
               <div>
                 <label className="mb-2 block text-sm font-bold text-[#33554d]">
-                  Note
+                  หมายเหตุ
                 </label>
                 <textarea
                   value={form.note}
                   onChange={(event) => handleNoteChange(event.target.value)}
                   className={TEXTAREA_CLASS}
-                  placeholder="Reason, contact coverage, or any clinic note"
+                  placeholder="เหตุผล ผู้ติดต่อแทน หรือหมายเหตุสำหรับคลินิก"
                 />
               </div>
 
@@ -330,7 +326,7 @@ export function ClinicalLeavePlanner({
                   disabled={submitting || loading}
                   className="min-h-[48px] rounded-2xl bg-[#0f766e] px-5 font-semibold text-white transition hover:bg-[#0d6760] disabled:cursor-wait disabled:opacity-70"
                 >
-                  {submitting ? 'Saving...' : 'Save leave entry'}
+                  {submitting ? 'กำลังบันทึก...' : 'บันทึกวันลา'}
                 </button>
 
                 <button
@@ -339,7 +335,7 @@ export function ClinicalLeavePlanner({
                   disabled={!selectedSchedule || deleting}
                   className="min-h-[48px] rounded-2xl border border-[rgba(15,118,110,0.18)] px-5 font-semibold text-[#173630] transition hover:border-[#0f766e] hover:text-[#0f766e] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {deleting ? 'Clearing...' : 'Clear day'}
+                  {deleting ? 'กำลังล้างข้อมูล...' : 'ล้างข้อมูลวันดังกล่าว'}
                 </button>
               </div>
             </form>

@@ -206,6 +206,8 @@ export class PsychologistDashboardService {
         item.note ??
         (item.status === 'leave'
           ? 'วันลา ไม่เปิดรับ session ใหม่'
+          : item.status === 'holiday'
+            ? 'วันหยุด ไม่เปิดรับ session ใหม่'
           : 'เปิดตาราง session ตามเวลางานปกติ'),
     }));
 

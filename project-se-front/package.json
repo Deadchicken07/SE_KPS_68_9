@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/dev-safe.mjs",
+    "dev:turbo": "next dev",
+    "dev:webpack": "next dev --webpack",
     "build": "node scripts/build-prod.mjs",
     "start": "node scripts/start-prod.mjs",
     "start:next": "next start",

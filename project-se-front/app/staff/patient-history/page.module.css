@@ -1,14 +1,11 @@
-:global(body) {
-  background:
-    radial-gradient(circle at top left, rgba(63, 127, 109, 0.12), transparent 32%),
-    radial-gradient(circle at bottom right, rgba(192, 144, 87, 0.12), transparent 28%),
-    linear-gradient(180deg, #f7f1ea 0%, #f3ede4 100%);
-}
-
 .page {
   min-height: calc(100vh - 48px);
   color: #1f2937;
   padding: 6px 0 30px;
+  background:
+    radial-gradient(circle at top left, rgba(63, 127, 109, 0.12), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(192, 144, 87, 0.12), transparent 28%),
+    linear-gradient(180deg, #f7f1ea 0%, #f3ede4 100%);
 }
 
 .hero {

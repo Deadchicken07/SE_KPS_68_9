@@ -1,0 +1,14 @@
+
+> project-se-front@0.1.0 dev
+> node scripts/dev-safe.mjs
+
+▲ Next.js 16.1.6 (webpack)
+- Local:         http://localhost:3000
+- Network:       http://172.16.0.2:3000
+- Environments: .env.local
+
+✓ Starting...
+✓ Ready in 1379ms
+○ Compiling /staff/role-psychiatrist-psychologists/psychiatrist ...
+ GET /login 200 in 2.5s (compile: 2.1s, render: 433ms)
+ GET /staff/role-psychiatrist-psychologists/psychiatrist 200 in 161ms (compile: 19ms, render: 142ms)

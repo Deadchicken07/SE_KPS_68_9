@@ -246,6 +246,7 @@ model schedule {
 enum schedule_status {
   working
   leave
+  holiday
 }
 
 enum appointments_type_enum {

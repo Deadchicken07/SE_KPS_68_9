@@ -144,7 +144,7 @@ export function useClinicalLeaveSchedule(role: ClinicalRole) {
 
     const nextForm = {
       ...createStaffScheduleFormState(selectedDate, String(me.sub)),
-      status: selectedSchedule?.status ?? 'working',
+      status: selectedSchedule?.status === 'leave' ? 'leave' : 'working',
       note: selectedSchedule?.note ?? '',
     } satisfies StaffScheduleFormState;
 
