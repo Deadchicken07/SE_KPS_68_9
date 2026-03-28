@@ -125,6 +125,7 @@ export interface PharmacistHomeReceipt {
   total: number | null;
   tracking: string | null;
   status: ReceiptStatus | null;
+  payment_status: string | null;
 }
 
 export interface PharmacistHomeConsultation {

@@ -201,15 +201,9 @@ function shouldShowTrendLabel(
 export function AdminReportHeader() {
   return (
     <section className="staff-page-header">
-      <Typography.Text className="staff-kicker">
-        STAFF / ADMIN / REPORT
-      </Typography.Text>
       <Typography.Title level={2} style={{ marginTop: 8, marginBottom: 8 }}>
-        รายงานภาพรวมระบบ
+        รายงานภาพรวม
       </Typography.Title>
-      <Typography.Text className="staff-section-muted">
-        หน้ารายงานสำหรับติดตามผู้รับบริการ นัดหมาย เคสปรึกษา และรายรับจากข้อมูลจริงในระบบ
-      </Typography.Text>
     </section>
   );
 }
@@ -354,7 +348,6 @@ export function AdminReportSummarySection({
   state: AdminReportState;
 }) {
   const cards = getMetricCards(state);
-  const summary = state.data?.summary;
 
   return (
     <section className="mt-5 grid gap-4">
@@ -370,18 +363,6 @@ export function AdminReportSummarySection({
             </h3>
           </article>
         ))}
-      </div>
-
-      <div className="flex flex-wrap gap-3 text-sm">
-        <span className="rounded-full bg-white/80 px-4 py-2 text-slate-600 shadow-sm">
-          ชำระแล้ว {formatNumber(summary?.paidAppointments ?? 0)} นัด
-        </span>
-        <span className="rounded-full bg-white/80 px-4 py-2 text-slate-600 shadow-sm">
-          รอตรวจสอบ {formatNumber(summary?.pendingAppointments ?? 0)} นัด
-        </span>
-        <span className="rounded-full bg-white/80 px-4 py-2 text-slate-600 shadow-sm">
-          ใบเสร็จ {formatNumber(summary?.totalReceipts ?? 0)} รายการ
-        </span>
       </div>
     </section>
   );
@@ -472,17 +453,16 @@ function TrendOverviewCard({ state }: { state: AdminReportState }) {
   );
 
   return (
-    <Card className="staff-content-card !mt-0 min-w-0 overflow-hidden" variant="borderless">
+    <Card
+      className="staff-content-card !mt-0 !mx-0 !max-w-none w-full min-w-0 overflow-hidden"
+      variant="borderless"
+    >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <Typography.Title level={4} style={{ margin: 0 }}>
             แนวโน้มรายงาน
           </Typography.Title>
-          <Typography.Text className="staff-section-muted">
-            {state.reportMode === "year"
-              ? "ดูแนวโน้มรายเดือนของนัดหมาย เคสปรึกษา และรายรับ"
-              : "ดูแนวโน้มรายวันของนัดหมายและเคสปรึกษา พร้อมแยกรายรับให้อ่านง่ายขึ้น"}
-          </Typography.Text>
+          
         </div>
 
         <div className="flex flex-wrap gap-2 text-xs">
@@ -593,9 +573,7 @@ function TrendOverviewCard({ state }: { state: AdminReportState }) {
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="m-0 text-sm font-semibold text-[#173630]">แนวโน้มรายรับ</p>
-                <p className="m-0 mt-1 text-xs text-slate-500">
-                  แยกกราฟรายรับออกมาเพื่อไม่ให้สเกลชนกับจำนวนเคส
-                </p>
+                
               </div>
               <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#a56a2b]">
                 จุดพีค {peakRevenue?.label ?? "-"} •{" "}
@@ -748,9 +726,6 @@ function TopStaffCard({ state }: { state: AdminReportState }) {
       <Typography.Title level={4} style={{ margin: 0 }}>
         บุคลากรที่มีภาระงานสูงสุด
       </Typography.Title>
-      <Typography.Text className="staff-section-muted">
-        จัดอันดับจากนัดหมาย เคสปรึกษา และรายรับในช่วงที่เลือก
-      </Typography.Text>
 
       {rows.length ? (
         <div className="mt-5 grid gap-3 lg:grid-cols-2">
@@ -877,10 +852,9 @@ function MetricMiniCard({
 
 function ActivityFeedCardsSection({ state }: { state: AdminReportState }) {
   return (
-    <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid w-full items-stretch gap-2 md:grid-cols-2 xl:grid-cols-3">
       <ActivityCard
         title="ใบเสร็จล่าสุด"
-        subtitle="รายการใบเสร็จที่เพิ่งถูกบันทึกในช่วงรายงานนี้"
         tone="bg-[#faf1e5] text-[#a56a2b]"
         items={(state.data?.recentReceipts ?? []).slice(0, 5).map((row) => ({
           key: row.id,
@@ -892,7 +866,6 @@ function ActivityFeedCardsSection({ state }: { state: AdminReportState }) {
 
       <ActivityCard
         title="นัดหมายล่าสุด"
-        subtitle="นัดหมายที่เพิ่งเกิดขึ้นหรือถูกอัปเดตล่าสุด"
         tone="bg-[#eefbf8] text-[#0f766e]"
         items={(state.data?.recentAppointments ?? []).slice(0, 5).map((row) => ({
           key: row.id,
@@ -904,7 +877,6 @@ function ActivityFeedCardsSection({ state }: { state: AdminReportState }) {
 
       <ActivityCard
         title="เคสปรึกษาล่าสุด"
-        subtitle="เคสที่เพิ่งถูกบันทึกในระบบช่วงล่าสุด"
         tone="bg-[#edf7f4] text-[#2f6e5d]"
         items={(state.data?.recentConsultations ?? []).slice(0, 5).map((row) => ({
           key: row.id,
@@ -930,21 +902,28 @@ function ActivityCard({
     badge: string;
   }>;
   title: string;
-  subtitle: string;
+  subtitle?: string;
   tone: string;
 }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
-    <Card className="staff-content-card !mt-0 min-w-0 overflow-hidden" variant="borderless">
-      <div className="flex items-start justify-between gap-3">
+    <Card
+      className="staff-content-card !mt-0 !mx-0 !max-w-none w-full h-full min-w-0 overflow-hidden"
+      variant="borderless"
+      styles={{ body: { height: "100%" } }}
+    >
+      <div className="flex h-full min-h-[420px] flex-col">
+        <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <Typography.Title level={4} style={{ margin: 0, fontSize: "1.08rem" }}>
             {title}
           </Typography.Title>
-          <Typography.Text className="staff-section-muted">
-            {subtitle}
-          </Typography.Text>
+          {subtitle ? (
+            <Typography.Text className="staff-section-muted">
+              {subtitle}
+            </Typography.Text>
+          ) : null}
         </div>
 
         <div className="flex items-center gap-2">
@@ -981,7 +960,8 @@ function ActivityCard({
         </div>
       </div>
 
-      {!isCollapsed ? <ActivitySection items={items} tone={tone} /> : null}
+        {!isCollapsed ? <ActivitySection items={items} tone={tone} /> : null}
+      </div>
     </Card>
   );
 }
@@ -999,13 +979,13 @@ function ActivitySection({
   tone: string;
 }) {
   return (
-    <div className="mt-4 rounded-[20px] border border-slate-100 bg-[#fbfdfc] p-4">
+    <div className="mt-4 flex min-h-[320px] flex-1 flex-col rounded-[20px] border border-slate-100 bg-[#fbfdfc] p-4">
       {items.length ? (
-        <div className="grid gap-2">
+        <div className="grid h-full auto-rows-fr gap-3">
           {items.map((item) => (
             <div
               key={item.key}
-              className="flex items-center justify-between gap-3 rounded-[16px] border border-slate-100 bg-white px-3 py-2.5"
+              className="flex h-full items-center justify-between gap-3 rounded-[16px] border border-slate-100 bg-white px-4 py-3"
             >
               <div className="min-w-0">
                 <p className="m-0 truncate text-sm font-semibold text-[#173630]">

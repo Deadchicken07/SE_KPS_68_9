@@ -9,7 +9,7 @@ import {
   PHARMACIST_HOME_STATUS_RANK,
   formatPharmacistHomeDateTime,
   getPharmacistHomeErrorMessage,
-  isOutstandingPharmacistHomeStatus,
+  isPaidOutstandingPharmacistHomeConsultation,
   pharmacistHomeDisplayStatus,
 } from '@/utils/pharmacistHome'
 
@@ -92,7 +92,7 @@ export const usePharmacistHome = () => {
   const outstandingConsultations = useMemo(
     () =>
       consultations.filter((item) =>
-        isOutstandingPharmacistHomeStatus(pharmacistHomeDisplayStatus(item)),
+        isPaidOutstandingPharmacistHomeConsultation(item),
       ),
     [consultations],
   )
