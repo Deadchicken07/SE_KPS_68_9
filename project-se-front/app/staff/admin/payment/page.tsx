@@ -70,11 +70,11 @@ function PaymentContent() {
     const price = appointmentData?.price?.toString() || searchParams.get('price') || '0';
 
     const handleConfirmPayment = async () => {
-        if (!uploadedSlip) return alert('กรุณาแนบสลิปการโอนเงิน');
+        if (!uploadedSlip) return message.warning('กรุณาแนบสลิปการโอนเงิน');
         const appointmentId = searchParams.get('id') || searchParams.get('appointmentId');
 
         if (!appointmentId) {
-            alert('ไม่พบข้อมูลรหัสการนัดหมาย');
+            message.error('ไม่พบข้อมูลรหัสการนัดหมาย');
             return;
         }
 
@@ -85,7 +85,7 @@ function PaymentContent() {
             const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
             const filePath = `slips/${fileName}`;
 
-            const { error: uploadError, data } = await supabase.storage
+            const { error: uploadError } = await supabase.storage
                 .from('Paid_appointment')
                 .upload(filePath, uploadedSlip);
 
@@ -115,9 +115,10 @@ function PaymentContent() {
             }
 
             setStep('success');
+            message.success('แจ้งโอนเงินสำเร็จ');
         } catch (error: any) {
             console.error('Payment error:', error);
-            alert(error.message || 'เกิดข้อผิดพลาดในการทำรายการ');
+            message.error(error.message || 'เกิดข้อผิดพลาดในการทำรายการ');
         } finally {
             setIsSubmitting(false);
         }
@@ -136,7 +137,7 @@ function PaymentContent() {
             <div className="appt-page" style={{ textAlign: 'center', paddingTop: 100 }}>
                 <h2 style={{ color: '#ef4444' }}>เกิดข้อผิดพลาด</h2>
                 <p>{fetchError}</p>
-                <Button onClick={() => router.push('/user/appointments')}>กลับไปหน้าการนัดหมาย</Button>
+                <Button onClick={() => router.push('/staff/admin/payment-verification')}>กลับไปหน้าตรวจสอบการชำระเงิน</Button>
             </div>
         );
     }
@@ -148,7 +149,7 @@ function PaymentContent() {
                     {step === 'success' ? (
                         <div className="appt-success">
                             <div className="appt-success-icon" style={{ fontSize: 64, marginBottom: 16 }}>✅</div>
-                            <h2 style={{ fontSize: 24, fontWeight: 800, color: '#065f46', marginBottom: 12 }}>นัดหมายสำเร็จ !</h2>
+                            <h2 style={{ fontSize: 24, fontWeight: 800, color: '#065f46', marginBottom: 12 }}>แจ้งชำระเงินเรียบร้อย !</h2>
                             <p style={{ fontSize: 16, color: '#4b5563', marginBottom: 24, lineHeight: 1.6 }}>
                                 วันที่ {date} เวลา {time} น.<br />
                                 ระยะเวลา {duration} นาที<br />
@@ -159,14 +160,14 @@ function PaymentContent() {
                                 size="large"
                                 block
                                 style={{ background: '#0f766e', borderColor: '#0f766e', fontFamily: "'Sarabun', Arial, sans-serif", height: 48, fontSize: 16, fontWeight: 700, borderRadius: 999 }}
-                                onClick={() => router.push('/user/appointments')}
+                                onClick={() => router.push('/staff/admin/payment-verification')}
                             >
-                                กลับไปหน้าหลัก
+                                ไปยังหน้าตรวจสอบหลักฐาน
                             </Button>
                         </div>
                     ) : (
                         <div>
-                            <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1e1b4b', marginBottom: 24 }}>การชำระเงิน</h2>
+                            <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1e1b4b', marginBottom: 24 }}>แจ้งชำระเงิน (Admin)</h2>
 
                             <div style={{ background: '#f0fdf4', border: '1px solid #a7f3d0', padding: 16, borderRadius: 12, marginBottom: 24, textAlign: 'left' }}>
                                 <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'space-between' }}>
@@ -195,7 +196,7 @@ function PaymentContent() {
 
                             <div style={{ textAlign: 'left', marginBottom: 32, background: '#fff', padding: 20, borderRadius: 12, border: '1px solid #e5e7eb', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
                                 <label style={{ display: 'block', fontSize: 15, fontWeight: 700, color: '#374151', marginBottom: 12 }}>
-                                    แนบสลิปการโอนเงิน <span style={{ color: '#ef4444' }}>*</span>
+                                    อัปโหลดสลิปแทนผู้ป่วย <span style={{ color: '#ef4444' }}>*</span>
                                 </label>
                                 <input
                                     type="file"
@@ -234,16 +235,16 @@ function PaymentContent() {
                                 onClick={handleConfirmPayment}
                                 disabled={isSubmitting}
                             >
-                                {isSubmitting ? <Spin size="small" /> : 'แจ้งโอนเงิน'}
+                                {isSubmitting ? <Spin size="small" /> : 'ยืนยันและส่งสลิป'}
                             </Button>
 
                             <Button
                                 type="text"
                                 block
                                 style={{ marginTop: 12, color: '#6b7280', fontFamily: "'Sarabun', Arial, sans-serif", fontWeight: 600 }}
-                                onClick={() => router.push('/user/appointments')}
+                                onClick={() => router.push('/staff/admin/payment-verification')}
                             >
-                                ยกเลิก
+                                กลับไปหน้ารวม
                             </Button>
                         </div>
                     )}
@@ -253,7 +254,7 @@ function PaymentContent() {
     );
 }
 
-export default function PaymentPage() {
+export default function AdminPaymentPage() {
     return (
         <ConfigProvider locale={locale}>
             <style>{`

@@ -8,7 +8,16 @@ import { pay_type_enum } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
 
-type AppointmentStatus = 'pending' | 'confirmed' | 'completed' | 'waiting';
+type AppointmentStatus =
+  | 'รอการชำระเงิน'
+  | 'รอการตรวจสอบ'
+  | 'ชำระเงินแล้ว'
+  | 'ยกเลิกแล้ว'
+  | 'เสร็จสิ้น'
+  | 'pending'
+  | 'confirmed'
+  | 'completed'
+  | 'waiting';
 
 type AppointmentScheduleItem = {
   id: number;
@@ -22,7 +31,12 @@ type AppointmentScheduleItem = {
   avatarUrl: string | null;
   appointmentType: 'online' | 'onsite' | null;
   paymentStatus: string | null;
+  medicinePaymentStatus?: string | null;
+  receiptId?: number | null;
+  totalPrice?: number | null;
   meetLink: string | null;
+  hasPrescription: boolean;
+  hasConsultation: boolean;
 };
 
 type AppointmentScheduleResponse = {
@@ -53,72 +67,165 @@ export class AppointmentsService {
   constructor(private readonly prisma: PrismaService) { }
 
   async getMySchedule(userId: number): Promise<AppointmentScheduleResponse> {
-    const clinicMeetUrl = process.env.CLINIC_MEET_URL ?? null;
+    try {
+      const clinicMeetUrl = process.env.CLINIC_MEET_URL ?? null;
 
-    const records = await this.prisma.appointments.findMany({
-      where: { user_id: userId },
-      include: {
-        users_appointments_staff_idTousers: {
-          select: {
-            name: true,
-            sur_name: true,
-            email: true,
-            file_name: true,
+      // 1. Fetch upcoming appointments (driven by appointments table)
+      const appointmentRecords = await this.prisma.appointments.findMany({
+        where: { user_id: userId },
+        include: {
+          users_appointments_staff_idTousers: {
+            select: {
+              name: true,
+              sur_name: true,
+              email: true,
+              file_name: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    const mapped = records.map((record) => {
-      const appointmentDate = record.appointment_date
-        ? this.dateToIsoDate(record.appointment_date)
-        : null;
-      const parsedRange = this.tryParseTimeRange(record.time_select);
-      const isPast = this.isPastAppointment(appointmentDate, parsedRange);
-      const consultantName = this.buildConsultantName(
-        record.users_appointments_staff_idTousers?.name,
-        record.users_appointments_staff_idTousers?.sur_name,
-      );
+      const upcomingMapped = appointmentRecords
+        .map((record) => {
+          const appointmentDate = record.appointment_date
+            ? this.dateToIsoDate(record.appointment_date)
+            : null;
+          const parsedRange = this.tryParseTimeRange(record.time_select);
+          const isPast = this.isPastAppointment(appointmentDate, parsedRange);
 
-      const item: AppointmentScheduleItem = {
-        id: record.id,
-        staffId: record.staff_id,
-        consultantName,
-        appointmentDate,
-        timeSelect: record.time_select ?? null,
-        contact: record.users_appointments_staff_idTousers?.email ?? '-',
-        status: this.toDisplayStatus(record.status, isPast),
-        avatarLabel: this.toAvatarLabel(
-          record.users_appointments_staff_idTousers?.name,
-          record.users_appointments_staff_idTousers?.sur_name,
-        ),
-        avatarUrl: record.users_appointments_staff_idTousers?.file_name ?? null,
-        appointmentType: record.appointment_type ?? null,
-        paymentStatus: record.status ?? null,
-        meetLink: record.appointment_type === 'online' ? clinicMeetUrl : null,
-      };
+          if (isPast) return null; // Skip past appointments here
+
+          const consultantName = this.buildConsultantName(
+            record.users_appointments_staff_idTousers?.name,
+            record.users_appointments_staff_idTousers?.sur_name,
+          );
+
+          const item: AppointmentScheduleItem = {
+            id: record.id,
+            staffId: record.staff_id,
+            consultantName,
+            appointmentDate,
+            timeSelect: record.time_select ?? null,
+            contact: record.users_appointments_staff_idTousers?.email ?? '-',
+            status: this.toDisplayStatus(record.status, false),
+            avatarLabel: this.toAvatarLabel(
+              record.users_appointments_staff_idTousers?.name,
+              record.users_appointments_staff_idTousers?.sur_name,
+            ),
+            avatarUrl: record.users_appointments_staff_idTousers?.file_name ?? null,
+            appointmentType: record.appointment_type ?? null,
+            paymentStatus: record.status ?? null,
+            medicinePaymentStatus: null,
+            meetLink: record.appointment_type === 'online' ? clinicMeetUrl : null,
+            hasPrescription: false,
+            hasConsultation: false,
+          };
+
+          return {
+            item,
+            sortValue: this.getSortValue(appointmentDate, parsedRange),
+          };
+        })
+        .filter((entry): entry is { item: AppointmentScheduleItem; sortValue: number } => entry !== null)
+        .sort((a, b) => a.sortValue - b.sortValue)
+        .map((entry) => entry.item);
+
+      // 2. Fetch past history (driven by consultations table)
+      const consultationRecords = (await this.prisma.consultations.findMany({
+        where: { user_id: userId },
+        include: {
+          users_consultations_staff_idTousers: {
+            select: {
+              name: true,
+              sur_name: true,
+              email: true,
+              file_name: true,
+            },
+          },
+          _count: {
+            select: { prescription_items: true },
+          },
+          receipts: {
+            select: {
+              id: true,
+              total: true,
+              status: true,
+              payment_status: true,
+              receipt_details: {
+                select: {
+                  item_type: true,
+                  total_price: true,
+                },
+              },
+            },
+            take: 1,
+          },
+        },
+      } as any)) as any[];
+
+      const pastMapped = consultationRecords
+        .map((c) => {
+          const dateKey = c.created_at ? this.dateToIsoDate(c.created_at) : null;
+          
+          // Try to link this consultation back to an appointment item for the frontend modal
+          // Logic: Match by staff_id and dateKey
+          const matchedAppt = appointmentRecords.find(a => 
+            a.staff_id === c.staff_id && 
+            (a.appointment_date ? this.dateToIsoDate(a.appointment_date) : null) === dateKey
+          );
+
+          const consultantName = this.buildConsultantName(
+            c.users_consultations_staff_idTousers?.name,
+            c.users_consultations_staff_idTousers?.sur_name,
+          );
+
+          const firstReceipt = c.receipts?.[0];
+          const medicineTotal = firstReceipt?.receipt_details
+            ? firstReceipt.receipt_details
+              .filter((d: any) => d.item_type === 'medicine')
+              .reduce((sum: number, d: any) => sum + (d.total_price ? Number(d.total_price) : 0), 0)
+            : null;
+
+          const item: AppointmentScheduleItem = {
+            // Use consultation ID for direct mapping to clinical data
+            id: c.id, 
+            staffId: c.staff_id,
+            consultantName,
+            appointmentDate: dateKey,
+            timeSelect: matchedAppt?.time_select ?? null, 
+            contact: c.users_consultations_staff_idTousers?.email ?? '-',
+            status: 'เสร็จสิ้น',
+            avatarLabel: this.toAvatarLabel(
+              c.users_consultations_staff_idTousers?.name,
+              c.users_consultations_staff_idTousers?.sur_name,
+            ),
+            avatarUrl: c.users_consultations_staff_idTousers?.file_name ?? null,
+            appointmentType: matchedAppt?.appointment_type ?? null,
+            paymentStatus: matchedAppt?.status ?? 'Paid',
+            medicinePaymentStatus: firstReceipt?.payment_status ?? null,
+            receiptId: firstReceipt?.id ?? null,
+            totalPrice: medicineTotal,
+            meetLink: null,
+            hasPrescription: c._count?.prescription_items > 0,
+            hasConsultation: true,
+          };
+
+          return {
+            item,
+            sortValue: this.getSortValue(dateKey, null), // Sort by date
+          };
+        })
+        .sort((a, b) => b.sortValue - a.sortValue)
+        .map((entry) => entry.item);
 
       return {
-        item,
-        isPast,
-        sortValue: this.getSortValue(appointmentDate, parsedRange),
+        upcoming: upcomingMapped,
+        past: pastMapped,
       };
-    });
-
-    const upcoming = mapped
-      .filter((entry) => !entry.isPast)
-      .sort((a, b) => a.sortValue - b.sortValue)
-      .map((entry) => entry.item);
-
-    const past = mapped
-      .filter((entry) => entry.isPast)
-      .sort((a, b) => b.sortValue - a.sortValue)
-      .map((entry) => entry.item);
-
-    return {
-      upcoming,
-      past,
-    };
+    } catch (error) {
+      console.error('Error in getMySchedule:', error);
+      throw error;
+    }
   }
 
   async createAppointment(userId: number, body: any) {
@@ -251,11 +358,12 @@ export class AppointmentsService {
         // check if this slot is covered by any booked range
         const isBooked = bookedRanges.some(r => r && startMin >= r.startMinutes && startMin < r.endMinutes);
 
-        // also reject past times if it's today
-        const now = new Date();
-        const today = this.toLocalDateKey(now);
-        if (today === trimmed) {
-          const nowMinutes = now.getHours() * 60 + now.getMinutes();
+        // Also reject past times if it's today (using Bangkok timezone)
+        const nowInThai = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
+        const todayInThai = this.toLocalDateKey(nowInThai);
+
+        if (todayInThai === trimmed) {
+          const nowMinutes = nowInThai.getHours() * 60 + nowInThai.getMinutes();
           if (startMin <= nowMinutes) return false;
         }
 
@@ -347,7 +455,7 @@ export class AppointmentsService {
         }
       },
       orderBy: {
-        appointment_date: 'desc'
+        id: 'desc'
       }
     });
 
@@ -375,7 +483,77 @@ export class AppointmentsService {
     });
   }
 
-  async getAppointmentDetails(userId: number, appointmentId: number) {
+  async getAllMedicinePayments() {
+    const receipts = await this.prisma.receipts.findMany({
+      orderBy: {
+        id: 'desc'
+      },
+      include: {
+        users: {
+          select: {
+            name: true,
+            sur_name: true,
+          },
+        },
+        consultations: {
+          select: {
+            staff_id: true,
+            users_consultations_staff_idTousers: {
+              select: {
+                name: true,
+                sur_name: true,
+              },
+            },
+          },
+        },
+        receipt_details: {
+          where: { item_type: 'medicine' },
+          include: {
+            medications: true,
+          },
+        },
+      },
+    });
+
+    return receipts.map((r) => {
+      const patientName = this.buildConsultantName(
+        r.users?.name,
+        r.users?.sur_name,
+      );
+      const staffName = this.buildConsultantName(
+        r.consultations?.users_consultations_staff_idTousers?.name,
+        r.consultations?.users_consultations_staff_idTousers?.sur_name,
+      );
+
+      const medicineCost = r.receipt_details.reduce(
+        (sum, d) => sum + (d.total_price ? Number(d.total_price) : 0),
+        0,
+      );
+
+      const medicineItems = r.receipt_details.map((d) => ({
+        name: d.item_name ?? d.medications?.name ?? '-',
+        quantity: d.quantity ?? 0,
+        unitPrice: d.unit_price ? Number(d.unit_price) : 0,
+        totalPrice: d.total_price ? Number(d.total_price) : 0,
+      }));
+
+      return {
+        id: r.id,
+        patientName,
+        staffName,
+        date: r.created_at ? r.created_at.toISOString().split('T')[0] : null,
+        medicineCost,
+        medicineItems,
+        total: r.total ? Number(r.total) : 0,
+        slipUrl: r.slip_file,
+        status: r.status,
+        paymentStatus: (r as any).payment_status,
+        tracking: r.tracking,
+      };
+    });
+  }
+
+  async getAppointmentDetails(userId: number, appointmentId: number, isAdmin = false) {
     const appointment = await this.prisma.appointments.findUnique({
       where: { id: appointmentId },
       include: {
@@ -391,7 +569,7 @@ export class AppointmentsService {
       throw new NotFoundException('Appointment not found');
     }
 
-    if (appointment.user_id !== userId) {
+    if (!isAdmin && appointment.user_id !== userId) {
       throw new ForbiddenException('Appointment does not belong to this user');
     }
 
@@ -447,6 +625,81 @@ export class AppointmentsService {
       message: 'Payment confirmed successfully',
       appointmentId,
       status: pay_type_enum.Paid,
+    };
+  }
+
+  async rejectPayment(appointmentId: number) {
+    const appointment = await this.prisma.appointments.findUnique({
+      where: { id: appointmentId },
+    });
+
+    if (!appointment) {
+      throw new NotFoundException('Appointment not found');
+    }
+
+    try {
+      await this.prisma.appointments.delete({
+        where: { id: appointmentId },
+      });
+    } catch (error) {
+       console.error('Failed to delete appointment on reject:', error);
+       throw new BadRequestException('Cannot delete appointment. It may have dependent data.');
+    }
+
+    return {
+      message: 'Appointment deleted successfully on rejection',
+      appointmentId,
+    };
+  }
+
+  async confirmMedicinePayment(receiptId: number) {
+    const receipt = await this.prisma.receipts.findUnique({
+      where: { id: receiptId },
+    });
+
+    if (!receipt) {
+      throw new NotFoundException('Receipt not found');
+    }
+
+    const newStatus = receipt.status === 'pending_delivery' ? 'delivered' : 'picked_up';
+
+    await this.prisma.receipts.update({
+      where: { id: receiptId },
+      data: {
+        status: newStatus as any,
+        payment_status: 'Paid',
+      } as any,
+    });
+
+    return {
+      message: 'Medicine payment confirmed successfully',
+      receiptId,
+      status: newStatus,
+    };
+  }
+
+  async rejectMedicinePayment(receiptId: number) {
+    const receipt = await this.prisma.receipts.findUnique({
+      where: { id: receiptId },
+    });
+
+    if (!receipt) {
+      throw new NotFoundException('Receipt not found');
+    }
+
+    try {
+      await this.prisma.receipts.delete({
+        where: { id: receiptId },
+      });
+    } catch (error) {
+      console.error('Failed to delete receipt on reject:', error);
+      throw new BadRequestException('Cannot delete receipt. It may have dependent data.');
+    }
+
+    return {
+      message: 'Receipt deleted successfully on rejection',
+      receiptId,
+      status: 'deleted',
     };
   }
 
@@ -852,6 +1105,161 @@ export class AppointmentsService {
       depositSlipFile: record.deposit_slip_file ?? null,
       meetUrl: record.meet_url ?? null,
     }));
+  }
+
+  async payMedicine(userId: number, appointmentId: number, slipUrl: string) {
+    const appointment = await this.prisma.appointments.findUnique({
+      where: { id: appointmentId },
+    });
+
+    if (!appointment) {
+      throw new NotFoundException('Appointment not found');
+    }
+
+    if (appointment.user_id !== userId) {
+      throw new ForbiddenException('Appointment does not belong to this user');
+    }
+
+    if (!appointment.user_id || !appointment.staff_id) {
+      throw new BadRequestException('Appointment data is incomplete');
+    }
+
+    // Find the consultation matching this appointment
+    const consultation = await this.prisma.consultations.findFirst({
+      where: {
+        user_id: appointment.user_id,
+        staff_id: appointment.staff_id,
+      },
+      orderBy: { created_at: 'desc' },
+      include: {
+        receipts: true,
+      },
+    });
+
+    if (!consultation) {
+      throw new NotFoundException('No consultation found for this appointment');
+    }
+
+    const receipt = consultation.receipts?.[0];
+    if (!receipt) {
+      throw new NotFoundException('No receipt found for this consultation');
+    }
+
+    // Update the receipt with the slip file
+    await this.prisma.receipts.update({
+      where: { id: receipt.id },
+      data: {
+        slip_file: slipUrl,
+        payment_status: 'Pending',
+      } as any,
+    });
+
+    return {
+      message: 'Medicine payment slip uploaded successfully',
+      receiptId: receipt.id,
+    };
+  }
+
+  async getConsultationForAppointment(userId: number, id: number) {
+    let consultation = await this.prisma.consultations.findUnique({
+      where: { id: id, user_id: userId },
+      include: {
+        prescription_items: {
+          include: {
+            medications: true,
+          },
+        },
+        receipts: {
+          include: {
+            receipt_details: {
+              include: {
+                medications: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!consultation) {
+      const appointment = await this.prisma.appointments.findUnique({
+        where: { id: id, user_id: userId },
+      });
+
+      if (appointment) {
+        consultation = await this.prisma.consultations.findFirst({
+          where: {
+            user_id: userId,
+            staff_id: appointment.staff_id,
+          },
+          orderBy: { created_at: 'desc' },
+          include: {
+            prescription_items: {
+              include: {
+                medications: true,
+              },
+            },
+            receipts: {
+              include: {
+                receipt_details: {
+                  include: {
+                    medications: true,
+                  },
+                },
+              },
+            },
+          },
+        });
+      }
+    }
+
+    if (!consultation) {
+      return { consultation: null, prescriptionItems: [], receipt: null, receiptDetails: [] };
+    }
+
+    const prescriptionItems = consultation.prescription_items.map((item) => ({
+      id: item.id,
+      medicationName: item.medications?.name ?? '-',
+      quantity: item.quantity ?? 0,
+      comment: item.comment ?? '',
+      price: item.medications?.retail ? Number(item.medications.retail) : (item.medications?.price ? Number(item.medications.price) : 0),
+    }));
+
+    const receipt = consultation.receipts?.[0] ?? null;
+    const receiptDetails = receipt?.receipt_details?.map((d) => ({
+      id: d.id,
+      itemName: d.item_name ?? '-',
+      itemType: d.item_type ?? null,
+      quantity: d.quantity ?? 0,
+      unitPrice: d.unit_price ? Number(d.unit_price) : 0,
+      totalPrice: d.total_price ? Number(d.total_price) : 0,
+    })) ?? [];
+
+    const serviceFee = receiptDetails
+      .filter((d) => d.itemType === 'fee' || d.itemType === 'service')
+      .reduce((sum, d) => sum + d.totalPrice, 0);
+
+    const medicineCost = receiptDetails
+      .filter((d) => d.itemType === 'medicine')
+      .reduce((sum, d) => sum + d.totalPrice, 0);
+
+    return {
+      consultation: {
+        id: consultation.id,
+        note: consultation.note ?? '',
+        createdAt: consultation.created_at,
+      },
+      prescriptionItems,
+      receipt: receipt ? {
+        id: receipt.id,
+        total: receipt.total ? Number(receipt.total) : 0,
+        status: receipt.status,
+        tracking: receipt.tracking,
+      } : null,
+      receiptDetails,
+      serviceFee,
+      medicineCost,
+    };
   }
 
   private buildPatientName(

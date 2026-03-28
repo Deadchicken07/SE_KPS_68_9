@@ -39,11 +39,39 @@ export class AppointmentsController {
     return this.appointmentsService.getAllPaidAppointments();
   }
 
+  @Get('medicine-payments')
+  @UseGuards(RolesGuard)
+  @Roles(1) // Admin only
+  getAllMedicinePayments() {
+    return this.appointmentsService.getAllMedicinePayments();
+  }
+
   @Patch(':id/confirm')
   @UseGuards(RolesGuard)
   @Roles(1) // Admin only
   async confirmPayment(@Param('id', ParseIntPipe) appointmentId: number) {
     return this.appointmentsService.confirmPayment(appointmentId);
+  }
+
+  @Patch(':id/reject')
+  @UseGuards(RolesGuard)
+  @Roles(1) // Admin only
+  async rejectPayment(@Param('id', ParseIntPipe) appointmentId: number) {
+    return this.appointmentsService.rejectPayment(appointmentId);
+  }
+
+  @Patch('receipts/:id/confirm')
+  @UseGuards(RolesGuard)
+  @Roles(1)
+  async confirmMedicinePayment(@Param('id', ParseIntPipe) receiptId: number) {
+    return this.appointmentsService.confirmMedicinePayment(receiptId);
+  }
+
+  @Patch('receipts/:id/reject')
+  @UseGuards(RolesGuard)
+  @Roles(1)
+  async rejectMedicinePayment(@Param('id', ParseIntPipe) receiptId: number) {
+    return this.appointmentsService.rejectMedicinePayment(receiptId);
   }
 
   @Get('staff/me')
@@ -96,9 +124,11 @@ export class AppointmentsController {
   @Get(':id')
   getAppointment(@Req() req, @Param('id', ParseIntPipe) appointmentId: number) {
     const userId = this.getUserIdFromRequest(req);
+    const roleId = this.getRoleIdFromRequest(req);
     return this.appointmentsService.getAppointmentDetails(
       userId,
       appointmentId,
+      roleId === 1,
     );
   }
 
@@ -151,6 +181,32 @@ export class AppointmentsController {
 
 
 
+
+  @Patch(':id/pay-medicine')
+  payMedicine(
+    @Req() req,
+    @Param('id', ParseIntPipe) appointmentId: number,
+    @Body() body: { slipUrl: string },
+  ) {
+    const userId = this.getUserIdFromRequest(req);
+    return this.appointmentsService.payMedicine(
+      userId,
+      appointmentId,
+      body.slipUrl,
+    );
+  }
+
+  @Get(':id/consultation')
+  getConsultationForAppointment(
+    @Req() req,
+    @Param('id', ParseIntPipe) appointmentId: number,
+  ) {
+    const userId = this.getUserIdFromRequest(req);
+    return this.appointmentsService.getConsultationForAppointment(
+      userId,
+      appointmentId,
+    );
+  }
 
   @Get('staff/:staffId')
   findAllByStaff(@Req() req, @Param('staffId', ParseIntPipe) staffId: number) {

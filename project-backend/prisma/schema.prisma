@@ -151,6 +151,7 @@ model receipts {
   total           Decimal?          @db.Decimal(10, 2)
   tracking        String?           @db.VarChar(255)
   status          receipt_status?
+  payment_status  pay_type_enum?    @default(Not_paying)
   receipt_details receipt_details[]
   consultations   consultations?    @relation(fields: [consultation_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users           users?            @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
@@ -246,6 +247,7 @@ model schedule {
 enum schedule_status {
   working
   leave
+  holiday
 }
 
 enum appointments_type_enum {
