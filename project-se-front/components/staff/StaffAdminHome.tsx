@@ -1,7 +1,5 @@
-"use client";
-
 import { type CSSProperties } from "react";
-import { useStaffAdminHome } from "@/hooks/useStaffAdminHome";
+import type { useStaffAdminHome } from "@/hooks/useStaffAdminHome";
 import type {
   AppointmentItem,
   StaffOverviewItem,
@@ -22,7 +20,7 @@ const DAY_TONES = [
 
 const WEEKDAY_LABELS = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
 
-const PAGE_BACKGROUND =
+export const PAGE_BACKGROUND =
   "radial-gradient(circle at top left, rgba(63, 127, 109, 0.14), transparent 34%), radial-gradient(circle at bottom right, rgba(192, 144, 87, 0.12), transparent 28%), linear-gradient(180deg, #f7f1ea 0%, #f3ede4 100%)";
 const HERO_BACKGROUND =
   "linear-gradient(135deg, rgba(230, 255, 251, 0.32), rgba(255, 255, 255, 0.06)), linear-gradient(135deg, #0f766e 0%, #115e59 56%, #134e4a 100%)";
@@ -109,9 +107,7 @@ function getScheduleBadgeClasses(value: string) {
     "inline-flex items-center gap-2 rounded-full px-3 py-2 text-[0.8rem] font-extrabold",
     value === "working" && "bg-[#e6fffb] text-[#115e59]",
     value === "leave" && "bg-[#fff1f2] text-[#be123c]",
-    value !== "working" &&
-      value !== "leave" &&
-      "bg-[#edf4f2] text-[#47655e]",
+    value !== "working" && value !== "leave" && "bg-[#edf4f2] text-[#47655e]",
   );
 }
 
@@ -154,66 +150,32 @@ function buildDashboardSummaryCards(
   ];
 }
 
-export function StaffAdminHome() {
-  const state = useStaffAdminHome();
-
-  if (!state.hasAccess) {
+export function DashboardSummarySection({
+  summary,
+}: {
+  summary: StaffAdminHomeState["summary"];
+}) {
+  if (!summary) {
     return null;
   }
 
   return (
-    <main
-      className="min-h-screen px-4 pb-10 pt-6 text-[#18312c] sm:px-6 lg:px-7 lg:pb-14 lg:pt-8"
-      style={{ background: PAGE_BACKGROUND }}
-    >
-      <div className="mx-auto grid max-w-[1420px] gap-6">
-        <HeroSection
-          selectedStaffName={state.selectedStaff?.name ?? "ทั้งคลินิก"}
-          weekRange={state.data?.weekRange ?? null}
-        />
-        <FilterSection state={state} />
-        {state.error ? (
-          <ErrorPanel
-            authRequired={state.authRequired}
-            error={state.error}
-            onLogin={state.goToLogin}
-          />
-        ) : null}
-        {state.summary ? (
-          <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
-            {buildDashboardSummaryCards(state.summary).map((card) => (
-              <article key={card.label} className={cx(PANEL_CLASS, "p-5")}>
-                <span className="mb-2 block text-[0.78rem] font-bold text-[#68756c]">
-                  {card.label}
-                </span>
-                <strong className="block text-[1.95rem] leading-none">
-                  {card.value}
-                </strong>
-              </article>
-            ))}
-          </section>
-        ) : null}
-        <section className="grid grid-cols-1 gap-6">
-          <TimelineSection state={state} />
-          <SelectedAppointmentsSection state={state} />
-        </section>
-        <section className="grid grid-cols-1 items-start gap-6 xl:grid-cols-2">
-          <StaffOverviewSection
-            onOpenStaffWorkModal={state.openStaffWorkModal}
-            staffOverview={state.staffOverview}
-          />
-          <UpcomingAppointmentsSection
-            selectedDate={state.selectedDate}
-            upcomingAppointments={state.upcomingAppointments}
-          />
-        </section>
-        <StaffWorkModal state={state} />
-      </div>
-    </main>
+    <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+      {buildDashboardSummaryCards(summary).map((card) => (
+        <article key={card.label} className={cx(PANEL_CLASS, "p-5")}>
+          <span className="mb-2 block text-[0.78rem] font-bold text-[#68756c]">
+            {card.label}
+          </span>
+          <strong className="block text-[1.95rem] leading-none">
+            {card.value}
+          </strong>
+        </article>
+      ))}
+    </section>
   );
 }
 
-function HeroSection({
+export function HeroSection({
   selectedStaffName,
   weekRange,
 }: {
@@ -231,7 +193,7 @@ function HeroSection({
             ตารางงานคลินิก
           </span>
           <h1 className="mt-4 text-[clamp(2rem,3vw,3.1rem)] font-semibold leading-[1.08]">
-            ตารางงานทั้งคลินิกแบบรายสัปดาห์
+            ตารางงานทั้งคลินิกรายสัปดาห์
           </h1>
         </div>
 
@@ -262,7 +224,7 @@ function HeroSection({
   );
 }
 
-function FilterSection({ state }: { state: StaffAdminHomeState }) {
+export function FilterSection({ state }: { state: StaffAdminHomeState }) {
   return (
     <section
       className={cx(
@@ -271,7 +233,10 @@ function FilterSection({ state }: { state: StaffAdminHomeState }) {
       )}
     >
       <div className="grid gap-2">
-        <label className="text-[0.88rem] font-bold text-[#33554d]" htmlFor="month">
+        <label
+          className="text-[0.88rem] font-bold text-[#33554d]"
+          htmlFor="month"
+        >
           เลือกเดือน
         </label>
         <input
@@ -321,12 +286,11 @@ function FilterSection({ state }: { state: StaffAdminHomeState }) {
           ))}
         </select>
       </div>
-
     </section>
   );
 }
 
-function ErrorPanel({
+export function ErrorPanel({
   authRequired,
   error,
   onLogin,
@@ -356,7 +320,7 @@ function ErrorPanel({
   );
 }
 
-function TimelineSection({ state }: { state: StaffAdminHomeState }) {
+export function TimelineSection({ state }: { state: StaffAdminHomeState }) {
   return (
     <article className={PANEL_CLASS}>
       <div className="flex flex-wrap items-start justify-between gap-4 p-[24px_24px_18px]">
@@ -366,7 +330,9 @@ function TimelineSection({ state }: { state: StaffAdminHomeState }) {
           </h2>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2.5">
-          <span className={PANEL_META_CLASS}>{formatMonthLabel(state.month)}</span>
+          <span className={PANEL_META_CLASS}>
+            {formatMonthLabel(state.month)}
+          </span>
         </div>
       </div>
 
@@ -444,7 +410,11 @@ function TimelineSection({ state }: { state: StaffAdminHomeState }) {
                     style={{ background: tone.fill, color: tone.ink }}
                   >
                     <span className="mb-1.5 block text-[0.72rem] font-extrabold tracking-[0.08em]">
-                      {WEEKDAY_LABELS[new Date(`${day.date}T00:00:00`).getDay()]}
+                      {
+                        WEEKDAY_LABELS[
+                          new Date(`${day.date}T00:00:00`).getDay()
+                        ]
+                      }
                     </span>
                     <strong className="block text-base font-bold">
                       {formatCompactDateLabel(day.date)}
@@ -475,7 +445,9 @@ function TimelineSection({ state }: { state: StaffAdminHomeState }) {
                     ))}
                     {day.events.length ? (
                       day.events.map((event) => {
-                        const isActive = event.appointment.id === state.selectedAppointment?.id;
+                        const isActive =
+                          event.appointment.id ===
+                          state.selectedAppointment?.id;
                         const eventStyle = {
                           left: `${event.left}%`,
                           width: `${event.width}%`,
@@ -497,7 +469,10 @@ function TimelineSection({ state }: { state: StaffAdminHomeState }) {
                             )}
                             onClick={(clickEvent) => {
                               clickEvent.stopPropagation();
-                              state.selectAppointment(event.appointment.id, day.date);
+                              state.selectAppointment(
+                                event.appointment.id,
+                                day.date,
+                              );
                             }}
                           >
                             <div className="flex items-center justify-between gap-2">
@@ -538,7 +513,7 @@ function TimelineSection({ state }: { state: StaffAdminHomeState }) {
   );
 }
 
-function SelectedAppointmentsSection({
+export function SelectedAppointmentsSection({
   state,
 }: {
   state: StaffAdminHomeState;
@@ -552,7 +527,9 @@ function SelectedAppointmentsSection({
           </h2>
           <p className="mt-2 text-[0.94rem] leading-7 text-[#68756c]">
             {formatDateLabel(state.selectedDate)}
-            {state.selectedStaff ? ` • ${state.selectedStaff.name}` : " • แสดงทั้งคลินิก"}
+            {state.selectedStaff
+              ? ` • ${state.selectedStaff.name}`
+              : " • แสดงทั้งคลินิก"}
           </p>
         </div>
         <div className="flex items-center gap-2.5">
@@ -564,10 +541,14 @@ function SelectedAppointmentsSection({
             onClick={state.toggleSelectedAppointmentsCollapsed}
             aria-expanded={!state.isSelectedAppointmentsCollapsed}
             aria-label={
-              state.isSelectedAppointmentsCollapsed ? "ขยายรายการนัด" : "ย่อรายการนัด"
+              state.isSelectedAppointmentsCollapsed
+                ? "ขยายรายการนัด"
+                : "ย่อรายการนัด"
             }
             title={
-              state.isSelectedAppointmentsCollapsed ? "ขยายรายการนัด" : "ย่อรายการนัด"
+              state.isSelectedAppointmentsCollapsed
+                ? "ขยายรายการนัด"
+                : "ย่อรายการนัด"
             }
             className="inline-flex h-[42px] w-[42px] items-center justify-center rounded-full border border-[rgba(15,118,110,0.16)] bg-white text-[#0f766e] transition hover:-translate-y-0.5"
           >
@@ -612,7 +593,11 @@ function SelectedAppointmentsSection({
                       {appointment.timeSelect ??
                         `${appointment.startTime ?? "--"} - ${appointment.endTime ?? "--"}`}
                     </span>
-                    <span className={getStatusBadgeClasses(appointment.displayStatus)}>
+                    <span
+                      className={getStatusBadgeClasses(
+                        appointment.displayStatus,
+                      )}
+                    >
                       {appointment.displayStatusLabel}
                     </span>
                   </div>
@@ -621,30 +606,44 @@ function SelectedAppointmentsSection({
                   </h3>
                   <p className="mt-1 leading-7 text-[#6d776f]">
                     {appointment.staffName}
-                    {appointment.staffRoleLabel ? ` • ${appointment.staffRoleLabel}` : ""}
+                    {appointment.staffRoleLabel
+                      ? ` • ${appointment.staffRoleLabel}`
+                      : ""}
                   </p>
                   <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <InfoBox label="รูปแบบ" value={appointment.appointmentTypeLabel} />
-                    <InfoBox label="ชำระเงิน" value={appointment.paymentStatusLabel} />
-                    <InfoBox label="อีเมล" value={appointment.patientEmail ?? "-"} />
-                    <InfoBox label="เบอร์โทร" value={appointment.patientPhone ?? "-"} />
+                    <InfoBox
+                      label="รูปแบบ"
+                      value={appointment.appointmentTypeLabel}
+                    />
+                    <InfoBox
+                      label="ชำระเงิน"
+                      value={appointment.paymentStatusLabel}
+                    />
+                    <InfoBox
+                      label="อีเมล"
+                      value={appointment.patientEmail ?? "-"}
+                    />
+                    <InfoBox
+                      label="เบอร์โทร"
+                      value={appointment.patientPhone ?? "-"}
+                    />
                   </div>
                 </article>
               ))
             ) : (
               <div className={EMPTY_CLASS}>
-                วันนี้ยังไม่มีนัดหมายในตัวกรองที่เลือก หรือฐานข้อมูลยังไม่มีรายการในวันดังกล่าว
+                วันนี้ยังไม่มีนัดหมายในตัวกรองที่เลือก
+                หรือฐานข้อมูลยังไม่มีรายการในวันดังกล่าว
               </div>
             )}
           </div>
-
         </>
       ) : null}
     </article>
   );
 }
 
-function StaffOverviewSection({
+export function StaffOverviewSection({
   onOpenStaffWorkModal,
   staffOverview,
 }: {
@@ -665,7 +664,7 @@ function StaffOverviewSection({
             onClick={onOpenStaffWorkModal}
             className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[#0f766e] px-4 text-[0.9rem] font-extrabold text-white shadow-[0_10px_24px_rgba(15,118,110,0.18)] transition hover:bg-[#115e59]"
           >
-            เพิ่ม
+            แก้ไข
           </button>
           <span className={PANEL_META_CLASS}>{staffOverview.length} คน</span>
         </div>
@@ -698,14 +697,18 @@ function StaffOverviewSection({
                   <InfoBox label="นัดทั้งหมด" value={staff.totalAppointments} />
                   <InfoBox label="ชำระแล้ว" value={staff.paidAppointments} />
                   <InfoBox label="ออนไลน์" value={staff.onlineAppointments} />
-                  <InfoBox label="นัดถัดไป" value={staff.nextAppointmentTime ?? "-"} />
+                  <InfoBox
+                    label="นัดถัดไป"
+                    value={staff.nextAppointmentTime ?? "-"}
+                  />
                 </div>
               ) : null}
             </article>
           ))
         ) : (
           <div className={EMPTY_CLASS}>
-            ยังไม่พบบุคลากรที่ตรงกับบทบาททางคลินิกในฐานข้อมูล หรือยังไม่มีนัดหมายในเดือนนี้
+            ยังไม่พบบุคลากรที่ตรงกับบทบาททางคลินิกในฐานข้อมูล
+            หรือยังไม่มีนัดหมายในเดือนนี้
           </div>
         )}
       </div>
@@ -713,7 +716,7 @@ function StaffOverviewSection({
   );
 }
 
-function UpcomingAppointmentsSection({
+export function UpcomingAppointmentsSection({
   selectedDate,
   upcomingAppointments,
 }: {
@@ -728,7 +731,9 @@ function UpcomingAppointmentsSection({
             นัดหมายถัดไปของคลินิก
           </h2>
         </div>
-        <span className={PANEL_META_CLASS}>{upcomingAppointments.length} รายการ</span>
+        <span className={PANEL_META_CLASS}>
+          {upcomingAppointments.length} รายการ
+        </span>
       </div>
 
       <div className="grid gap-3.5 px-[22px] pb-[22px]">
@@ -744,17 +749,23 @@ function UpcomingAppointmentsSection({
                     {appointment.patientName}
                   </h3>
                   <div className="mt-1.5 text-[0.92rem] text-[#5e6c65]">
-                    {formatDateLabel(appointment.appointmentDate ?? selectedDate)} •{" "}
-                    {appointment.timeSelect ?? "-"}
+                    {formatDateLabel(
+                      appointment.appointmentDate ?? selectedDate,
+                    )}{" "}
+                    • {appointment.timeSelect ?? "-"}
                   </div>
                 </div>
-                <span className={getStatusBadgeClasses(appointment.displayStatus)}>
+                <span
+                  className={getStatusBadgeClasses(appointment.displayStatus)}
+                >
                   {appointment.displayStatusLabel}
                 </span>
               </div>
               <p className="mt-2 leading-7 text-[#6d776f]">
                 {appointment.staffName}
-                {appointment.staffRoleLabel ? ` • ${appointment.staffRoleLabel}` : ""}
+                {appointment.staffRoleLabel
+                  ? ` • ${appointment.staffRoleLabel}`
+                  : ""}
               </p>
             </article>
           ))
@@ -768,7 +779,7 @@ function UpcomingAppointmentsSection({
   );
 }
 
-function StaffWorkModal({ state }: { state: StaffAdminHomeState }) {
+export function StaffWorkModal({ state }: { state: StaffAdminHomeState }) {
   if (!state.isStaffWorkModalOpen) {
     return null;
   }
@@ -908,7 +919,9 @@ function StaffWorkModal({ state }: { state: StaffAdminHomeState }) {
               disabled={state.staffScheduleSubmitting}
               className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-[#0f766e] px-5 text-[0.95rem] font-bold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:bg-[#b7c8c1]"
             >
-              {state.staffScheduleSubmitting ? "กำลังบันทึก..." : "บันทึกตารางงาน"}
+              {state.staffScheduleSubmitting
+                ? "กำลังบันทึก..."
+                : "บันทึกตารางงาน"}
             </button>
           </div>
         </form>

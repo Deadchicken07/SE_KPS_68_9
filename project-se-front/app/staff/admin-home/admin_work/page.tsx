@@ -160,9 +160,6 @@ export default function AdminWorkSchedulePage() {
     <main className="staff-shell text-[#173630]">
       <div className="mx-auto max-w-[1400px] space-y-6">
         <section className="staff-page-header">
-          <Typography.Text className="staff-kicker">
-            STAFF / ADMIN / WORK SCHEDULE
-          </Typography.Text>
           <Typography.Title level={2} style={{ marginTop: 8, marginBottom: 8 }}>
             ตารางวันทำงาน
           </Typography.Title>
