@@ -139,11 +139,7 @@ export function pharmacistHomeDisplayStatus(
 export function isOutstandingPharmacistHomeStatus(
   status: PharmacistHomeDisplayStatus,
 ) {
-  return (
-    status === 'no_receipt' ||
-    status === 'pending_delivery' ||
-    status === 'pending_pickup'
-  )
+  return status === 'pending_delivery' || status === 'pending_pickup'
 }
 
 export function pharmacistHomeDeliveryModeLabel(

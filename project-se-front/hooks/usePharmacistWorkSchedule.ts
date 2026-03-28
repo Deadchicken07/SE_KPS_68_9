@@ -3,7 +3,6 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { roleHome } from '@/types/role.types'
 import type {
   ClinicScheduleResponse,
   StaffScheduleFormState,
@@ -20,6 +19,11 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
 function getFirstDateOfMonth(monthKey: string) {
   return `${monthKey}-01`
 }
+
+type PharmacistEditableStatus = Extract<
+  StaffScheduleFormState['status'],
+  'working' | 'leave'
+>
 
 export const usePharmacistWorkSchedule = () => {
   const router = useRouter()
@@ -53,7 +57,7 @@ export const usePharmacistWorkSchedule = () => {
     }
 
     if (roleId === 1) {
-      router.replace(roleHome.admin)
+      router.replace('/staff/admin/admin-home')
       return
     }
 
@@ -136,6 +140,7 @@ export const usePharmacistWorkSchedule = () => {
       scheduleEntries.find((entry) => entry.workDate === selectedDate) ?? null,
     [scheduleEntries, selectedDate],
   )
+  const isHolidayLocked = selectedSchedule?.status === 'holiday'
 
   useEffect(() => {
     if (!me?.sub) {
@@ -144,7 +149,7 @@ export const usePharmacistWorkSchedule = () => {
 
     const nextForm = {
       ...createStaffScheduleFormState(selectedDate, String(me.sub)),
-      status: selectedSchedule?.status ?? 'working',
+      status: selectedSchedule?.status === 'leave' ? 'leave' : 'working',
       note: selectedSchedule?.note ?? '',
     } satisfies StaffScheduleFormState
 
@@ -217,7 +222,7 @@ export const usePharmacistWorkSchedule = () => {
     setFormError(null)
   }
 
-  const handleStatusChange = (status: StaffScheduleFormState['status']) => {
+  const handleStatusChange = (status: PharmacistEditableStatus) => {
     setForm((current) => ({
       ...current,
       status,
@@ -249,6 +254,11 @@ export const usePharmacistWorkSchedule = () => {
 
     if (form.workDate < todayDateKey) {
       setFormError('ไม่สามารถแก้ไขวันย้อนหลังได้')
+      return
+    }
+
+    if (selectedSchedule?.status === 'holiday') {
+      setFormError('วันนี้ถูกกำหนดเป็นวันหยุด')
       return
     }
 
@@ -307,6 +317,11 @@ export const usePharmacistWorkSchedule = () => {
       return
     }
 
+    if (selectedSchedule.status === 'holiday') {
+      setFormError('วันนี้ถูกกำหนดเป็นวันหยุด')
+      return
+    }
+
     setDeleting(true)
 
     try {
@@ -344,10 +359,10 @@ export const usePharmacistWorkSchedule = () => {
     currentMonthKey,
     currentUserOverview,
     dailyStats,
+    deleting,
     error,
     form,
     formError,
-    deleting,
     handleDelete,
     handleMonthChange,
     handleNoteChange,
@@ -355,6 +370,7 @@ export const usePharmacistWorkSchedule = () => {
     handleStatusChange,
     handleSubmit,
     hasAccess,
+    isHolidayLocked,
     leaveDays,
     loading,
     month,

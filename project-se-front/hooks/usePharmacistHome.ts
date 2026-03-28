@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import axios from 'axios'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { roleHome } from '@/types/role.types'
 import type { PharmacistHomeOrdersResponse } from '@/types/pharmacist.types'
 import {
   PHARMACIST_HOME_STATUS_RANK,
@@ -39,7 +38,7 @@ export const usePharmacistHome = () => {
     }
 
     if (roleId === 1) {
-      router.replace(roleHome.admin)
+      router.replace('/staff/admin/admin-home')
       return
     }
 
