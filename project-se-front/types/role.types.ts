@@ -10,6 +10,15 @@ export type Roles =
   | "psychiatrist"
   | "pharmacist";
 
+export const authPages = ["/login", "/login/regis"] as const;
+
+export const userProtectedPrefixes = [
+  "/user/appointments",
+  "/user/profile",
+  "/user/schedule",
+  "/user/payment",
+] as const;
+
 export const mapRoleIdToRole = (roleId: number | null): Roles | null => {
   switch (roleId) {
     case 1:
@@ -63,4 +72,20 @@ export const roleHome: Record<Roles, string> = {
   psychologist: "/staff/patient-history",
   psychiatrist: "/staff/patient-history",
   pharmacist: "/staff/pharmacist/pharmacist_home",
+};
+
+export const roleRoutePrefixes: Record<Roles, readonly string[]> = {
+  admin: ["/staff/admin"],
+  user: ["/user", ...userProtectedPrefixes],
+  psychologist: [
+    "/staff/patient-history",
+    "/staff/appointments",
+    "/staff/consult",
+  ],
+  psychiatrist: [
+    "/staff/patient-history",
+    "/staff/appointments",
+    "/staff/consult",
+  ],
+  pharmacist: ["/staff/pharmacist"],
 };
