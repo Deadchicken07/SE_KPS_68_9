@@ -7,11 +7,13 @@ import {
   AppstoreOutlined,
   CalendarOutlined,
   FileTextOutlined,
+  HeartFilled,
   HomeOutlined,
   MedicineBoxOutlined,
   ScheduleOutlined,
   TeamOutlined,
 } from "@ant-design/icons";
+import type { AuthMeResponse } from "@/types/auth.types";
 import {
   mapRoleIdToRole,
   roleHome,
@@ -39,9 +41,15 @@ const matchesLink = (pathname: string, href: string) => {
   return pathname === href || pathname.startsWith(`${href}/`);
 };
 
+const buildDisplayName = (me: AuthMeResponse | null) => {
+  const fullName = [me?.name, me?.sur_name].filter(Boolean).join(" ").trim();
+  return fullName || "Unknown user";
+};
+
 export default function SidebarNav() {
   const pathname = usePathname();
   const { me } = useAuth();
+  const displayName = buildDisplayName(me);
   const role: Roles | null = useMemo(
     () => mapRoleIdToRole(me?.role_id ?? null),
     [me?.role_id],
@@ -60,12 +68,16 @@ export default function SidebarNav() {
       <div className="flex min-h-full flex-col">
         <Link
           href={homePath}
-          className="mb-2 block px-1 pt-2 pb-1"
+          className="mb-4 block px-1 pt-2 pb-1"
         >
-          <p className="text-[2.1rem] leading-[0.92] font-extrabold tracking-[-0.05em] text-white md:text-[2.35rem]">
-            Jitdee
-          </p>
-          
+          <div className="flex items-center gap-2 whitespace-nowrap">
+            <HeartFilled className="shrink-0 text-[1.15rem] text-[#bff7e8]" />
+            <p className="m-0 whitespace-nowrap text-[2.1rem] leading-[0.92] font-extrabold tracking-[-0.05em] md:text-[2.35rem]">
+              <span className="text-white">JitDee</span>{" "}
+              <span className="text-[#bff7e8]">Clinic</span>
+            </p>
+          </div>
+         
         </Link>
 
         <nav className="flex flex-col gap-1.5">
