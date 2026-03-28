@@ -22,6 +22,7 @@ import { useUser } from "@/hooks/useUsers";
 import { useConsultation } from "@/hooks/useConsultation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { PrescriptionFormItem } from "@/types/consult.types";
+import { useSearchParams } from "next/navigation";
 
 const { TextArea } = Input;
 
@@ -41,14 +42,19 @@ let nextId = 1;
 export default function ConsultPage() {
   const [messageApi, contextHolder] = message.useMessage();
   const { user, loading } = useUser();
-  const [selectedUser, setSelectedUser] = useState<number | null>(null);
   const [note, setNote] = useState("");
   const [sending, setSending] = useState(false);
   const [prescriptions, setPrescriptions] = useState<PrescriptionFormItem[]>(
     [],
   );
   const { me } = useAuth();
+  const canPrescribe = me?.role !== 'psychologist';
   const { createConsultation } = useConsultation();
+  const searchParams = useSearchParams();
+  const userIdFromQuery = Number(searchParams.get("userId")) || null;
+  const [selectedUser, setSelectedUser] = useState<number | null>(
+    userIdFromQuery,
+  );
 
   const userOptions = user.map((u) => ({
     value: u.user_id,
@@ -143,6 +149,7 @@ export default function ConsultPage() {
             loading={loading}
             onChange={(val) => setSelectedUser(val)}
             value={selectedUser}
+            disabled={!!userIdFromQuery}
             notFoundContent={loading ? <Spin size="small" /> : "ไม่พบข้อมูล"}
             size="large"
           />
@@ -158,6 +165,8 @@ export default function ConsultPage() {
             onChange={(e) => setNote(e.target.value)}
           />
 
+          {canPrescribe && (
+          <>
           <Divider style={{ margin: "4px 0" }} />
           <div
             style={{
@@ -183,6 +192,7 @@ export default function ConsultPage() {
           </div>
 
           {prescriptions.length > 0 && (
+
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {/* Header */}
               <div style={{ display: "flex", gap: 12, paddingInline: 4 }}>
@@ -229,7 +239,6 @@ export default function ConsultPage() {
                     }
                     notFoundContent="ไม่พบยา"
                   />
-                  {/* จำนวน */}
                   <InputNumber
                     min={1}
                     placeholder="จำนวน"
@@ -239,7 +248,6 @@ export default function ConsultPage() {
                       updatePrescription(item.id, "quantity", val)
                     }
                   />
-                  {/* comment */}
                   <Input
                     placeholder="หมายเหตุ"
                     style={{ flex: 2 }}
@@ -258,6 +266,8 @@ export default function ConsultPage() {
                 </div>
               ))}
             </div>
+          )}
+          </>
           )}
 
           <div

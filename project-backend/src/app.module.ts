@@ -28,7 +28,6 @@ import { ConsultationsModule } from './consultations/consultations.module';
     ChoicesModule,
     AnswersModule,
     ResponsesModule,
-    PharmacistModule,
     ConsultationsModule,
   ],
   controllers: [AppController],
