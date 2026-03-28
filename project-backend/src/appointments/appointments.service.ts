@@ -344,7 +344,7 @@ export class AppointmentsService {
     const leaves = await this.prisma.schedule.findMany({
       where: {
         work_date: dateValue,
-        status: { in: ['leave', 'holiday'] },
+        status: { in: ['leave', 'holiday'] as any },
         staff_id: { in: staffIds },
       },
     });
@@ -882,8 +882,8 @@ export class AppointmentsService {
       });
 
       if (
-        leaveRecord?.status === 'leave' ||
-        leaveRecord?.status === 'holiday'
+        (leaveRecord?.status as any) === 'leave' ||
+        (leaveRecord?.status as any) === 'holiday'
       ) {
         throw new BadRequestException(
           'This consultant is unavailable for the selected date',
@@ -1149,6 +1149,7 @@ export class AppointmentsService {
       paymentStatus: record.status ?? null,
       depositSlipFile: record.deposit_slip_file ?? null,
       meetUrl: record.meet_url ?? null,
+      hasConsultation: false,
     }));
   }
 

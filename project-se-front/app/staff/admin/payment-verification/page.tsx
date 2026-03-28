@@ -313,17 +313,15 @@ export default function PaymentVerificationPage() {
             title: 'การจัดการ',
             key: 'action',
             render: (_: any, record: MedicinePaymentRecord) => (
-                record.paymentStatus !== 'Paid' && (
-                    <Popconfirm
-                        title="คุณแน่ใจหรือไม่ที่จะยกเลิกรายการใบเสร็จนี้?"
-                        onConfirm={() => handleRejectMedicine(record.id)}
-                        okText="ใช่, ยกเลิก"
-                        cancelText="ไม่"
-                        placement="left"
-                    >
-                        <Button danger size="small">ยกเลิกรายการ</Button>
-                    </Popconfirm>
-                )
+                <Popconfirm
+                    title="คุณแน่ใจหรือไม่ที่จะยกเลิกรายการใบเสร็จนี้?"
+                    onConfirm={() => handleRejectMedicine(record.id)}
+                    okText="ใช่, ยกเลิก"
+                    cancelText="ไม่"
+                    placement="left"
+                >
+                    <Button danger size="small">ยกเลิกรายการ</Button>
+                </Popconfirm>
             ),
         },
     ];
@@ -335,7 +333,7 @@ export default function PaymentVerificationPage() {
     const items: TabsProps['items'] = [
         {
             key: '1',
-            label: `ค่าบริการ (การจองนัด)`,
+            label: `ค่าการนัดหมาย`,
             children: (
                 <Table
                     columns={appointmentColumns}
