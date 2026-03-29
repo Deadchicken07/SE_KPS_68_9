@@ -120,7 +120,13 @@ export class AppointmentsService {
             appointmentType: record.appointment_type ?? null,
             paymentStatus: record.status ?? null,
             medicinePaymentStatus: null,
-            meetLink: record.appointment_type === 'online' ? (record['meet_url'] || record['meetUrl'] || (record as any).meet_url || clinicMeetUrl) : null,
+            meetLink:
+              record.appointment_type === 'online'
+                ? record['meet_url'] ||
+                  record['meetUrl'] ||
+                  (record as any).meet_url ||
+                  clinicMeetUrl
+                : null,
             meet_url: record['meet_url'] || (record as any).meet_url || null,
             meetUrl: record['meet_url'] || (record as any).meet_url || null,
             hasPrescription: false,
@@ -336,7 +342,9 @@ export class AppointmentsService {
     // 1. Fetch staff that are not on leave
     const staffs = await this.prisma.users.findMany({
       where: {
-        roles: { name: { in: ['psychiatrist', 'psychologist'], mode: 'insensitive' } },
+        roles: {
+          name: { in: ['psychiatrist', 'psychologist'], mode: 'insensitive' },
+        },
       },
       select: { user_id: true },
     });
@@ -364,7 +372,9 @@ export class AppointmentsService {
           .map((a) => this.tryParseTimeRange(a.time_select))
       : [];
 
-    const staffAppointments = allAppointments.filter(a => staffIds.includes(a.staff_id ?? 0));
+    // const staffAppointments = allAppointments.filter((a) =>
+    //   staffIds.includes(a.staff_id ?? 0),
+    // );
 
     // Every 30 minutes slots map
     const allTimes = [
@@ -383,7 +393,6 @@ export class AppointmentsService {
       '16:00',
       '16:30',
     ];
-
 
     const result: Record<number, string[]> = {};
 
@@ -416,7 +425,9 @@ export class AppointmentsService {
         if (isUserBooked) return false;
 
         // 3. Reject past times if today
-        const nowInThai = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
+        const nowInThai = new Date(
+          new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }),
+        );
         const todayInThai = this.toLocalDateKey(nowInThai);
 
         if (todayInThai === trimmed) {
@@ -577,8 +588,8 @@ export class AppointmentsService {
             prescription_items: {
               include: {
                 medications: true,
-              }
-            }
+              },
+            },
           },
         },
         receipt_details: {
@@ -613,8 +624,10 @@ export class AppointmentsService {
       }));
 
       // Inferred appointment type from receipt status (pending_pickup usually means onsite)
-      const appointmentType = r.status === 'pending_pickup' ? 'onsite' : 'online';
-      const hasPrescription = (r.consultations?.prescription_items?.length ?? 0) > 0;
+      const appointmentType =
+        r.status === 'pending_pickup' ? 'onsite' : 'online';
+      const hasPrescription =
+        (r.consultations?.prescription_items?.length ?? 0) > 0;
 
       return {
         id: r.id,
@@ -666,10 +679,10 @@ export class AppointmentsService {
     if (roleId) {
       const roleWithFee = await this.prisma.roles.findUnique({
         where: { id: roleId },
-        include: { 
+        include: {
           // Assuming roles has fee_id if your schema is like that
           // Let's re-verify: from your prisma schema 'roles' has fee_id
-        }
+        },
       });
 
       if (roleWithFee?.fee_id) {
@@ -788,7 +801,6 @@ export class AppointmentsService {
     };
   }
 
-
   async rejectMedicinePayment(receiptId: number) {
     const receipt = await this.prisma.receipts.findUnique({
       where: { id: receiptId },
@@ -869,7 +881,10 @@ export class AppointmentsService {
     // Skip past-check for admin or onsite (walk-in) appointments
     const skipPastCheck = isAdmin || appointment.appointment_type === 'onsite';
 
-    if (!skipPastCheck && this.isPastAppointment(appointmentDate, parsedRange)) {
+    if (
+      !skipPastCheck &&
+      this.isPastAppointment(appointmentDate, parsedRange)
+    ) {
       throw new BadRequestException(
         'Cannot update payment for an appointment that has already ended',
       );
@@ -1222,7 +1237,9 @@ export class AppointmentsService {
       .filter((r) => r.consultations.length === 0)
       .map((r) => ({
         id: r.id,
-        appointmentDate: r.appointment_date ? r.appointment_date.toISOString().split('T')[0] : null,
+        appointmentDate: r.appointment_date
+          ? r.appointment_date.toISOString().split('T')[0]
+          : null,
         timeSelect: r.time_select ?? null,
         appointmentType: r.appointment_type ?? null,
       }));
@@ -1263,7 +1280,9 @@ export class AppointmentsService {
     });
 
     const consultedAppointmentIds = new Set(
-      consultations.map((c) => c.appointment_id).filter((id): id is number => id !== null)
+      consultations
+        .map((c) => c.appointment_id)
+        .filter((id): id is number => id !== null),
     );
 
     return records.map((record) => {
@@ -1281,7 +1300,9 @@ export class AppointmentsService {
             record.user_id ??
             null,
         ),
-        appointmentDate: record.appointment_date ? this.dateToIsoDate(record.appointment_date) : null,
+        appointmentDate: record.appointment_date
+          ? this.dateToIsoDate(record.appointment_date)
+          : null,
         timeSelect: record.time_select ?? null,
         appointmentType: record.appointment_type ?? null,
         paymentStatus: record.status ?? null,
@@ -1378,7 +1399,11 @@ export class AppointmentsService {
     };
   }
 
-  async payMedicineByReceipt(userId: number, receiptId: number, slipUrl: string) {
+  async payMedicineByReceipt(
+    userId: number,
+    receiptId: number,
+    slipUrl: string,
+  ) {
     // Find the receipt and verify it belongs to this user (via consultation)
     const receipt = await this.prisma.receipts.findUnique({
       where: { id: receiptId },
@@ -1440,7 +1465,9 @@ export class AppointmentsService {
     }
 
     if (receipt.user_id !== userId) {
-      throw new ForbiddenException('You do not have permission to view this receipt');
+      throw new ForbiddenException(
+        'You do not have permission to view this receipt',
+      );
     }
 
     // 1. Fetch receipt details to calculate ONLY medicine cost
@@ -1453,13 +1480,13 @@ export class AppointmentsService {
       0,
     );
 
-    const prescriptionItems = receipt.consultations?.prescription_items.map((item) => ({
-      medicationName: item.medications?.name || 'Unknown Medicine',
-      quantity: item.quantity,
-      comment: item.comment,
-      price: Number(item.medications?.retail || 0),
-    })) || [];
-
+    const prescriptionItems =
+      receipt.consultations?.prescription_items.map((item) => ({
+        medicationName: item.medications?.name || 'Unknown Medicine',
+        quantity: item.quantity,
+        comment: item.comment,
+        price: Number(item.medications?.retail || 0),
+      })) || [];
 
     return {
       receiptId: receipt.id,
@@ -1469,7 +1496,6 @@ export class AppointmentsService {
       status: receipt.payment_status,
       note: receipt.consultations?.note,
     };
-
   }
 
   async getConsultationForAppointment(userId: number, id: number) {
@@ -1592,7 +1618,10 @@ export class AppointmentsService {
     lastName?: string | null,
     patientId?: number | null,
   ): string {
-    const fullName = [title, firstName, lastName].filter(Boolean).join(' ').trim();
+    const fullName = [title, firstName, lastName]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
 
     if (fullName) {
       return fullName;

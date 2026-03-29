@@ -51,18 +51,6 @@ function formatCurrency(value: number) {
   })}`;
 }
 
-function formatCompactCurrency(value: number) {
-  if (value >= 1_000_000) {
-    return `฿${(value / 1_000_000).toFixed(1)}M`;
-  }
-
-  if (value >= 1_000) {
-    return `฿${(value / 1_000).toFixed(1)}k`;
-  }
-
-  return `฿${value.toLocaleString("th-TH")}`;
-}
-
 function formatDateLabel(dateKey?: string | null) {
   if (!dateKey) {
     return "-";
@@ -112,19 +100,6 @@ function getMetricCards(state: AdminReportState) {
 
 function getBreakdownColor(index: number) {
   return BREAKDOWN_COLORS[index % BREAKDOWN_COLORS.length];
-}
-
-function getPeakPoint(
-  points: AdminReportDisplayTrendPoint[],
-  field: "appointmentCount" | "consultationCount" | "revenue",
-) {
-  return points.reduce<AdminReportDisplayTrendPoint | null>((best, point) => {
-    if (!best || point[field] > best[field]) {
-      return point;
-    }
-
-    return best;
-  }, null);
 }
 
 function buildConicGradient(items: AdminReportBreakdownItem[]) {
@@ -423,19 +398,6 @@ function TrendOverviewCard({ state }: { state: AdminReportState }) {
     ),
   );
   const maxRevenue = Math.max(1, ...points.map((point) => point.revenue));
-  const totals = points.reduce(
-    (result, point) => {
-      result.appointments += point.appointmentCount;
-      result.consultations += point.consultationCount;
-      result.revenue += point.revenue;
-      return result;
-    },
-    { appointments: 0, consultations: 0, revenue: 0 },
-  );
-  const peakAppointments = getPeakPoint(points, "appointmentCount");
-  const peakConsultations = getPeakPoint(points, "consultationCount");
-  const peakRevenue = getPeakPoint(points, "revenue");
-
   const countChartWidth = 1000;
   const countChartHeight = 284;
   const countLeft = 40;
@@ -466,35 +428,13 @@ function TrendOverviewCard({ state }: { state: AdminReportState }) {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <Typography.Title level={4} style={{ margin: 0 }}>
-            แนวโน้มรายงาน
+            สถิติการนัดหมาย/ปรึกษา
           </Typography.Title>
-          
-        </div>
-
-        <div className="flex flex-wrap gap-2 text-xs">
-          <span className="rounded-full bg-[#e6fffb] px-3 py-1 font-semibold text-[#0f766e]">
-            นัดสูงสุด {peakAppointments?.label ?? "-"} •{" "}
-            {formatNumber(peakAppointments?.appointmentCount ?? 0)} นัด
-          </span>
-          <span className="rounded-full bg-[#edf7f4] px-3 py-1 font-semibold text-[#2f6e5d]">
-            เคสสูงสุด {peakConsultations?.label ?? "-"} •{" "}
-            {formatNumber(peakConsultations?.consultationCount ?? 0)} เคส
-          </span>
-          <span className="rounded-full bg-[#faf1e5] px-3 py-1 font-semibold text-[#a56a2b]">
-            รายรับสูงสุด {peakRevenue?.label ?? "-"} •{" "}
-            {formatCompactCurrency(peakRevenue?.revenue ?? 0)}
-          </span>
         </div>
       </div>
 
       {points.length ? (
         <div className="mt-5 grid gap-4">
-          <div className="grid gap-3 md:grid-cols-3">
-            <MetricMiniCard label="นัดหมายรวม" value={formatNumber(totals.appointments)} />
-            <MetricMiniCard label="เคสปรึกษารวม" value={formatNumber(totals.consultations)} />
-            <MetricMiniCard label="รายรับรวม" value={formatCurrency(totals.revenue)} />
-          </div>
-
           <div className="rounded-[24px] border border-slate-100 bg-[#fcfefd] p-4">
             <div className="mb-3 flex flex-wrap gap-2 text-xs text-slate-500">
               <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1">
@@ -576,15 +516,10 @@ function TrendOverviewCard({ state }: { state: AdminReportState }) {
           </div>
 
           <div className="rounded-[24px] border border-slate-100 bg-[#fbf6ef] p-4">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <div className="mb-3">
               <div>
                 <p className="m-0 text-sm font-semibold text-[#173630]">แนวโน้มรายรับ</p>
-                
               </div>
-              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#a56a2b]">
-                จุดพีค {peakRevenue?.label ?? "-"} •{" "}
-                {formatCompactCurrency(peakRevenue?.revenue ?? 0)}
-              </span>
             </div>
 
             <svg
@@ -847,23 +782,6 @@ function SnapshotItem({
         {label}
       </p>
       <p className="m-0 mt-2 text-sm font-semibold text-[#173630]">{value}</p>
-    </div>
-  );
-}
-
-function MetricMiniCard({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-[18px] border border-slate-100 bg-[#f8fbfa] px-4 py-3">
-      <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
-        {label}
-      </p>
-      <p className="m-0 mt-2 text-[1.3rem] font-bold text-[#173630]">{value}</p>
     </div>
   );
 }

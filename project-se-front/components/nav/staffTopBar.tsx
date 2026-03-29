@@ -39,7 +39,7 @@ const buildAvatarLabel = (me: AuthMeResponse | null) => {
 
 export default function StaffTopBar() {
   const router = useRouter();
-  const { me, setMe } = useAuth();
+  const { me, setMe, loading } = useAuth();
 
   const handleLogout = async () => {
     try {
@@ -103,19 +103,10 @@ export default function StaffTopBar() {
         </Typography.Title>
       </div>
 
-      <Dropdown
-        menu={{
-          items: menuItems,
-          onClick: ({ key }) => {
-            if (key === "logout") {
-              void handleLogout();
-            }
-          },
-        }}
-        trigger={["click"]}
-        placement="bottomRight"
-      >
+      {loading ? (
         <button
+          aria-hidden="true"
+          disabled
           type="button"
           style={{
             display: "flex",
@@ -125,22 +116,17 @@ export default function StaffTopBar() {
             border: "none",
             background: "transparent",
             color: "#173f35",
-            cursor: "pointer",
+            cursor: "default",
           }}
         >
           <Avatar
             size={44}
-            src={avatarSrc}
-            icon={!avatarSrc ? <UserOutlined /> : undefined}
             style={{
-              backgroundColor: avatarSrc ? "transparent" : "#0f766e",
-              color: "#ffffff",
+              backgroundColor: "#d9ece8",
+              color: "transparent",
               flexShrink: 0,
             }}
-          >
-            {!avatarSrc ? avatarLabel : null}
-          </Avatar>
-
+          />
           <div style={{ minWidth: 0, textAlign: "left" }}>
             <Typography.Text
               strong
@@ -151,16 +137,94 @@ export default function StaffTopBar() {
               }}
               ellipsis
             >
-              {displayName}
+              <span
+                style={{
+                  display: "block",
+                  width: 160,
+                  height: 16,
+                  borderRadius: 999,
+                  background: "linear-gradient(90deg, #e6efec 25%, #f2f7f5 50%, #e6efec 75%)",
+                  backgroundSize: "200% 100%",
+                  animation: "authSkeletonShimmer 1.4s ease-in-out infinite",
+                }}
+              />
             </Typography.Text>
             <Typography.Text style={{ color: "#4d6b63", fontSize: 12 }}>
-              {role ? roleLabelMap[role] : "STAFF"}
+              <span
+                style={{
+                  display: "block",
+                  width: 120,
+                  height: 12,
+                  borderRadius: 999,
+                  background: "linear-gradient(90deg, #e6efec 25%, #f2f7f5 50%, #e6efec 75%)",
+                  backgroundSize: "200% 100%",
+                  animation: "authSkeletonShimmer 1.4s ease-in-out infinite",
+                }}
+              />
             </Typography.Text>
           </div>
-
-          <Space style={{ color: "#0f766e", fontSize: 12 }}>▼</Space>
+          <Space style={{ color: "transparent", fontSize: 12 }}>▼</Space>
         </button>
-      </Dropdown>
+      ) : (
+        <Dropdown
+          menu={{
+            items: menuItems,
+            onClick: ({ key }) => {
+              if (key === "logout") {
+                void handleLogout();
+              }
+            },
+          }}
+          trigger={["click"]}
+          placement="bottomRight"
+        >
+          <button
+            type="button"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              padding: 0,
+              border: "none",
+              background: "transparent",
+              color: "#173f35",
+              cursor: "pointer",
+            }}
+          >
+            <Avatar
+              size={44}
+              src={avatarSrc}
+              icon={!avatarSrc ? <UserOutlined /> : undefined}
+              style={{
+                backgroundColor: avatarSrc ? "transparent" : "#0f766e",
+                color: "#ffffff",
+                flexShrink: 0,
+              }}
+            >
+              {!avatarSrc ? avatarLabel : null}
+            </Avatar>
+
+            <div style={{ minWidth: 0, textAlign: "left" }}>
+              <Typography.Text
+                strong
+                style={{
+                  display: "block",
+                  maxWidth: 220,
+                  color: "#173f35",
+                }}
+                ellipsis
+              >
+                {displayName}
+              </Typography.Text>
+              <Typography.Text style={{ color: "#4d6b63", fontSize: 12 }}>
+                {role ? roleLabelMap[role] : "STAFF"}
+              </Typography.Text>
+            </div>
+
+            <Space style={{ color: "#0f766e", fontSize: 12 }}>▼</Space>
+          </button>
+        </Dropdown>
+      )}
     </div>
   );
 }
