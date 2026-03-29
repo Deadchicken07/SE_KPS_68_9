@@ -39,7 +39,7 @@ const buildAvatarLabel = (me: AuthMeResponse | null) => {
 
 export default function StaffTopBar() {
   const router = useRouter();
-  const { me, setMe } = useAuth();
+  const { me, setMe, loading } = useAuth();
 
   const handleLogout = async () => {
     try {
@@ -103,64 +103,68 @@ export default function StaffTopBar() {
         </Typography.Title>
       </div>
 
-      <Dropdown
-        menu={{
-          items: menuItems,
-          onClick: ({ key }) => {
-            if (key === "logout") {
-              void handleLogout();
-            }
-          },
-        }}
-        trigger={["click"]}
-        placement="bottomRight"
-      >
-        <button
-          type="button"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            padding: 0,
-            border: "none",
-            background: "transparent",
-            color: "#173f35",
-            cursor: "pointer",
+      {loading ? (
+        <div style={{ width: 220, height: 44 }} aria-hidden="true" />
+      ) : (
+        <Dropdown
+          menu={{
+            items: menuItems,
+            onClick: ({ key }) => {
+              if (key === "logout") {
+                void handleLogout();
+              }
+            },
           }}
+          trigger={["click"]}
+          placement="bottomRight"
         >
-          <Avatar
-            size={44}
-            src={avatarSrc}
-            icon={!avatarSrc ? <UserOutlined /> : undefined}
+          <button
+            type="button"
             style={{
-              backgroundColor: avatarSrc ? "transparent" : "#0f766e",
-              color: "#ffffff",
-              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              padding: 0,
+              border: "none",
+              background: "transparent",
+              color: "#173f35",
+              cursor: "pointer",
             }}
           >
-            {!avatarSrc ? avatarLabel : null}
-          </Avatar>
-
-          <div style={{ minWidth: 0, textAlign: "left" }}>
-            <Typography.Text
-              strong
+            <Avatar
+              size={44}
+              src={avatarSrc}
+              icon={!avatarSrc ? <UserOutlined /> : undefined}
               style={{
-                display: "block",
-                maxWidth: 220,
-                color: "#173f35",
+                backgroundColor: avatarSrc ? "transparent" : "#0f766e",
+                color: "#ffffff",
+                flexShrink: 0,
               }}
-              ellipsis
             >
-              {displayName}
-            </Typography.Text>
-            <Typography.Text style={{ color: "#4d6b63", fontSize: 12 }}>
-              {role ? roleLabelMap[role] : "STAFF"}
-            </Typography.Text>
-          </div>
+              {!avatarSrc ? avatarLabel : null}
+            </Avatar>
 
-          <Space style={{ color: "#0f766e", fontSize: 12 }}>▼</Space>
-        </button>
-      </Dropdown>
+            <div style={{ minWidth: 0, textAlign: "left" }}>
+              <Typography.Text
+                strong
+                style={{
+                  display: "block",
+                  maxWidth: 220,
+                  color: "#173f35",
+                }}
+                ellipsis
+              >
+                {displayName}
+              </Typography.Text>
+              <Typography.Text style={{ color: "#4d6b63", fontSize: 12 }}>
+                {role ? roleLabelMap[role] : "STAFF"}
+              </Typography.Text>
+            </div>
+
+            <Space style={{ color: "#0f766e", fontSize: 12 }}>▼</Space>
+          </button>
+        </Dropdown>
+      )}
     </div>
   );
 }

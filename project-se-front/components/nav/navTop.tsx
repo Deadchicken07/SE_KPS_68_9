@@ -46,7 +46,7 @@ export default function ClinicLayout() {
   const router = useRouter();
   const [modalApi, modalContextHolder] = Modal.useModal();
   const [mounted, setMounted] = useState(false);
-  const { me, setMe } = useAuth();
+  const { me, setMe, loading } = useAuth();
 
   useEffect(() => {
     setMounted(true);
@@ -70,7 +70,8 @@ export default function ClinicLayout() {
     { key: "logout", label: "Logout" },
   ];
 
-  const isLogin = mounted && !!me;
+  const isReady = mounted && !loading;
+  const isLogin = isReady && !!me;
   const displayName = buildDisplayName(me);
   const avatarLabel = buildAvatarLabel(me);
   const avatarSrc = me?.file_name || undefined;
@@ -131,7 +132,9 @@ export default function ClinicLayout() {
             </div>
 
             <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-              {isLogin ? (
+              {!isReady ? (
+                <div style={{ width: 248, height: 44 }} aria-hidden="true" />
+              ) : isLogin ? (
                 <Dropdown
                   menu={{
                     items: menuItems,
