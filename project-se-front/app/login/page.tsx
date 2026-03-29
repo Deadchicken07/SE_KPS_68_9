@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Alert,
   Button,
@@ -42,20 +42,12 @@ export default function LoginPage() {
   const emailValue = Form.useWatch("email", form);
   const passwordValue = Form.useWatch("password", form);
   const router = useRouter();
-  const [registered, setRegistered] = useState<string | null>(null);
-  const [expired, setExpired] = useState<string | null>(null);
-  const [redirectTarget, setRedirectTarget] = useState<string | null>(null);
+  const searchParams = useSearchParams();
   const isLoginDisabled = !emailValue?.trim() || !passwordValue?.trim();
+  const expired = searchParams.get("expired");
 
   useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    setRegistered(searchParams.get("registered"));
-    setExpired(searchParams.get("expired"));
-    setRedirectTarget(searchParams.get("redirect"));
-  }, []);
-
-  useEffect(() => {
-    if (registered === "success") {
+    if (searchParams.get("registered") === "success") {
       api.success({
         title: "สมัครสมาชิกสำเร็จ",
         description: "กรุณาเข้าสู่ระบบ",
@@ -63,7 +55,7 @@ export default function LoginPage() {
       });
       router.replace("/login");
     }
-  }, [registered, api, router]);
+  }, [api, router, searchParams]);
 
   const handleFinish = async (values: { email: string; password: string }) => {
     try {

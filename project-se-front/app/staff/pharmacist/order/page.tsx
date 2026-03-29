@@ -10,7 +10,6 @@ import {
   Empty,
   Form,
   Input,
-  Popconfirm,
   Row,
   Select,
   Table,
@@ -68,7 +67,9 @@ const renderStatusTag = (status: string | null) => {
 function PharmacistOrderPageContent() {
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm<OrderFormValues>();
-  const [selectedConsultationId, setSelectedConsultationId] = useState<number | null>(null);
+  const [manualSelectedConsultationId, setManualSelectedConsultationId] = useState<
+    number | undefined
+  >();
   const searchParams = useSearchParams();
   const { me } = useAuth();
   const { consultations, isLoading, isFetching, saving, consultationOptions, createOrder } =
@@ -106,6 +107,34 @@ function PharmacistOrderPageContent() {
     return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
   }, [searchParams]);
 
+  const selectedConsultationId = useMemo(() => {
+    if (paidConsultations.length === 0) {
+      return undefined;
+    }
+
+    if (
+      manualSelectedConsultationId &&
+      paidConsultations.some(
+        (consultation) =>
+          consultation.consultationId === manualSelectedConsultationId,
+      )
+    ) {
+      return manualSelectedConsultationId;
+    }
+
+    if (
+      requestedConsultationId &&
+      paidConsultations.some(
+        (consultation) =>
+          consultation.consultationId === requestedConsultationId,
+      )
+    ) {
+      return requestedConsultationId;
+    }
+
+    return paidConsultations[0].consultationId;
+  }, [manualSelectedConsultationId, paidConsultations, requestedConsultationId]);
+
   const selectedConsultation = useMemo(
     () =>
       paidConsultations.find(
@@ -130,43 +159,20 @@ function PharmacistOrderPageContent() {
 
   useEffect(() => {
     if (paidConsultations.length === 0) {
-      if (selectedConsultationId !== null) {
-        setSelectedConsultationId(null);
-      }
       form.resetFields();
       return;
     }
 
-    const nextConsultationId =
-      selectedConsultationId &&
-      paidConsultations.some(
-        (consultation) => consultation.consultationId === selectedConsultationId,
-      )
-        ? selectedConsultationId
-        : requestedConsultationId &&
-            paidConsultations.some(
-              (consultation) =>
-                consultation.consultationId === requestedConsultationId,
-            )
-          ? requestedConsultationId
-        : paidConsultations[0].consultationId;
-
-    if (selectedConsultationId !== nextConsultationId) {
-      setSelectedConsultationId(nextConsultationId);
+    if (form.getFieldValue("consultationId") !== selectedConsultationId) {
       form.setFieldsValue({
-        consultationId: nextConsultationId,
+        consultationId: selectedConsultationId,
         tracking: "",
       });
-      return;
     }
-
-    if (form.getFieldValue("consultationId") !== nextConsultationId) {
-      form.setFieldValue("consultationId", nextConsultationId);
-    }
-  }, [form, paidConsultations, requestedConsultationId, selectedConsultationId]);
+  }, [form, paidConsultations.length, selectedConsultationId]);
 
   const handleConsultationChange = (consultationId: number) => {
-    setSelectedConsultationId(consultationId);
+    setManualSelectedConsultationId(consultationId);
     form.setFieldsValue({
       consultationId,
       tracking: "",
@@ -286,18 +292,6 @@ function PharmacistOrderPageContent() {
                   </Button>
                 ) : null}
 
-                <Popconfirm
-                  title="ยืนยันการยกเลิกรายการ"
-                  description="ใช้เฉพาะกรณียกเลิกรายการจริง ไม่ใช่กรณีส่งไม่ถึง"
-                  okText="ยืนยัน"
-                  cancelText="ยกเลิก"
-                  onConfirm={() => void handleSubmit("cancelled")}
-                  disabled={!selectedConsultation}
-                >
-                  <Button block disabled={paidConsultations.length === 0}>
-                    ยกเลิกรายการ
-                  </Button>
-                </Popconfirm>
               </div>
             </Form>
           </Card>

@@ -3,7 +3,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, item_type_enum, pay_type_enum, receipt_status } from '@prisma/client';
+import {
+  Prisma,
+  item_type_enum,
+  pay_type_enum,
+  receipt_status,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { CreateMedicationDto } from './dto/create-medication.dto';
@@ -640,7 +645,10 @@ export class PharmacistService {
     firstName?: string | null,
     lastName?: string | null,
   ) {
-    const fullName = [title, firstName, lastName].filter(Boolean).join(' ').trim();
+    const fullName = [title, firstName, lastName]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
     return fullName || '-';
   }
 
@@ -948,10 +956,13 @@ export class PharmacistService {
   ) {
     const normalizedStatus = receipt?.status?.trim().toLowerCase() ?? null;
 
+    if (normalizedStatus === 'pending_pickup') {
+      return true;
+    }
+
     return (
       receipt?.payment_status === pay_type_enum.Paid &&
-      (normalizedStatus === 'pending_delivery' ||
-        normalizedStatus === 'pending_pickup')
+      normalizedStatus === 'pending_delivery'
     );
   }
 
