@@ -49,9 +49,9 @@ const formatDateTime = (value: string | null) =>
   value ? dateFormatter.format(new Date(value)) : "-";
 
 const buildDisplayName = (
-  me: { name?: string | null; sur_name?: string | null } | null,
+  me: { title?: string | null; name?: string | null; sur_name?: string | null } | null,
 ) => {
-  const fullName = [me?.name, me?.sur_name].filter(Boolean).join(" ").trim();
+  const fullName = [me?.title, me?.name, me?.sur_name].filter(Boolean).join(" ").trim();
   return fullName || "-";
 };
 
