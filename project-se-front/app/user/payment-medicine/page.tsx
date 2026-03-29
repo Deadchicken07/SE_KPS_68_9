@@ -32,54 +32,54 @@ function MedicinePaymentContent() {
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [fetchError, setFetchError] = useState<string | null>(null);
 
-    const appointmentId = searchParams.get('appointmentId');
+    const receiptId = searchParams.get('receiptId');
+
+    // Calculate medicine cost based on displayed items
+    const medicineCost = paymentData?.prescriptionItems.reduce(
+        (sum, item) => sum + (item.price * item.quantity),
+        0
+    ) || 0;
 
     useEffect(() => {
-        const fetchConsultationData = async () => {
-            if (!appointmentId) {
-                setFetchError('ไม่พบรหัสการนัดหมาย');
+        const fetchPaymentDetails = async () => {
+            if (!receiptId) {
+                setFetchError('ไม่พบรหัสใบเสร็จ');
                 setIsLoadingData(false);
                 return;
             }
 
             try {
                 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-                const res = await fetch(`${apiUrl}/appointments/${appointmentId}/consultation`, {
+                const res = await fetch(`${apiUrl}/appointments/receipts/${receiptId}/payment-details`, {
                     credentials: 'include'
                 });
 
                 if (!res.ok) {
-                    throw new Error('ไม่สามารถโหลดข้อมูลใบสั่งยาได้');
+                    throw new Error('ไม่สามารถโหลดข้อมูลการชำระเงินได้');
                 }
 
                 const data = await res.json();
 
-                if (!data.prescriptionItems || data.prescriptionItems.length === 0) {
-                    setFetchError('ไม่มีใบสั่งยาสำหรับนัดหมายนี้');
-                    setIsLoadingData(false);
-                    return;
-                }
-
                 setPaymentData({
                     prescriptionItems: data.prescriptionItems,
                     medicineCost: data.medicineCost,
-                    receipt: data.receipt,
+                    receipt: { id: data.receiptId, total: data.medicineCost, status: data.status },
                 });
             } catch (err: any) {
-                console.error('Fetch consultation error:', err);
+                console.error('Fetch payment details error:', err);
                 setFetchError(err.message);
             } finally {
                 setIsLoadingData(false);
             }
         };
 
-        fetchConsultationData();
-    }, [appointmentId]);
+        fetchPaymentDetails();
+    }, [receiptId]);
 
     const handleConfirmPayment = async () => {
         if (!uploadedSlip) return alert('กรุณาแนบสลิปการโอนเงิน');
-        if (!appointmentId) {
-            alert('ไม่พบข้อมูลรหัสการนัดหมาย');
+        if (!receiptId) {
+            alert('ไม่พบข้อมูลรหัสใบเสร็จ');
             return;
         }
 
@@ -104,9 +104,9 @@ function MedicinePaymentContent() {
                 .from('Paid_medicine')
                 .getPublicUrl(filePath);
 
-            // 3. Send URL to backend
+            // 3. Send URL to backend using receiptId
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-            const response = await fetch(`${apiUrl}/appointments/${appointmentId}/pay-medicine`, {
+            const response = await fetch(`${apiUrl}/appointments/receipts/${receiptId}/pay`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json'
@@ -145,8 +145,6 @@ function MedicinePaymentContent() {
             </div>
         );
     }
-
-    const medicineCost = paymentData?.medicineCost ?? 0;
 
     return (
         <div className="med-page">

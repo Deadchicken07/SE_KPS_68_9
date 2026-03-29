@@ -46,6 +46,16 @@ export class AppointmentsController {
     return this.appointmentsService.getAllMedicinePayments();
   }
 
+  @Get('receipts/:id/payment-details')
+  async getMedicinePaymentDetails(
+    @Req() req,
+    @Param('id', ParseIntPipe) receiptId: number,
+  ) {
+    const userId = this.getUserIdFromRequest(req);
+    return this.appointmentsService.getMedicinePaymentDetails(userId, receiptId);
+  }
+
+
   @Patch(':id/confirm')
   @UseGuards(RolesGuard)
   @Roles(1) // Admin only
@@ -73,6 +83,17 @@ export class AppointmentsController {
   async rejectMedicinePayment(@Param('id', ParseIntPipe) receiptId: number) {
     return this.appointmentsService.rejectMedicinePayment(receiptId);
   }
+
+  @Patch('receipts/:id/pay')
+  async payMedicineByReceipt(
+    @Req() req,
+    @Param('id', ParseIntPipe) receiptId: number,
+    @Body() body: { slipUrl: string },
+  ) {
+    const userId = this.getUserIdFromRequest(req);
+    return this.appointmentsService.payMedicineByReceipt(userId, receiptId, body.slipUrl);
+  }
+
 
   @Get('staff/me')
   getMyStaffAppointments(@Req() req) {
@@ -172,10 +193,13 @@ export class AppointmentsController {
     @Body() body: { slipUrl: string },
   ) {
     const userId = this.getUserIdFromRequest(req);
+    const roleId = this.getRoleIdFromRequest(req);
+    const isAdmin = roleId === 1;
     return this.appointmentsService.markAppointmentPaid(
       userId,
       appointmentId,
       body.slipUrl,
+      isAdmin,
     );
   }
 
@@ -189,10 +213,13 @@ export class AppointmentsController {
     @Body() body: { slipUrl: string },
   ) {
     const userId = this.getUserIdFromRequest(req);
+    const roleId = this.getRoleIdFromRequest(req);
+    const isAdmin = roleId === 1;
     return this.appointmentsService.payMedicine(
       userId,
       appointmentId,
       body.slipUrl,
+      isAdmin,
     );
   }
 

@@ -610,23 +610,43 @@ export class AppointmentsService {
     }
 
     const staff = appointment.users_appointments_staff_idTousers;
-    const role = staff?.roles;
+    const roleId = staff?.role_id;
     let pricePerHour = 0;
 
-    if (role?.fee_id) {
-      const fee = await this.prisma.fees.findUnique({
-        where: { id: role.fee_id },
+    // 1. Get price from fees table linked via roles
+    if (roleId) {
+      const roleWithFee = await this.prisma.roles.findUnique({
+        where: { id: roleId },
+        include: { 
+          // Assuming roles has fee_id if your schema is like that
+          // Let's re-verify: from your prisma schema 'roles' has fee_id
+        }
       });
-      pricePerHour = fee?.price_per_hours ? Number(fee.price_per_hours) : 0;
+
+      if (roleWithFee?.fee_id) {
+        const fee = await this.prisma.fees.findUnique({
+          where: { id: roleWithFee.fee_id },
+        });
+        pricePerHour = fee?.price_per_hours ? Number(fee.price_per_hours) : 0;
+      }
+    }
+
+    // 2. Fallback prices if fee not found in DB
+    if (pricePerHour === 0) {
+      // Logic fallback: Psychiatrist (4) = 500, Psychologist (3) = 300
+      if (roleId === 4) pricePerHour = 500;
+      else if (roleId === 3) pricePerHour = 300;
+      else pricePerHour = 1000; // Default flat rate
     }
 
     const parsedRange = this.tryParseTimeRange(appointment.time_select);
-    let durationMinutes = 0;
+    let durationMinutes = 30; // Default
     if (parsedRange) {
       durationMinutes = parsedRange.endMinutes - parsedRange.startMinutes;
     }
 
-    const totalPrice = (durationMinutes / 60) * pricePerHour;
+    // Calculation: (Minutes / 60) * Rate
+    const totalPrice = Math.round((durationMinutes / 60) * pricePerHour);
 
     return {
       id: appointment.id,
@@ -697,12 +717,11 @@ export class AppointmentsService {
       throw new NotFoundException('Receipt not found');
     }
 
-    const newStatus = receipt.status === 'pending_delivery' ? 'delivered' : 'picked_up';
-
+    // Keep current fulfillment status (pending_delivery/pending_pickup) 
+    // but mark as Paid so the pharmacist sees it in their queue
     await this.prisma.receipts.update({
       where: { id: receiptId },
       data: {
-        status: newStatus as any,
         payment_status: 'Paid',
       } as any,
     });
@@ -710,9 +729,10 @@ export class AppointmentsService {
     return {
       message: 'Medicine payment confirmed successfully',
       receiptId,
-      status: newStatus,
+      status: receipt.status,
     };
   }
+
 
   async rejectMedicinePayment(receiptId: number) {
     const receipt = await this.prisma.receipts.findUnique({
@@ -743,8 +763,30 @@ export class AppointmentsService {
     userId: number,
     appointmentId: number,
     slipUrl: string,
+    isAdmin = false,
   ) {
-    const appointment = await this.getOwnedAppointment(appointmentId, userId);
+    let appointment: Awaited<ReturnType<typeof this.getOwnedAppointment>>;
+
+    if (isAdmin) {
+      const found = await this.prisma.appointments.findUnique({
+        where: { id: appointmentId },
+        select: {
+          id: true,
+          user_id: true,
+          staff_id: true,
+          status: true,
+          appointment_date: true,
+          time_select: true,
+          appointment_type: true,
+        },
+      });
+      if (!found) {
+        throw new NotFoundException('Appointment not found');
+      }
+      appointment = found;
+    } else {
+      appointment = await this.getOwnedAppointment(appointmentId, userId);
+    }
 
     if (appointment.status === pay_type_enum.Paid) {
       return {
@@ -767,7 +809,10 @@ export class AppointmentsService {
       : null;
     const parsedRange = this.tryParseTimeRange(appointment.time_select);
 
-    if (this.isPastAppointment(appointmentDate, parsedRange)) {
+    // Skip past-check for admin or onsite (walk-in) appointments
+    const skipPastCheck = isAdmin || appointment.appointment_type === 'onsite';
+
+    if (!skipPastCheck && this.isPastAppointment(appointmentDate, parsedRange)) {
       throw new BadRequestException(
         'Cannot update payment for an appointment that has already ended',
       );
@@ -798,6 +843,7 @@ export class AppointmentsService {
         status: true,
         appointment_date: true,
         time_select: true,
+        appointment_type: true,
       },
     });
 
@@ -1153,7 +1199,12 @@ export class AppointmentsService {
     }));
   }
 
-  async payMedicine(userId: number, appointmentId: number, slipUrl: string) {
+  async payMedicine(
+    userId: number,
+    appointmentId: number,
+    slipUrl: string,
+    isAdmin = false,
+  ) {
     const appointment = await this.prisma.appointments.findUnique({
       where: { id: appointmentId },
     });
@@ -1162,7 +1213,7 @@ export class AppointmentsService {
       throw new NotFoundException('Appointment not found');
     }
 
-    if (appointment.user_id !== userId) {
+    if (!isAdmin && appointment.user_id !== userId) {
       throw new ForbiddenException('Appointment does not belong to this user');
     }
 
@@ -1170,17 +1221,23 @@ export class AppointmentsService {
       throw new BadRequestException('Appointment data is incomplete');
     }
 
-    // Find the consultation matching this appointment
-    const consultation = await this.prisma.consultations.findFirst({
-      where: {
-        user_id: appointment.user_id,
-        staff_id: appointment.staff_id,
-      },
-      orderBy: { created_at: 'desc' },
-      include: {
-        receipts: true,
-      },
+    // 1. Try to find consultation by ID directly (often appointment ID = consultation ID)
+    let consultation = await this.prisma.consultations.findUnique({
+      where: { id: appointmentId },
+      include: { receipts: true },
     });
+
+    // 2. Fallback: Find by user/staff if not found by ID
+    if (!consultation) {
+      consultation = await this.prisma.consultations.findFirst({
+        where: {
+          user_id: appointment.user_id,
+          staff_id: appointment.staff_id,
+        },
+        orderBy: { created_at: 'desc' },
+        include: { receipts: true },
+      });
+    }
 
     if (!consultation) {
       throw new NotFoundException('No consultation found for this appointment');
@@ -1204,6 +1261,100 @@ export class AppointmentsService {
       message: 'Medicine payment slip uploaded successfully',
       receiptId: receipt.id,
     };
+  }
+
+  async payMedicineByReceipt(userId: number, receiptId: number, slipUrl: string) {
+    // Find the receipt and verify it belongs to this user (via consultation)
+    const receipt = await this.prisma.receipts.findUnique({
+      where: { id: receiptId },
+      include: {
+        consultations: {
+          select: { id: true, user_id: true },
+        },
+      },
+    });
+
+    if (!receipt) {
+      throw new NotFoundException('Receipt not found');
+    }
+
+    if ((receipt as any).consultations?.user_id !== userId) {
+      throw new ForbiddenException('Receipt does not belong to this user');
+    }
+
+    if ((receipt.payment_status as string) === 'Pending') {
+      return { message: 'Payment is already pending verification', receiptId };
+    }
+
+    if ((receipt.payment_status as string) === 'Paid') {
+      return { message: 'Payment is already confirmed', receiptId };
+    }
+
+    await this.prisma.receipts.update({
+      where: { id: receiptId },
+      data: {
+        slip_file: slipUrl,
+        payment_status: 'Pending',
+      } as any,
+    });
+
+    return {
+      message: 'Medicine payment slip uploaded successfully',
+      receiptId,
+    };
+  }
+
+  async getMedicinePaymentDetails(userId: number, receiptId: number) {
+    const receipt = await this.prisma.receipts.findUnique({
+      where: { id: receiptId },
+      include: {
+        consultations: {
+          include: {
+            prescription_items: {
+              include: {
+                medications: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!receipt) {
+      throw new NotFoundException('Receipt not found');
+    }
+
+    if (receipt.user_id !== userId) {
+      throw new ForbiddenException('You do not have permission to view this receipt');
+    }
+
+    // 1. Fetch receipt details to calculate ONLY medicine cost
+    const receiptDetails = await this.prisma.receipt_details.findMany({
+      where: { receipt_id: receiptId, item_type: 'medicine' },
+    });
+
+    const medicineCost = receiptDetails.reduce(
+      (sum, item) => sum + Number(item.total_price || 0),
+      0,
+    );
+
+    const prescriptionItems = receipt.consultations?.prescription_items.map((item) => ({
+      medicationName: item.medications?.name || 'Unknown Medicine',
+      quantity: item.quantity,
+      comment: item.comment,
+      price: Number(item.medications?.retail || 0),
+    })) || [];
+
+
+    return {
+      receiptId: receipt.id,
+      medicineCost: medicineCost,
+      prescriptionItems,
+      date: receipt.created_at,
+      status: receipt.payment_status,
+      note: receipt.consultations?.note,
+    };
+
   }
 
   async getConsultationForAppointment(userId: number, id: number) {

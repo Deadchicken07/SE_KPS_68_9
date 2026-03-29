@@ -922,13 +922,13 @@ export default function AppointmentSchedulePage() {
                           {item.hasPrescription && item.medicinePaymentStatus !== 'Paid' && item.medicinePaymentStatus !== 'Pending' && (
                             <Link
                               className="appt-btn appt-btn--primary"
-                              href={`/user/payment-medicine?appointmentId=${item.id}`}
+                              href={`/user/payment-medicine?receiptId=${item.receiptId}`}
                             >
                               ชำระค่ายา
                             </Link>
                           )}
                           {/* Show tracking button if prescription paid */}
-                          {item.hasPrescription && item.medicinePaymentStatus === 'Paid' && (
+                          {item.hasPrescription && (item.medicinePaymentStatus === 'Paid' || item.medicinePaymentStatus === 'Pending') && (
                             <button
                               className="appt-btn appt-btn--ghost"
                               onClick={() => void openTrackingModal(item.id)}

@@ -265,18 +265,33 @@ export class UserService {
         sur_name: true,
         file_name: true,
         info: true,
+        role_id: true,
         roles: {
           select: {
             name: true,
+            fee_id: true,
           },
         },
       },
     });
 
+    // Fetch all relevant fees in one query
+    const feeIds = staffs
+      .map((s) => s.roles?.fee_id)
+      .filter((id): id is number => id != null);
+    const fees = feeIds.length
+      ? await this.prisma.fees.findMany({ where: { id: { in: feeIds } } })
+      : [];
+    const feeMap = new Map(fees.map((f) => [f.id, Number(f.price_per_hours ?? 0)]));
+
     return staffs.map((staff) => {
       let roleThai = staff.roles?.name || '';
       if (roleThai === 'psychiatrist') roleThai = 'จิตแพทย์';
       else if (roleThai === 'psychologist') roleThai = 'นักจิตวิทยา';
+
+      const pricePerHour = staff.roles?.fee_id
+        ? (feeMap.get(staff.roles.fee_id) ?? 0)
+        : 0;
 
       return {
         id: staff.user_id,
@@ -284,6 +299,7 @@ export class UserService {
         role: roleThai,
         specialty: staff.info || '',
         image: staff.file_name || '',
+        pricePerHour,
       };
     });
   }

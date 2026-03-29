@@ -30,6 +30,7 @@ type Staff = {
     specialty: string;
     image: string;
     slots: string[];
+    pricePerHour: number;
 };
 
 interface Booking {
@@ -140,6 +141,7 @@ export default function AppointmentsPage() {
         specialty: s.specialty || '',
         image: s.image || '/docterProfile/defaultPicture.png',
         slots: availableSlotsMap[s.id] || [],
+        pricePerHour: (s as any).pricePerHour ?? 0,
     }));
 
     useEffect(() => {
@@ -189,8 +191,12 @@ export default function AppointmentsPage() {
     const [selectedDuration, setSelectedDuration] = useState<number>(30);
     const [appointmentType, setAppointmentType] = useState<'online' | 'onsite'>('online');
 
-    const calculatePrice = (role: string, duration: number) => {
-        const basePrice30 = role === 'จิตแพทย์' ? 1000 : 500;
+    const calculatePrice = (staff: Staff, duration: number) => {
+        if (staff.pricePerHour > 0) {
+            return Math.round((duration / 60) * staff.pricePerHour);
+        }
+        // Fallback if API doesn't return price
+        const basePrice30 = staff.role === 'จิตแพทย์' ? 1000 : 500;
         return duration === 60 ? basePrice30 * 2 : basePrice30;
     };
 
@@ -812,7 +818,7 @@ export default function AppointmentsPage() {
                                                 </div>
                                                 <div className="appt-summary-item">
                                                     <span className="appt-summary-label">ราคา</span>
-                                                    <span className="appt-summary-value" style={{ color: '#0f766e' }}>{calculatePrice(selectedStaff.role, selectedDuration)} บาท</span>
+                                                    <span className="appt-summary-value" style={{ color: '#0f766e' }}>{calculatePrice(selectedStaff, selectedDuration)} บาท</span>
                                                 </div>
                                             </div>
                                             <button
@@ -824,7 +830,7 @@ export default function AppointmentsPage() {
                                                         displayDate: selectedDate.format('D MMMM BBBB'),
                                                         time: selectedTime,
                                                         duration: selectedDuration,
-                                                        price: calculatePrice(selectedStaff.role, selectedDuration),
+                                                        price: calculatePrice(selectedStaff, selectedDuration),
                                                         appointmentType: appointmentType,
                                                     })
                                                 }
@@ -950,7 +956,7 @@ export default function AppointmentsPage() {
                                                 </div>
                                                 <div className="appt-summary-item">
                                                     <span className="appt-summary-label">ราคา</span>
-                                                    <span className="appt-summary-value" style={{ color: '#0f766e' }}>{calculatePrice(timeStaff.role, selectedDuration)} บาท</span>
+                                                    <span className="appt-summary-value" style={{ color: '#0f766e' }}>{calculatePrice(timeStaff, selectedDuration)} บาท</span>
                                                 </div>
                                             </div>
                                             <button
@@ -962,7 +968,7 @@ export default function AppointmentsPage() {
                                                         displayDate: timeDate.format('D MMMM BBBB'),
                                                         time: timeSlot,
                                                         duration: selectedDuration,
-                                                        price: calculatePrice(timeStaff.role, selectedDuration),
+                                                        price: calculatePrice(timeStaff, selectedDuration),
                                                         appointmentType: appointmentType,
                                                     })
                                                 }
