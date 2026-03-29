@@ -40,22 +40,22 @@ const INPUT_CLASS =
   'min-h-[46px] w-full rounded-2xl border border-[rgba(15,118,110,0.18)] bg-[#f8fcfb] px-4 text-[#173630] outline-none transition focus:border-[#0f766e] focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]';
 const TEXTAREA_CLASS =
   'min-h-[144px] w-full rounded-2xl border border-[rgba(15,118,110,0.18)] bg-[#f8fcfb] px-4 py-3 text-[#173630] outline-none transition focus:border-[#0f766e] focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]';
-const WEEKDAY_LABELS = ['เธญเธฒ.', 'เธ.', 'เธญ.', 'เธ.', 'เธเธค.', 'เธจ.', 'เธช.'];
+const WEEKDAY_LABELS = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
 
 function getStatusLabel(status: ScheduleStatus | null) {
   if (status === 'working') {
-    return 'เธ—เธณเธเธฒเธ';
+    return 'ทำงาน';
   }
 
   if (status === 'leave') {
-    return 'เธฅเธฒ';
+    return 'ลา';
   }
 
   if (status === 'holiday') {
-    return 'เธงเธฑเธเธซเธขเธธเธ”';
+    return 'วันหยุดคลินิก';
   }
 
-  return 'เธขเธฑเธเนเธกเนเธฅเธเธ•เธฒเธฃเธฒเธ';
+  return 'ยังไม่มีรายการ';
 }
 
 function getStatusBadgeClass(status: ScheduleStatus | null) {
@@ -182,13 +182,13 @@ export function ClinicalLeavePlanner({
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <h2 className="text-[1.35rem] font-semibold text-[#173630]">
-                  เธเธเธดเธ—เธดเธเธเธฒเธฃเธฅเธฒเธเธฒเธเธฃเธฒเธขเน€เธ”เธทเธญเธ
+                  ปฏิทินวันลาและวันทำงาน
                 </h2>
               </div>
 
               <div className="min-w-[220px]">
                 <label className="mb-2 block text-sm font-bold text-[#33554d]">
-                  เน€เธ”เธทเธญเธ
+                  เดือน
                 </label>
                 <input
                   type="month"
@@ -256,19 +256,19 @@ export function ClinicalLeavePlanner({
           <article className={cx(PANEL_CLASS, 'p-5 md:p-6')}>
             <div className="flex flex-wrap items-start justify-between gap-3">
               <h2 className="text-[1.35rem] font-semibold text-[#173630]">
-                เธเธฑเธ”เธเธฒเธฃเธงเธฑเธเธฅเธฒ
+                ตั้งค่าวันที่เลือก
               </h2>
 
               <span className={getStatusBadgeClass(selectedSchedule?.status ?? null)}>
                 {selectedSchedule
                   ? getStatusLabel(selectedSchedule.status)
-                  : 'เธขเธฑเธเนเธกเนเธฅเธเธ•เธฒเธฃเธฒเธ'}
+                  : 'ยังไม่มีรายการ'}
               </span>
             </div>
 
             <div className="mt-5 rounded-[24px] border border-[rgba(15,118,110,0.12)] bg-[#f7fbfa] p-4">
               <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#6a736c]">
-                เธงเธฑเธเธ—เธตเนเน€เธฅเธทเธญเธ
+                วันที่ที่เลือก
               </p>
               <strong className="mt-2 block text-lg text-[#173630]">
                 {formatDateLabel(selectedDate)}
@@ -278,7 +278,7 @@ export function ClinicalLeavePlanner({
             <form className="mt-6 space-y-5" onSubmit={(event) => void handleSubmit(event)}>
               <div>
                 <label className="mb-2 block text-sm font-bold text-[#33554d]">
-                  เธชเธ–เธฒเธเธฐเธ•เธฒเธฃเธฒเธเธเธฒเธ
+                  สถานะการทำงาน
                 </label>
                 {isHolidayLocked ? (
                   <div
@@ -287,7 +287,7 @@ export function ClinicalLeavePlanner({
                       'flex items-center font-semibold text-[#9a6700]',
                     )}
                   >
-                    เธงเธฑเธเธซเธขเธธเธ”
+                    วันหยุดคลินิก
                   </div>
                 ) : (
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -301,7 +301,7 @@ export function ClinicalLeavePlanner({
                           : 'border-[rgba(15,118,110,0.12)] bg-white text-[#173630]',
                       )}
                     >
-                      <strong className="block text-sm">เธ—เธณเธเธฒเธ</strong>
+                      <strong className="block text-sm">ทำงาน</strong>
                     </button>
 
                     <button
@@ -314,7 +314,7 @@ export function ClinicalLeavePlanner({
                           : 'border-[rgba(15,118,110,0.12)] bg-white text-[#173630]',
                       )}
                     >
-                      <strong className="block text-sm">เธฅเธฒ</strong>
+                      <strong className="block text-sm">ลา</strong>
                     </button>
                   </div>
                 )}
@@ -322,14 +322,14 @@ export function ClinicalLeavePlanner({
 
               <div>
                 <label className="mb-2 block text-sm font-bold text-[#33554d]">
-                  เธซเธกเธฒเธขเน€เธซเธ•เธธ
+                  หมายเหตุ
                 </label>
                 <textarea
                   value={form.note}
                   onChange={(event) => handleNoteChange(event.target.value)}
                   readOnly={isHolidayLocked}
                   className={TEXTAREA_CLASS}
-                  placeholder="เน€เธซเธ•เธธเธเธฅ เธเธนเนเธ•เธดเธ”เธ•เนเธญเนเธ—เธ เธซเธฃเธทเธญเธซเธกเธฒเธขเน€เธซเธ•เธธเธชเธณเธซเธฃเธฑเธเธเธฅเธดเธเธดเธ"
+                  placeholder="เช่น ลาพักผ่อน, ลากิจ, หรือหมายเหตุเพิ่มเติมสำหรับวันนั้น"
                 />
               </div>
 
@@ -345,16 +345,17 @@ export function ClinicalLeavePlanner({
                   disabled={submitting || isFetching || isHolidayLocked}
                   className="min-h-[48px] rounded-2xl bg-[#0f766e] px-5 font-semibold text-white transition hover:bg-[#0d6760] disabled:cursor-wait disabled:opacity-70"
                 >
-                  {submitting ? 'เธเธณเธฅเธฑเธเธเธฑเธเธ—เธถเธ...' : 'เธเธฑเธเธ—เธถเธเธงเธฑเธเธฅเธฒ'}
+                  {submitting ? 'กำลังบันทึก...' : 'บันทึกวันลา'}
                 </button>
-{selectedSchedule && selectedSchedule.status !== 'holiday' ? (
+
+                {selectedSchedule && selectedSchedule.status !== 'holiday' ? (
                   <button
                     type="button"
                     onClick={() => void handleDelete()}
                     disabled={deleting || isFetching}
                     className="min-h-[48px] rounded-2xl border border-[rgba(15,118,110,0.18)] px-5 font-semibold text-[#173630] transition hover:border-[#0f766e] hover:text-[#0f766e] disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {deleting ? 'เธเธณเธฅเธฑเธเธฅเนเธฒเธเธเนเธญเธกเธนเธฅ...' : 'เธฅเนเธฒเธเธเนเธญเธกเธนเธฅเธงเธฑเธเธ”เธฑเธเธเธฅเนเธฒเธง'}
+                    {deleting ? 'กำลังล้างข้อมูล...' : 'ล้างข้อมูลวันดังกล่าว'}
                   </button>
                 ) : null}
               </div>
