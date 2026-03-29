@@ -61,7 +61,7 @@ export class ConsultationsService {
       for (const item of dto.prescription_item) {
         const med = medications.find((m) => m.id === item.medication_id);
         if (med) {
-          const unitPrice = Number(med.retail ?? med.price ?? 0);
+          const unitPrice = Number(med.price ?? 0);
           const totalPrice = unitPrice * item.quantity;
           total += totalPrice;
           receiptDetails.push({
