@@ -70,7 +70,7 @@ async function getSession(request: NextRequest): Promise<SessionPayload | null> 
   }
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const authPage = isAuthPage(pathname);
   const protectedPath = isProtectedPath(pathname);

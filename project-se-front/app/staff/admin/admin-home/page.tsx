@@ -13,10 +13,15 @@ import {
   TimelineSection,
   UpcomingAppointmentsSection,
 } from "@/components/staff/StaffAdminHome";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 import { useStaffAdminHome } from "@/hooks/useStaffAdminHome";
 
 export default function StaffAdminHomePage() {
   const state = useStaffAdminHome();
+
+  if (state.loading) {
+    return <PageSkeleton cards={[{ rows: 5 }, { rows: 8 }, { rows: 6 }]} />;
+  }
 
   if (!state.hasAccess) {
     return null;

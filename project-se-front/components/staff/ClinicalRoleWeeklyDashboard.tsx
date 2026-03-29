@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Skeleton } from "antd";
 import { useAuth } from "@/components/providers/AuthProvider";
 import type {
   PsychiatristDashboardData,
@@ -358,6 +359,7 @@ export function ClinicalRoleWeeklyDashboard({
     () => buildRoleSections(role, roleData, upcomingAppointments),
     [role, roleData, upcomingAppointments],
   );
+  const isPageLoading = authLoading || loading;
 
   const handleDateChange = (dateKey: string) => {
     setSelectedDate(dateKey);
@@ -379,6 +381,10 @@ export function ClinicalRoleWeeklyDashboard({
     setSelectedAppointmentId(appointmentId);
     setIsAppointmentDialogOpen(true);
   };
+
+  if (isPageLoading) {
+    return <ClinicalDashboardSkeleton />;
+  }
 
   return (
     <main
@@ -429,6 +435,80 @@ export function ClinicalRoleWeeklyDashboard({
           isOpen={isAppointmentDialogOpen}
           onClose={() => setIsAppointmentDialogOpen(false)}
         />
+      </div>
+    </main>
+  );
+}
+
+function ClinicalDashboardSkeleton() {
+  return (
+    <main
+      className="min-h-screen px-4 pb-10 pt-6 text-[#18312c] sm:px-6 lg:px-7 lg:pb-14 lg:pt-8"
+      style={{ background: PAGE_BACKGROUND }}
+    >
+      <div className="mx-auto grid max-w-[1420px] gap-6">
+        <section
+          className="overflow-hidden rounded-[28px] px-7 py-7 shadow-[0_28px_60px_rgba(24,63,54,0.2)]"
+          style={{ background: HERO_BACKGROUND }}
+        >
+          <Skeleton.Button
+            active
+            block
+            style={{ width: 180, height: 38, borderRadius: 999 }}
+          />
+          <div className="mt-5">
+            <Skeleton
+              active
+              title={{ width: "58%" }}
+              paragraph={{ rows: 3, width: ["92%", "86%", "68%"] }}
+            />
+          </div>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:max-w-[360px]">
+            <div className="rounded-[20px] border border-white/15 bg-white/10 px-4 py-3.5">
+              <Skeleton active title={false} paragraph={{ rows: 2 }} />
+            </div>
+            <div className="rounded-[20px] border border-white/15 bg-white/10 px-4 py-3.5">
+              <Skeleton active title={false} paragraph={{ rows: 2 }} />
+            </div>
+          </div>
+        </section>
+
+        <article className={cx(PANEL_CLASS, "p-[22px]")}>
+          <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
+            <Skeleton active title={{ width: "32%" }} paragraph={{ rows: 1, width: ["74%"] }} />
+            <Skeleton.Input active block style={{ height: 46, borderRadius: 16 }} />
+          </div>
+        </article>
+
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <article key={index} className={cx(PANEL_CLASS, "p-5")}>
+              <Skeleton active title={{ width: "48%" }} paragraph={{ rows: 2, width: ["66%", "82%"] }} />
+            </article>
+          ))}
+        </section>
+
+        <article className={PANEL_CLASS}>
+          <div className="border-b border-[#4b615a1c] p-[24px_24px_18px]">
+            <Skeleton active title={{ width: "36%" }} paragraph={{ rows: 1, width: ["64%"] }} />
+          </div>
+          <div className="p-[22px]">
+            <Skeleton active title={false} paragraph={{ rows: 8 }} />
+          </div>
+        </article>
+
+        <div className="grid gap-6 xl:grid-cols-2">
+          {Array.from({ length: 2 }).map((_, index) => (
+            <article key={index} className={PANEL_CLASS}>
+              <div className="border-b border-[#4b615a1c] p-[24px_24px_18px]">
+                <Skeleton active title={{ width: "42%" }} paragraph={{ rows: 1, width: ["72%"] }} />
+              </div>
+              <div className="p-[22px]">
+                <Skeleton active title={false} paragraph={{ rows: 5 }} />
+              </div>
+            </article>
+          ))}
+        </div>
       </div>
     </main>
   );

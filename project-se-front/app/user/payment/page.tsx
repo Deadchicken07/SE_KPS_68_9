@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Button, ConfigProvider, message, Spin, QRCode } from 'antd';
 import generatePayload from 'promptpay-qr';
 import locale from 'antd/locale/th_TH';
+import PageSkeleton from '@/components/ui/PageSkeleton';
 import { supabase } from '@/utils/supabase';
 
 function PaymentContent() {
@@ -122,6 +123,10 @@ function PaymentContent() {
             setIsSubmitting(false);
         }
     };
+
+    if (isLoadingData) {
+        return <PageSkeleton cards={[{ rows: 4 }, { rows: 8 }]} />;
+    }
 
     if (isLoadingData) {
         return (

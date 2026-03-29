@@ -19,6 +19,7 @@ import { InfoCircleOutlined, PlusOutlined, ReadOutlined } from "@ant-design/icon
 import { Consultation } from "@/types/consult.types";
 import { useUserResponses, useResponseDetail } from "@/hooks/useResponse";
 import axios from "axios";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 import { ResponseDetail, ResponseSummary } from "@/types/response.types";
@@ -72,6 +73,10 @@ function ConsultHistoryPageContent() {
   const { getResponseDetail, loading: detailLoading } = useResponseDetail();
   const [responseDetailOpen, setResponseDetailOpen] = useState(false);
   const [selectedResponse, setSelectedResponse] = useState<ResponseDetail | null>(null);
+
+  if (loading || resLoading) {
+    return <PageSkeleton cards={[{ rows: 4 }, { rows: 7 }]} />;
+  }
 
   const handleOpenDetail = async (summary: ResponseSummary) => {
     const detail = await getResponseDetail(summary.id);

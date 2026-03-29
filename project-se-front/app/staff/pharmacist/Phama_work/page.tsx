@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { Typography } from "antd";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 import { usePharmacistWorkSchedule } from "@/hooks/usePharmacistWorkSchedule";
 import type {
   ScheduleStatus,
@@ -154,6 +155,10 @@ export default function PharmacistWorkSchedulePage() {
     submitting,
     todayDateKey,
   } = usePharmacistWorkSchedule();
+
+  if (loading) {
+    return <PageSkeleton cards={[{ rows: 6 }, { rows: 8 }]} />;
+  }
 
   const scheduleMap = useMemo(
     () => new Map(scheduleEntries.map((entry) => [entry.workDate, entry])),
