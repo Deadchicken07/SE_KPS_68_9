@@ -227,15 +227,7 @@ export default function AdminWorkSchedulePage() {
                   >
                     {deleting ? "กำลังลบ..." : "ลบ"}
                   </button>
-                ) : (
-                  <button
-                    type="submit"
-                    disabled={submitting || deleting || isFetching}
-                    className="inline-flex min-h-[48px] min-w-[220px] items-center justify-center rounded-full bg-[#0f766e] px-8 text-sm font-bold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:bg-[#b9c9c4]"
-                  >
-                    {submitting ? "กำลังบันทึก..." : "บันทึก"}
-                  </button>
-                )}
+                ) : null}
               </div>
             </form>
           </article>
