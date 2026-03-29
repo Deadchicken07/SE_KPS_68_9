@@ -248,7 +248,7 @@ function getJoinAccessInfo(item: AppointmentItem, now: Date): JoinAccessInfo {
       return {
         state: "payment-required",
         message:
-          "อยู่ระหว่างการพิจารณาตรวจสอบการชำระเงินของท่าน โดยเจ้าหน้าที่",
+          "อยู่ระหว่างการพิจารณาตรวจสอบการชำระเงิน",
         isWaiting: false,
       };
     }
