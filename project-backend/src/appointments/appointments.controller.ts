@@ -74,8 +74,11 @@ export class AppointmentsController {
   @Patch('receipts/:id/confirm')
   @UseGuards(RolesGuard)
   @Roles(1)
-  async confirmMedicinePayment(@Param('id', ParseIntPipe) receiptId: number) {
-    return this.appointmentsService.confirmMedicinePayment(receiptId);
+  async confirmMedicinePayment(
+    @Param('id', ParseIntPipe) receiptId: number,
+    @Body('slipUrl') slipUrl: string,
+  ) {
+    return this.appointmentsService.confirmMedicinePayment(receiptId, slipUrl);
   }
 
   @Patch('receipts/:id/reject')

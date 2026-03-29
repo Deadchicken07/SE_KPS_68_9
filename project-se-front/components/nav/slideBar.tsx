@@ -41,6 +41,7 @@ const navNameIconMap = {
   "payment verification": AuditOutlined,
   "add staff": UserAddOutlined,
   "walk-in appointment": FileDoneOutlined,
+  "medication payment": MedicineBoxOutlined,
 } as const;
 
 const navHrefIconMap = {
@@ -51,6 +52,7 @@ const navHrefIconMap = {
   "/staff/admin/patient-history": FolderOpenOutlined,
   "/staff/admin/payment-verification": AuditOutlined,
   "/staff/admin/walkin-appointment": ProfileOutlined,
+  "/staff/admin/medication-payment": MedicineBoxOutlined,
   "/staff/patient-history": HistoryOutlined,
   "/staff/appointments/med": CalendarOutlined,
   "/staff/consult": MessageOutlined,

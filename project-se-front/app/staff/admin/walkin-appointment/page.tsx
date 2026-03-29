@@ -11,7 +11,8 @@ const { Title } = Typography;
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 export default function WalkinAppointmentPage() {
-  const form = Form.useForm()[0];
+  const [form] = Form.useForm();
+  const [messageApi, contextHolder] = message.useMessage();
   const router = useRouter();
   const { staffs } = useStaff();
 
@@ -55,7 +56,7 @@ export default function WalkinAppointmentPage() {
       setAvailableSlotsMap(res.data);
     } catch (error) {
       console.error(error);
-      message.error("ไม่สามารถดึงข้อมูลเวลาว่างได้");
+      messageApi.error("ไม่สามารถดึงข้อมูลเวลาว่างได้");
       setAvailableSlotsMap({});
     } finally {
       setFetchingSlots(false);
@@ -148,11 +149,12 @@ export default function WalkinAppointmentPage() {
         form.resetFields();
         setSelectedDate(null);
         setSelectedTime(null);
+        messageApi.success("เพิ่มนัดหมาย Walk-in สำเร็จ!");
         setAvailableSlotsMap({});
       }
     } catch (error: any) {
       console.error(error);
-      message.error(error.response?.data?.message || "ไม่สามารถเพิ่มการนัดหมายได้");
+      messageApi.error(error.response?.data?.message || "ไม่สามารถเพิ่มการนัดหมายได้");
     } finally {
       setLoading(false);
     }
@@ -169,6 +171,7 @@ export default function WalkinAppointmentPage() {
         minHeight: "100vh",
       }}
     >
+      {contextHolder}
       <Card style={{ width: "100%", maxWidth: 650, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", borderRadius: 12, padding: 12 }}>
         <Title level={3} style={{ textAlign: "center", marginBottom: 24, color: "#0f766e" }}>
           จองคิวผู้ป่วย Walk-in

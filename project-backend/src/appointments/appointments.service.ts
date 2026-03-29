@@ -540,7 +540,7 @@ export class AppointmentsService {
   }
 
   async getAllMedicinePayments() {
-    const receipts = await this.prisma.receipts.findMany({
+    const receipts = (await this.prisma.receipts.findMany({
       orderBy: {
         id: 'desc'
       },
@@ -552,14 +552,18 @@ export class AppointmentsService {
           },
         },
         consultations: {
-          select: {
-            staff_id: true,
+          include: {
             users_consultations_staff_idTousers: {
               select: {
                 name: true,
                 sur_name: true,
               },
             },
+            prescription_items: {
+              include: {
+                medications: true,
+              }
+            }
           },
         },
         receipt_details: {
@@ -569,7 +573,7 @@ export class AppointmentsService {
           },
         },
       },
-    });
+    } as any)) as any[];
 
     return receipts.map((r) => {
       const patientName = this.buildConsultantName(
@@ -593,6 +597,10 @@ export class AppointmentsService {
         totalPrice: d.total_price ? Number(d.total_price) : 0,
       }));
 
+      // Inferred appointment type from receipt status (pending_pickup usually means onsite)
+      const appointmentType = r.status === 'pending_pickup' ? 'onsite' : 'online';
+      const hasPrescription = (r.consultations?.prescription_items?.length ?? 0) > 0;
+
       return {
         id: r.id,
         patientName,
@@ -605,6 +613,8 @@ export class AppointmentsService {
         status: r.status,
         paymentStatus: (r as any).payment_status,
         tracking: r.tracking,
+        appointmentType,
+        hasPrescription,
       };
     });
   }
@@ -728,7 +738,7 @@ export class AppointmentsService {
     };
   }
 
-  async confirmMedicinePayment(receiptId: number) {
+  async confirmMedicinePayment(receiptId: number, slipUrl?: string) {
     const receipt = await this.prisma.receipts.findUnique({
       where: { id: receiptId },
     });
@@ -737,19 +747,23 @@ export class AppointmentsService {
       throw new NotFoundException('Receipt not found');
     }
 
-    // Keep current fulfillment status (pending_delivery/pending_pickup) 
-    // but mark as Paid so the pharmacist sees it in their queue
+    // After Admin confirms payment at clinic:
+    // 1. Mark as Paid
+    // 2. Mark as Picked Up (dispensed)
+    // 3. Save slip file if provided
     await this.prisma.receipts.update({
       where: { id: receiptId },
       data: {
         payment_status: 'Paid',
+        status: 'picked_up', // In-clinic always means picked up once paid
+        slip_file: slipUrl || receipt.slip_file,
       } as any,
     });
 
     return {
-      message: 'Medicine payment confirmed successfully',
+      message: 'Medicine payment confirmed and picked up successfully',
       receiptId,
-      status: receipt.status,
+      status: 'picked_up',
     };
   }
 

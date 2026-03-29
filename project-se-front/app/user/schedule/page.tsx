@@ -1,6 +1,6 @@
 "use client";
 
-import { CSSProperties, useCallback, useEffect, useMemo, useState } from "react";
+import { CSSProperties, Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import "./schedule-ui.css";
 import Badge from "@/components/ui/Badge";
@@ -412,6 +412,7 @@ export default function AppointmentSchedulePage() {
   // ── Tracking modal state ──
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
   const [trackingNumber, setTrackingNumber] = useState<string | null>(null);
+  const [trackingMedicines, setTrackingMedicines] = useState<any[]>([]);
   const [trackingLoading, setTrackingLoading] = useState(false);
 
   const openConsultationModal = useCallback(async (appointmentId: number) => {
@@ -448,6 +449,7 @@ export default function AppointmentSchedulePage() {
     setIsTrackingModalOpen(true);
     setTrackingLoading(true);
     setTrackingNumber(null);
+    setTrackingMedicines([]);
     try {
       const resp = await fetch(`${API_BASE_URL}/appointments/${appointmentId}/consultation`, {
         credentials: "include",
@@ -455,9 +457,11 @@ export default function AppointmentSchedulePage() {
       if (resp.ok) {
         const data = await resp.json();
         setTrackingNumber(data?.receipt?.tracking ?? null);
+        setTrackingMedicines(data?.prescriptionItems ?? []);
       }
     } catch {
       setTrackingNumber(null);
+      setTrackingMedicines([]);
     } finally {
       setTrackingLoading(false);
     }
@@ -466,6 +470,7 @@ export default function AppointmentSchedulePage() {
   const closeTrackingModal = useCallback(() => {
     setIsTrackingModalOpen(false);
     setTrackingNumber(null);
+    setTrackingMedicines([]);
   }, []);
 
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
@@ -1294,28 +1299,67 @@ export default function AppointmentSchedulePage() {
             {trackingLoading ? (
               <div style={{ textAlign: 'center', padding: '32px 0', color: '#6b7280' }}>กำลังโหลดข้อมูล...</div>
             ) : (
-              <div style={{
-                background: '#f0fdf4',
-                border: '1.5px solid #a7f3d0',
-                borderRadius: 12,
-                padding: '20px 24px',
-                margin: '16px 0 20px',
-                textAlign: 'center',
-              }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#065f46', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>
-                  หมายเลขติดตามพัสดุ
+              <>
+                <div style={{
+                  background: '#f0fdf4',
+                  border: '1.5px solid #a7f3d0',
+                  borderRadius: 12,
+                  padding: '20px 24px',
+                  margin: '16px 0 20px',
+                  textAlign: 'center',
+                }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#065f46', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>
+                    หมายเลขติดตามพัสดุ
+                  </div>
+                  {trackingNumber ? (
+                    <div style={{ fontSize: 22, fontWeight: 800, color: '#0f766e', letterSpacing: 2, wordBreak: 'break-all' }}>
+                      {trackingNumber}
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: 15, color: '#9ca3af', fontWeight: 600 }}>
+                      ยังไม่มีหมายเลขติดตาม<br />
+                      <span style={{ fontSize: 13, fontWeight: 400 }}>กรุณารอเภสัชกรอัปเดตข้อมูลการจัดส่ง</span>
+                    </div>
+                  )}
                 </div>
-                {trackingNumber ? (
-                  <div style={{ fontSize: 22, fontWeight: 800, color: '#0f766e', letterSpacing: 2, wordBreak: 'break-all' }}>
-                    {trackingNumber}
-                  </div>
-                ) : (
-                  <div style={{ fontSize: 15, color: '#9ca3af', fontWeight: 600 }}>
-                    ยังไม่มีหมายเลขติดตาม<br />
-                    <span style={{ fontSize: 13, fontWeight: 400 }}>กรุณารอเภสัชกรอัปเดตข้อมูลการจัดส่ง</span>
-                  </div>
-                )}
-              </div>
+
+                <div style={{ marginTop: 20 }}>
+                  <h4 style={{ fontSize: 15, fontWeight: 700, color: '#1e1b4b', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    💊 รายการยาที่ได้รับ
+                  </h4>
+                  {trackingMedicines.length > 0 ? (
+                    <div style={{ border: '1.5px solid #e5e7eb', borderRadius: 12, overflow: 'hidden' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+                        <thead style={{ background: '#f8fafc', borderBottom: '1.5px solid #e5e7eb' }}>
+                          <tr>
+                            <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 700, color: '#475569' }}>ชื่อยา</th>
+                            <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700, color: '#475569' }}>จำนวน</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {trackingMedicines.map((m, i) => (
+                            <Fragment key={i}>
+                              <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <td style={{ padding: '10px 12px', color: '#1e293b', fontWeight: 600 }}>{m.medicationName}</td>
+                                <td style={{ padding: '10px 12px', textAlign: 'center', color: '#334155' }}>{m.quantity}</td>
+                              </tr>
+                              {m.comment ? (
+                                <tr>
+                                  <td colSpan={2} style={{ padding: '0 12px 10px', fontSize: 13, color: '#0f766e', fontStyle: 'italic' }}>
+                                    💡 คำแนะนำ: {m.comment}
+                                  </td>
+                                </tr>
+                              ) : null}
+                            </Fragment>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: 14, color: '#9ca3af', textAlign: 'center', padding: '10px 0' }}>ไม่พบข้อมูลรายการยา</p>
+                  )}
+                </div>
+              </>
             )}
 
             <div className="appt-modal__actions" style={{ gridTemplateColumns: '1fr', marginTop: 0 }}>

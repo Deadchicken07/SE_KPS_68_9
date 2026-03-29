@@ -45,6 +45,7 @@ export const roleLinks: Record<Roles, NavLinks[]> = {
     { name: "Patient History", href: "/staff/admin/patient-history" },
     { name: "Payment Verification", href: "/staff/admin/payment-verification" },
     { name: "Walk-in Appointment", href: "/staff/admin/walkin-appointment" },
+    { name: "Medication Payment", href: "/staff/admin/medication-payment" },
   ],
   user: [{ name: "หน้าแรก", href: "/user" }],
   psychologist: [
