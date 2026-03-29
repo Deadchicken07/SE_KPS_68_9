@@ -291,15 +291,15 @@ export default function AppointmentsPage() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                credentials: 'include',
-                body: JSON.stringify({
+                  credentials: 'include',
+                  body: JSON.stringify({
                     staffId: booking.staff.id,
-                    date: booking.date,
+                    appointmentDate: booking.date,
                     timeSelect: timeRangeString,
                     duration: booking.duration,
                     appointmentType: booking.appointmentType,
                     note: note,
-                })
+                  })
             });
 
             if (!res.ok) {
