@@ -428,7 +428,7 @@ function TrendOverviewCard({ state }: { state: AdminReportState }) {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <Typography.Title level={4} style={{ margin: 0 }}>
-            แนวโน้มรายงาน
+            สถิติการนัดหมาย/ปรึกษา
           </Typography.Title>
         </div>
       </div>
