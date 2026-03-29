@@ -24,7 +24,12 @@ export const usePatientAppointments = (userId: number | null, staffId?: number |
         params: staffId ? { staffId } : {},
         withCredentials: true,
       })
-      .then((res) => setData(res.data))
+      .then((res) => setData(res.data.map((a: any) => ({
+        id: a.id,
+        appointmentDate: a.appointmentDate ?? a.appointment_date ?? null,
+        timeSelect: a.timeSelect ?? a.time_select ?? null,
+        appointmentType: a.appointmentType ?? a.appointment_type ?? null,
+      }))))
       .catch(() => setData([]))
       .finally(() => setLoading(false));
   }, [userId, staffId]);

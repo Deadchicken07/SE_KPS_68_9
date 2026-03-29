@@ -467,15 +467,29 @@ export class AppointmentsService {
   }
 
   async findByPatient(userId: number, staffId?: number) {
-    return this.prisma.appointments.findMany({
-      where: { 
+    const records = await this.prisma.appointments.findMany({
+      where: {
         user_id: userId,
-        ...(staffId ? { staff_id: staffId } : {})
+        ...(staffId ? { staff_id: staffId } : {}),
       },
       include: {
-        users_appointments_staff_idTousers: { select: { name: true, sur_name: true } }
-      }
+        consultations: { select: { appointment_id: true } },
+      },
+      orderBy: { appointment_date: 'asc' },
     });
+
+    const consultedIds = new Set(
+      records.flatMap((r) => r.consultations.map((c) => c.appointment_id)).filter(Boolean)
+    );
+
+    return records
+      .filter((r) => !consultedIds.has(r.id))
+      .map((r) => ({
+        id: r.id,
+        appointmentDate: r.appointment_date ? this.dateToIsoDate(r.appointment_date) : null,
+        timeSelect: r.time_select,
+        appointmentType: r.appointment_type,
+      }));
   }
 
   async findAllByStaff(staffId: number) {
