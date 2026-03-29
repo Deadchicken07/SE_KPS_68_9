@@ -78,10 +78,16 @@ function PharmacistOrderPageContent() {
   const paidConsultations = useMemo(
     () =>
       consultations.filter(
-        (consultation) =>
-          consultation.latestPaymentStatus === "Paid" &&
-          (consultation.latestReceiptStatus === "pending_delivery" ||
-            consultation.latestReceiptStatus === "pending_pickup"),
+        (consultation) => {
+          if (consultation.latestReceiptStatus === "pending_pickup") {
+            return true;
+          }
+
+          return (
+            consultation.latestPaymentStatus === "Paid" &&
+            consultation.latestReceiptStatus === "pending_delivery"
+          );
+        },
       ),
     [consultations],
   );
