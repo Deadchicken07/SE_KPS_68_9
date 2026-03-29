@@ -41,6 +41,17 @@ const buildAvatarLabel = (me: AuthMeResponse | null) => {
     .join("");
 };
 
+const clearClientAuthState = () => {
+  localStorage.removeItem("access_token");
+  localStorage.removeItem("token");
+  sessionStorage.removeItem("access_token");
+  sessionStorage.removeItem("token");
+  document.cookie = "access_token=; path=/; max-age=0";
+  document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+  document.cookie = "_pgsmcmsss=; path=/; max-age=0";
+  document.cookie = "_pgsmcmsss=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+};
+
 export default function ClinicLayout() {
   const pathname = usePathname();
   const router = useRouter();
@@ -58,8 +69,7 @@ export default function ClinicLayout() {
     } catch {
       // Redirect even if the session is already gone.
     } finally {
-      localStorage.removeItem("access_token");
-      document.cookie = "access_token=; path=/; max-age=0";
+      clearClientAuthState();
       setMe(null);
       router.push("/login");
       router.refresh();
