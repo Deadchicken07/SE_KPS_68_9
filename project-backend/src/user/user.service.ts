@@ -76,7 +76,9 @@ export class UserService {
         orderBy: { user_id: 'desc' }, // ✅ ใช้ user_id
         select: {
           user_id: true,
+          title: true,
           name: true,
+          sur_name: true,
           email: true,
         },
       }),
@@ -86,7 +88,9 @@ export class UserService {
     return {
       data: users.map((u) => ({
         userId: u.user_id,
+        title: u.title,
         name: u.name,
+        sur_name: u.sur_name,
         email: u.email,
       })),
       meta: {
@@ -261,10 +265,15 @@ export class UserService {
       },
       select: {
         user_id: true,
+        title: true,
         name: true,
         sur_name: true,
+        email: true,
         file_name: true,
         info: true,
+        phone: true,
+        degree: true,
+        license: true,
         role_id: true,
         roles: {
           select: {
@@ -295,10 +304,15 @@ export class UserService {
 
       return {
         id: staff.user_id,
+        title: staff.title || '',
         name: `${staff.name} ${staff.sur_name}`,
         role: roleThai,
         specialty: staff.info || '',
         image: staff.file_name || '',
+        phone: staff.phone || '',
+        degree: staff.degree || '',
+        license: staff.license || '',
+        email: staff.email || '',
         pricePerHour,
       };
     });
@@ -308,7 +322,9 @@ export class UserService {
       where: { user_id: userId }, // ✅ ตรง schema
       select: {
         user_id: true,
+        title: true,
         name: true,
+        sur_name: true,
         email: true,
       },
     });
@@ -319,7 +335,9 @@ export class UserService {
 
     return {
       userId: user.user_id,
+      title: user.title,
       name: user.name,
+      sur_name: user.sur_name,
       email: user.email,
     };
   }
@@ -433,6 +451,7 @@ export class UserService {
       },
       select: {
         user_id: true,
+        title: true,
         name: true,
         sur_name: true,
         file_name: true,
@@ -455,7 +474,9 @@ export class UserService {
 
     return {
       id: staff.user_id,
-      name: `${staff.name} ${staff.sur_name}`,
+      title: staff.title || '',
+      name: staff.name,
+      sur_name: staff.sur_name,
       role: roleThai,
       specialty: staff.info || '',
       image: staff.file_name || '',
