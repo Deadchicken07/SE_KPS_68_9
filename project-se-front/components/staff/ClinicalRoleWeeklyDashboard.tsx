@@ -133,7 +133,8 @@ export function ClinicalRoleWeeklyDashboard({
     null,
   );
   const [isAppointmentDialogOpen, setIsAppointmentDialogOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [authRequired, setAuthRequired] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
@@ -164,9 +165,13 @@ export function ClinicalRoleWeeklyDashboard({
     let ignore = false;
 
     async function loadDashboard() {
-      setLoading(true);
-      setError(null);
-      setAuthRequired(false);
+        if (scheduleData === null || roleData === null) {
+          setIsLoading(true);
+        } else {
+          setIsFetching(true);
+        }
+        setError(null);
+        setAuthRequired(false);
 
       const scheduleQuery = new URLSearchParams({
         month,
@@ -242,7 +247,8 @@ export function ClinicalRoleWeeklyDashboard({
         setRoleData(null);
       } finally {
         if (!ignore) {
-          setLoading(false);
+          setIsLoading(false);
+          setIsFetching(false);
         }
       }
     }
@@ -359,7 +365,7 @@ export function ClinicalRoleWeeklyDashboard({
     () => buildRoleSections(role, roleData, upcomingAppointments),
     [role, roleData, upcomingAppointments],
   );
-  const isPageLoading = authLoading || loading;
+  const isPageLoading = authLoading || isLoading;
 
   const handleDateChange = (dateKey: string) => {
     setSelectedDate(dateKey);
@@ -401,7 +407,7 @@ export function ClinicalRoleWeeklyDashboard({
         />
 
         <FilterSection
-          loading={loading}
+          loading={isFetching}
           month={month}
           onMonthChange={handleMonthChange}
           onReload={() => setReloadKey((current) => current + 1)}
