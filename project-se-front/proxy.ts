@@ -47,19 +47,16 @@ function buildLoginRedirect(request: NextRequest) {
 
 async function getSession(request: NextRequest): Promise<SessionPayload | null> {
   const cookie = request.headers.get("cookie");
-  const token = request.cookies.get("access_token")?.value;
 
-  const headers: Record<string, string> = {};
-  if (cookie) headers["cookie"] = cookie;
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-
-  if (!cookie && !token) {
+  if (!cookie) {
     return null;
   }
 
   try {
     const response = await fetch(`${API_URL}/auth/session`, {
-      headers,
+      headers: {
+        cookie,
+      },
       cache: "no-store",
     });
 
