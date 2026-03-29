@@ -27,16 +27,39 @@ import {
 } from "@/types/adminStaffManagement.types";
 import PageSkeleton from "@/components/ui/PageSkeleton";
 
-const statusColorMap = {
-  ACTIVE: "green",
-  INACTIVE: "red",
-} as const;
-
 const roleColorMap: Record<number, string> = {
   3: "cyan",
   4: "blue",
   5: "purple",
 };
+
+const actionButtonBaseStyle = {
+  height: 38,
+  minWidth: 74,
+  borderRadius: 999,
+  paddingInline: 18,
+  fontWeight: 600,
+  boxShadow: "none",
+  background: "#ffffff",
+} as const;
+
+const editActionButtonStyle = {
+  ...actionButtonBaseStyle,
+  borderColor: "#0f766e",
+  color: "#0f766e",
+} as const;
+
+const deleteActionButtonStyle = {
+  ...actionButtonBaseStyle,
+  borderColor: "#ff4d4f",
+  color: "#ff4d4f",
+} as const;
+
+const activateActionButtonStyle = {
+  ...actionButtonBaseStyle,
+  borderColor: "#52c41a",
+  color: "#52c41a",
+} as const;
 
 const staffStatusLabelMap: Record<AdminStaffRecord["status"], string> = {
   ACTIVE: "ปฏิบัติงาน",
@@ -118,9 +141,9 @@ export default function AdminManagePage() {
   const handleToggleStatus = (record: AdminStaffRecord) => {
     if (record.status === "ACTIVE") {
       modalApi.confirm({
-        title: "เปลี่ยนสถานะบุคลากร",
-        content: `ต้องการเปลี่ยนสถานะ ${record.fullName} เป็น "พ้นสภาพ" ใช่หรือไม่`,
-        okText: "พ้นสภาพ",
+        title: "ลบบุคลากร",
+        content: `ต้องการลบ ${record.fullName} ใช่หรือไม่`,
+        okText: "ลบ",
         cancelText: "ยกเลิก",
         okButtonProps: { danger: true },
         onOk: async () => {
@@ -186,38 +209,24 @@ export default function AdminManagePage() {
       render: (value: string | null) => value || "-",
     },
     {
-      title: "ข้อมูลเพิ่มเติม",
-      dataIndex: "info",
-      width: 220,
-      ellipsis: true,
-      render: (value: string | null) => value || "-",
-    },
-    {
-      title: "สถานะ",
-      dataIndex: "status",
-      width: 130,
-      align: "center",
-      render: (value: AdminStaffRecord["status"]) => (
-        <Tag color={statusColorMap[value]}>{staffStatusLabelMap[value]}</Tag>
-      ),
-    },
-    {
       title: "จัดการ",
       key: "actions",
       width: 200,
-      fixed: "right",
       align: "center",
       render: (_, record) => (
-        <Space wrap>
-          <Button type="primary" ghost onClick={() => handleOpenEdit(record)}>
+        <Space size={12} wrap>
+          <Button style={editActionButtonStyle} onClick={() => handleOpenEdit(record)}>
             แก้ไข
           </Button>
           <Button
-            danger={record.status === "ACTIVE"}
-            type={record.status === "INACTIVE" ? "default" : "primary"}
+            style={
+              record.status === "ACTIVE"
+                ? deleteActionButtonStyle
+                : activateActionButtonStyle
+            }
             onClick={() => handleToggleStatus(record)}
           >
-            {record.status === "ACTIVE" ? "พ้นสภาพ" : "ปฏิบัติงาน"}
+            {record.status === "ACTIVE" ? "ลบ" : "ปฏิบัติงาน"}
           </Button>
         </Space>
       ),
@@ -242,7 +251,6 @@ export default function AdminManagePage() {
       <Card
         className="staff-content-card"
         variant="borderless"
-        styles={{ body: { overflowX: "auto" } }}
       >
         <div
           style={{
@@ -292,7 +300,6 @@ export default function AdminManagePage() {
           loading={staffsLoading}
           columns={staffColumns}
           dataSource={staffs}
-          scroll={{ x: 1180 }}
           locale={{ emptyText: "ยังไม่มีข้อมูลบุคลากร" }}
           pagination={{
             pageSize: 8,
