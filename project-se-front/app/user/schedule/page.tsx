@@ -100,6 +100,22 @@ type PaymentFormState = {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 const JOIN_LEAD_MS = 30 * 60 * 1000;
+const CLINIC_TIME_SLOTS: string[] = [
+  "09:00",
+  "09:30",
+  "10:00",
+  "10:30",
+  "11:00",
+  "11:30",
+  "13:00",
+  "13:30",
+  "14:00",
+  "14:30",
+  "15:00",
+  "15:30",
+  "16:00",
+  "16:30",
+];
 
 const statusText: Record<AppointmentStatus, string> = {
   pending: "รอชำระเงิน",
@@ -378,6 +394,40 @@ function buildInitialRescheduleForm(
   };
 }
 
+function expandBookedSlotEntry(
+  booking: string,
+  staffId: number,
+): string[] {
+  const prefix = `${staffId}_`;
+
+  if (!booking.startsWith(prefix)) {
+    return [];
+  }
+
+  const timeString = booking.slice(prefix.length).trim();
+  const rangeMatch = timeString.match(
+    /^(\d{2}):(\d{2})\s*-\s*(\d{2}):(\d{2})$/,
+  );
+
+  if (rangeMatch) {
+    const startMinutes = Number(rangeMatch[1]) * 60 + Number(rangeMatch[2]);
+    const endMinutes = Number(rangeMatch[3]) * 60 + Number(rangeMatch[4]);
+    const slots: string[] = [];
+
+    for (let minute = startMinutes; minute < endMinutes; minute += 30) {
+      const hours = Math.floor(minute / 60)
+        .toString()
+        .padStart(2, "0");
+      const minutes = (minute % 60).toString().padStart(2, "0");
+      slots.push(`${hours}:${minutes}`);
+    }
+
+    return slots;
+  }
+
+  return /^\d{2}:\d{2}$/.test(timeString) ? [timeString] : [];
+}
+
 function buildInitialPaymentForm(item: AppointmentItem): PaymentFormState {
   return {
     appointmentId: item.id,
@@ -518,31 +568,63 @@ export default function AppointmentSchedulePage() {
   const [fetchingTimes, setFetchingTimes] = useState(false);
 
   const fetchAvailableTimes = useCallback(
-    async (dateStr: string, staffId: number, durationMins: number) => {
+    async (
+      dateStr: string,
+      staffId: number,
+      durationMins: number,
+      excludeAppointmentId?: number,
+    ) => {
       setFetchingTimes(true);
       try {
+        const params = new URLSearchParams({ date: dateStr });
+        params.set("staffId", String(staffId));
+        params.set("durationMins", String(durationMins));
+        if (excludeAppointmentId) {
+          params.set("excludeAppointmentId", String(excludeAppointmentId));
+        }
+
         const resp = await fetch(
-          `${API_BASE_URL}/appointments/available-slots?date=${dateStr}`,
+          `${API_BASE_URL}/appointments/available-slots?${params.toString()}`,
           {
             credentials: "include",
           },
         );
         if (resp.ok) {
-          const data = await resp.json();
-          const baseSlots: string[] = data[staffId] || [];
+          const data = (await resp.json()) as {
+            bookedSlots?: string[];
+            availableTimes?: string[];
+          };
 
-          let validSlots = baseSlots;
-          if (durationMins === 60) {
-            validSlots = baseSlots.filter((t) => {
-              const [hh, mm] = t.split(":");
-              const nextSlot = dayjs()
-                .hour(Number(hh))
-                .minute(Number(mm))
-                .add(30, "minute")
-                .format("HH:mm");
-              return baseSlots.includes(nextSlot);
-            });
+          if (Array.isArray(data.availableTimes)) {
+            setAvailableTimes(data.availableTimes);
+            return;
           }
+
+          const bookedTimes = Array.from(
+            new Set(
+              (data.bookedSlots || []).flatMap((booking) =>
+                expandBookedSlotEntry(booking, staffId),
+              ),
+            ),
+          );
+
+          const baseSlots = CLINIC_TIME_SLOTS.filter(
+            (slot) => !bookedTimes.includes(slot),
+          );
+
+          const validSlots =
+            durationMins === 60
+              ? baseSlots.filter((t) => {
+                  const [hh, mm] = t.split(":");
+                  const nextSlot = dayjs()
+                    .hour(Number(hh))
+                    .minute(Number(mm))
+                    .add(30, "minute")
+                    .format("HH:mm");
+                  return baseSlots.includes(nextSlot);
+                })
+              : baseSlots;
+
           setAvailableTimes(validSlots);
         } else {
           setAvailableTimes([]);
@@ -642,6 +724,7 @@ export default function AppointmentSchedulePage() {
           initForm.appointmentDate,
           initForm.staffId,
           initForm.durationMins,
+          initForm.appointmentId,
         );
       }
     },
@@ -1168,6 +1251,7 @@ export default function AppointmentSchedulePage() {
                       newDate,
                       prev.staffId,
                       prev.durationMins,
+                      prev.appointmentId,
                     );
                   }
                   return {

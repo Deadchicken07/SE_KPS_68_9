@@ -26,12 +26,57 @@ export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) {}
 
   @Get('available-slots')
-  async getAvailableSlots(@Req() req, @Query('date') date: string) {
+  async getAvailableSlots(
+    @Req() req,
+    @Query('date') date: string,
+    @Query('excludeAppointmentId') excludeAppointmentIdRaw?: string,
+    @Query('staffId') staffIdRaw?: string,
+    @Query('durationMins') durationMinsRaw?: string,
+  ) {
     if (!date) {
       throw new BadRequestException('date query parameter is required');
     }
+
+    const excludeAppointmentId = excludeAppointmentIdRaw
+      ? Number.parseInt(excludeAppointmentIdRaw, 10)
+      : undefined;
+
+    if (
+      excludeAppointmentIdRaw &&
+      (!Number.isInteger(excludeAppointmentId) ||
+        (excludeAppointmentId ?? 0) <= 0)
+    ) {
+      throw new BadRequestException('excludeAppointmentId must be a positive integer');
+    }
+
+    const staffId = staffIdRaw ? Number.parseInt(staffIdRaw, 10) : undefined;
+    if (staffIdRaw && (!Number.isInteger(staffId) || (staffId ?? 0) <= 0)) {
+      throw new BadRequestException('staffId must be a positive integer');
+    }
+
+    const durationMins = durationMinsRaw
+      ? Number.parseInt(durationMinsRaw, 10)
+      : undefined;
+    if (
+      durationMinsRaw &&
+      (!Number.isInteger(durationMins) ||
+        ![30, 60].includes(durationMins ?? 0))
+    ) {
+      throw new BadRequestException('durationMins must be 30 or 60');
+    }
+
     const userId = this.getUserIdFromRequest(req);
-    return this.appointmentsService.getAvailableSlots(date, userId);
+    const roleId = this.getRoleIdFromRequest(req);
+    return this.appointmentsService.getAvailableSlots(
+      date,
+      userId,
+      {
+        excludeAppointmentId,
+        staffId,
+        durationMins,
+        requestUserId: roleId === 2 ? userId : undefined,
+      },
+    );
   }
 
   @Get('payments')
