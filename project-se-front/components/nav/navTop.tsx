@@ -133,7 +133,76 @@ export default function ClinicLayout() {
 
             <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
               {!isReady ? (
-                <div style={{ width: 248, height: 44 }} aria-hidden="true" />
+                <button
+                  aria-hidden="true"
+                  disabled
+                  type="button"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    padding: 0,
+                    border: "none",
+                    background: "transparent",
+                    color: "#173f35",
+                    cursor: "default",
+                  }}
+                >
+                  <Avatar
+                    size={44}
+                    style={{
+                      backgroundColor: "#d9ece8",
+                      color: "transparent",
+                      flexShrink: 0,
+                    }}
+                  />
+
+                  <div style={{ minWidth: 0, textAlign: "left" }}>
+                    <Typography.Text
+                      strong
+                      style={{
+                        display: "block",
+                        maxWidth: 220,
+                        color: "#173f35",
+                      }}
+                      ellipsis
+                    >
+                      <span
+                        style={{
+                          display: "block",
+                          width: 160,
+                          height: 16,
+                          borderRadius: 999,
+                          background: "linear-gradient(90deg, #e6efec 25%, #f2f7f5 50%, #e6efec 75%)",
+                          backgroundSize: "200% 100%",
+                          animation: "authSkeletonShimmer 1.4s ease-in-out infinite",
+                        }}
+                      />
+                    </Typography.Text>
+                    <Typography.Text
+                      style={{
+                        display: "block",
+                        maxWidth: 220,
+                        color: "#4d6b63",
+                        fontSize: 12,
+                      }}
+                      ellipsis
+                    >
+                      <span
+                        style={{
+                          display: "block",
+                          width: 220,
+                          height: 12,
+                          borderRadius: 999,
+                          background: "linear-gradient(90deg, #e6efec 25%, #f2f7f5 50%, #e6efec 75%)",
+                          backgroundSize: "200% 100%",
+                          animation: "authSkeletonShimmer 1.4s ease-in-out infinite",
+                        }}
+                      />
+                    </Typography.Text>
+                  </div>
+                  <Space style={{ color: "transparent", fontSize: 12 }}>▼</Space>
+                </button>
               ) : isLogin ? (
                 <Dropdown
                   menu={{

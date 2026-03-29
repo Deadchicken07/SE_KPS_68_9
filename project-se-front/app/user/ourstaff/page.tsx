@@ -12,7 +12,7 @@ import {
   Modal,
   Pagination,
   Row,
-  Spin,
+  Skeleton,
   Tag,
   Typography,
 } from "antd";
@@ -98,12 +98,16 @@ const App = () => {
       >
         {/* Loading */}
         {loading && (
-          <div style={{ textAlign: "center", padding: "80px 20px" }}>
-            <Spin size="large" />
-            <div style={{ marginTop: 12, color: "#1a5c4e", fontWeight: 600 }}>
-              กำลังโหลดข้อมูลทีมงาน...
-            </div>
-          </div>
+          <Row gutter={[28, 28]}>
+            {Array.from({ length: PAGE_SIZE }).map((_, i) => (
+              <Col key={i} xs={24} sm={12} md={8} lg={6}>
+                <Card style={{ borderRadius: 20, textAlign: "center" }} styles={{ body: { padding: "32px 20px 28px" } }}>
+                  <Skeleton.Avatar active size={120} style={{ marginBottom: 20 }} />
+                  <Skeleton active paragraph={{ rows: 2 }} title={{ width: "60%" }} />
+                </Card>
+              </Col>
+            ))}
+          </Row>
         )}
 
         {/* Error */}

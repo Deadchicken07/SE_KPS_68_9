@@ -32,6 +32,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 const navNameIconMap = {
   dashboard: HomeOutlined,
   "clinic holiday": CalendarOutlined,
+  "staff holiday": CalendarOutlined,
   "admin report": FileTextOutlined,
   appointments: CalendarOutlined,
   consultations: FileTextOutlined,

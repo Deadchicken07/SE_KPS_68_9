@@ -73,7 +73,7 @@ export default function AdminWorkSchedulePage() {
       <div className="mx-auto max-w-[1400px] space-y-6">
         <section className="staff-page-header">
           <Typography.Title level={2} style={{ marginTop: 8, marginBottom: 8 }}>
-            ตั้งวันหยุดรายเดือน
+            ตั้งวันหยุดประจำสัปดาห์บุคลากร
           </Typography.Title>
         </section>
 
@@ -96,7 +96,7 @@ export default function AdminWorkSchedulePage() {
                   เลือกวันหยุดประจำสัปดาห์
                 </h2>
                 <p className="mt-2 text-sm leading-7 text-[#64748b]">
-                  เลือกวันในสัปดาห์เพื่อกำหนดให้บุคลากรที่เลือกหยุดทุกสัปดาห์ของเดือนนี้
+                  เลือกวันในสัปดาห์เพื่อกำหนดวันหยุดประจำของบุคลากรในเดือนที่เลือก
                 </p>
               </div>
 
@@ -158,7 +158,7 @@ export default function AdminWorkSchedulePage() {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2 className="text-[1.35rem] font-semibold text-[#173630]">
-                  ตั้งวันหยุดรายบุคคล
+                  เลือกบุคลากรและบันทึกหมายเหตุ
                 </h2>
               </div>
               <span className={getStatusBadgeClass(selectedSchedule?.status ?? null)}>
@@ -209,14 +209,6 @@ export default function AdminWorkSchedulePage() {
               ) : null}
 
               <div className="flex flex-wrap gap-3">
-                <button
-                  type="submit"
-                  disabled={submitting || deleting || loading}
-                  className="inline-flex min-h-[48px] min-w-[220px] items-center justify-center rounded-full bg-[#0f766e] px-8 text-sm font-bold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:bg-[#b9c9c4]"
-                >
-                  {submitting ? "กำลังบันทึก..." : "บันทึกทั้งเดือน"}
-                </button>
-
                 {selectedSchedule ? (
                   <button
                     type="button"
@@ -224,9 +216,17 @@ export default function AdminWorkSchedulePage() {
                     disabled={submitting || deleting || loading}
                     className="inline-flex min-h-[48px] min-w-[220px] items-center justify-center rounded-full border border-[#fda4af] bg-white px-8 text-sm font-bold text-[#be123c] transition hover:bg-[#fff1f2] disabled:cursor-not-allowed disabled:border-[#e5e7eb] disabled:text-[#9ca3af]"
                   >
-                    {deleting ? "กำลังลบ..." : "ลบทั้งเดือน"}
+                    {deleting ? "กำลังลบ..." : "ลบ"}
                   </button>
-                ) : null}
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={submitting || deleting || loading}
+                    className="inline-flex min-h-[48px] min-w-[220px] items-center justify-center rounded-full bg-[#0f766e] px-8 text-sm font-bold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:bg-[#b9c9c4]"
+                  >
+                    {submitting ? "กำลังบันทึก..." : "บันทึก"}
+                  </button>
+                )}
               </div>
             </form>
           </article>

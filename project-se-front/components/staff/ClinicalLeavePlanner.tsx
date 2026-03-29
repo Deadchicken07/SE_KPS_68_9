@@ -52,7 +52,7 @@ function getStatusLabel(status: ScheduleStatus | null) {
   }
 
   if (status === 'holiday') {
-    return 'ลา';
+    return 'วันหยุด';
   }
 
   return 'ยังไม่ลงตาราง';
@@ -127,6 +127,7 @@ export function ClinicalLeavePlanner({
     handleStatusChange,
     handleSubmit,
     hasAccess,
+    isHolidayLocked,
     loading,
     month,
     scheduleEntries,
@@ -278,33 +279,44 @@ export function ClinicalLeavePlanner({
                 <label className="mb-2 block text-sm font-bold text-[#33554d]">
                   สถานะตารางงาน
                 </label>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={() => handleStatusChange('working')}
+                {isHolidayLocked ? (
+                  <div
                     className={cx(
-                      'rounded-2xl border px-4 py-3 text-left transition',
-                      form.status === 'working'
-                        ? 'border-[#0f766e] bg-[#e6fffb] text-[#0f766e]'
-                        : 'border-[rgba(15,118,110,0.12)] bg-white text-[#173630]',
+                      INPUT_CLASS,
+                      'flex items-center font-semibold text-[#9a6700]',
                     )}
                   >
-                    <strong className="block text-sm">ทำงาน</strong>
-                  </button>
+                    วันหยุด
+                  </div>
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={() => handleStatusChange('working')}
+                      className={cx(
+                        'rounded-2xl border px-4 py-3 text-left transition',
+                        form.status === 'working'
+                          ? 'border-[#0f766e] bg-[#e6fffb] text-[#0f766e]'
+                          : 'border-[rgba(15,118,110,0.12)] bg-white text-[#173630]',
+                      )}
+                    >
+                      <strong className="block text-sm">ทำงาน</strong>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => handleStatusChange('leave')}
-                    className={cx(
-                      'rounded-2xl border px-4 py-3 text-left transition',
-                      form.status === 'leave'
-                        ? 'border-[#be123c] bg-[#fff1f2] text-[#be123c]'
-                        : 'border-[rgba(15,118,110,0.12)] bg-white text-[#173630]',
-                    )}
-                  >
-                    <strong className="block text-sm">ลา</strong>
-                  </button>
-                </div>
+                    <button
+                      type="button"
+                      onClick={() => handleStatusChange('leave')}
+                      className={cx(
+                        'rounded-2xl border px-4 py-3 text-left transition',
+                        form.status === 'leave'
+                          ? 'border-[#be123c] bg-[#fff1f2] text-[#be123c]'
+                          : 'border-[rgba(15,118,110,0.12)] bg-white text-[#173630]',
+                      )}
+                    >
+                      <strong className="block text-sm">ลา</strong>
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -314,6 +326,7 @@ export function ClinicalLeavePlanner({
                 <textarea
                   value={form.note}
                   onChange={(event) => handleNoteChange(event.target.value)}
+                  readOnly={isHolidayLocked}
                   className={TEXTAREA_CLASS}
                   placeholder="เหตุผล ผู้ติดต่อแทน หรือหมายเหตุสำหรับคลินิก"
                 />
@@ -328,20 +341,22 @@ export function ClinicalLeavePlanner({
               <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
                 <button
                   type="submit"
-                  disabled={submitting || loading}
+                  disabled={submitting || loading || isHolidayLocked}
                   className="min-h-[48px] rounded-2xl bg-[#0f766e] px-5 font-semibold text-white transition hover:bg-[#0d6760] disabled:cursor-wait disabled:opacity-70"
                 >
                   {submitting ? 'กำลังบันทึก...' : 'บันทึกวันลา'}
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => void handleDelete()}
-                  disabled={!selectedSchedule || deleting}
-                  className="min-h-[48px] rounded-2xl border border-[rgba(15,118,110,0.18)] px-5 font-semibold text-[#173630] transition hover:border-[#0f766e] hover:text-[#0f766e] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {deleting ? 'กำลังล้างข้อมูล...' : 'ล้างข้อมูลวันดังกล่าว'}
-                </button>
+                {selectedSchedule && selectedSchedule.status !== 'holiday' ? (
+                  <button
+                    type="button"
+                    onClick={() => void handleDelete()}
+                    disabled={deleting}
+                    className="min-h-[48px] rounded-2xl border border-[rgba(15,118,110,0.18)] px-5 font-semibold text-[#173630] transition hover:border-[#0f766e] hover:text-[#0f766e] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {deleting ? 'กำลังล้างข้อมูล...' : 'ล้างข้อมูลวันดังกล่าว'}
+                  </button>
+                ) : null}
               </div>
             </form>
           </article>
@@ -349,8 +364,4 @@ export function ClinicalLeavePlanner({
       </div>
     </main>
   );
-}
-
-function ClinicalLeavePlannerSkeleton() {
-  return <PageSkeleton cards={[{ rows: 4 }, { rows: 8 }]} />;
 }

@@ -40,7 +40,7 @@ function ConsultPageContent() {
     [],
   );
   const { me, loading: authLoading } = useAuth();
-  const canPrescribe = !authLoading && me?.role !== "psychologist";
+  const canPrescribe = !authLoading && me?.role_id !== 3;
   const { createConsultation } = useConsultation();
   const { medications, medicationsLoading } = usePharmacistMedications();
   const searchParams = useSearchParams();
