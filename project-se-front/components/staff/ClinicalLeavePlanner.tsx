@@ -1,8 +1,9 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Skeleton, Typography } from 'antd';
+import { Typography } from 'antd';
 import { useClinicalLeaveSchedule } from '@/hooks/useClinicalLeaveSchedule';
+import PageSkeleton from '@/components/ui/PageSkeleton';
 import { cx, formatDateLabel } from '@/utils/staffAdminHome';
 import type {
   ScheduleStatus,
@@ -146,7 +147,7 @@ export function ClinicalLeavePlanner({
   );
 
   if (loading) {
-    return <ClinicalLeavePlannerSkeleton />;
+    return <PageSkeleton cards={[{ rows: 4 }, { rows: 8 }]} />;
   }
 
   if (!hasAccess) {
@@ -351,75 +352,5 @@ export function ClinicalLeavePlanner({
 }
 
 function ClinicalLeavePlannerSkeleton() {
-  return (
-    <main className="staff-shell text-[#173630]">
-      <div className="mx-auto max-w-[1400px] space-y-6">
-        <section className="staff-page-header">
-          <Skeleton active title={{ width: 220 }} paragraph={{ rows: 1, width: ['42%'] }} />
-        </section>
-
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.95fr)]">
-          <article className={cx(PANEL_CLASS, 'p-5 md:p-6')}>
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <Skeleton active title={{ width: 240 }} paragraph={false} />
-              <div className="min-w-[220px]">
-                <Skeleton.Input active block style={{ height: 46, borderRadius: 16 }} />
-              </div>
-            </div>
-
-            <div className="mt-6 grid grid-cols-7 gap-2">
-              {Array.from({ length: 35 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="min-h-[116px] rounded-[22px] border border-[rgba(15,118,110,0.12)] bg-white px-3 py-3"
-                >
-                  <Skeleton.Avatar active size={32} shape="circle" />
-                  <div className="mt-4">
-                    <Skeleton.Button
-                      active
-                      block
-                      style={{ height: 24, borderRadius: 999 }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </article>
-
-          <article className={cx(PANEL_CLASS, 'p-5 md:p-6')}>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <Skeleton active title={{ width: 200 }} paragraph={false} />
-              <Skeleton.Button active style={{ width: 110, height: 28, borderRadius: 999 }} />
-            </div>
-
-            <div className="mt-5 rounded-[24px] border border-[rgba(15,118,110,0.12)] bg-[#f7fbfa] p-4">
-              <Skeleton active title={{ width: '36%' }} paragraph={{ rows: 1, width: ['54%'] }} />
-            </div>
-
-            <div className="mt-6 space-y-5">
-              <div>
-                <Skeleton active title={{ width: 160 }} paragraph={false} />
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <Skeleton.Button active block style={{ height: 54, borderRadius: 16 }} />
-                  <Skeleton.Button active block style={{ height: 54, borderRadius: 16 }} />
-                </div>
-              </div>
-
-              <div>
-                <Skeleton active title={{ width: 140 }} paragraph={false} />
-                <div className="mt-3">
-                  <Skeleton.Input active block style={{ height: 144, borderRadius: 16 }} />
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
-                <Skeleton.Button active block style={{ height: 48, borderRadius: 16 }} />
-                <Skeleton.Button active block style={{ width: 180, height: 48, borderRadius: 16 }} />
-              </div>
-            </div>
-          </article>
-        </section>
-      </div>
-    </main>
-  );
+  return <PageSkeleton cards={[{ rows: 4 }, { rows: 8 }]} />;
 }

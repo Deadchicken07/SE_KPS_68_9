@@ -25,6 +25,7 @@ import {
   ADMIN_STAFF_ROLE_OPTIONS,
   ADMIN_STAFF_STATUS_OPTIONS,
 } from "@/types/adminStaffManagement.types";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 
 const statusColorMap = {
   ACTIVE: "green",
@@ -68,6 +69,10 @@ export default function AdminManagePage() {
     ...item,
     label: staffStatusLabelMap[item.value as AdminStaffRecord["status"]],
   }));
+
+  if (staffsLoading) {
+    return <PageSkeleton cards={[{ rows: 4 }, { rows: 10 }]} />;
+  }
 
   const handleOpenEdit = (record: AdminStaffRecord) => {
     staffForm.setFieldsValue({
