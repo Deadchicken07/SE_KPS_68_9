@@ -27,6 +27,29 @@ export class UserService {
     return `PT-${userId.toString().padStart(6, '0')}`;
   }
 
+  private formatAddress(address: {
+    detail: string | null;
+    provinces: { name: string | null } | null;
+    districts: { name: string | null } | null;
+    sub_districts: { name: string | null } | null;
+    zip_codes: { code: string | null } | null;
+  } | null) {
+    if (!address) {
+      return '';
+    }
+
+    return [
+      address.detail,
+      address.sub_districts?.name,
+      address.districts?.name,
+      address.provinces?.name,
+      address.zip_codes?.code,
+    ]
+      .map((part) => part?.trim())
+      .filter((part): part is string => Boolean(part))
+      .join(' ');
+  }
+
   private mapProfile(user: {
     user_id: number;
     name: string;
@@ -35,8 +58,20 @@ export class UserService {
     email: string | null;
     medical_condition: string | null;
     allergy_drug: string | null;
-    addresses: { detail: string | null } | null;
-    addresses_users_address_id_nationToaddresses: { detail: string | null } | null;
+    addresses: {
+      detail: string | null;
+      provinces: { name: string | null } | null;
+      districts: { name: string | null } | null;
+      sub_districts: { name: string | null } | null;
+      zip_codes: { code: string | null } | null;
+    } | null;
+    addresses_users_address_id_nationToaddresses: {
+      detail: string | null;
+      provinces: { name: string | null } | null;
+      districts: { name: string | null } | null;
+      sub_districts: { name: string | null } | null;
+      zip_codes: { code: string | null } | null;
+    } | null;
   }): UserProfileResponseDto {
     return {
       patientCode: this.buildPatientCode(user.user_id),
@@ -46,9 +81,10 @@ export class UserService {
       email: user.email ?? '',
       chronicDisease: user.medical_condition ?? '',
       allergies: user.allergy_drug ?? '',
-      currentAddress: user.addresses?.detail ?? '',
-      shippingAddress:
-        user.addresses_users_address_id_nationToaddresses?.detail ?? '',
+      currentAddress: this.formatAddress(user.addresses),
+      shippingAddress: this.formatAddress(
+        user.addresses_users_address_id_nationToaddresses,
+      ),
     };
   }
 
@@ -130,11 +166,51 @@ export class UserService {
         addresses: {
           select: {
             detail: true,
+            provinces: {
+              select: {
+                name: true,
+              },
+            },
+            districts: {
+              select: {
+                name: true,
+              },
+            },
+            sub_districts: {
+              select: {
+                name: true,
+              },
+            },
+            zip_codes: {
+              select: {
+                code: true,
+              },
+            },
           },
         },
         addresses_users_address_id_nationToaddresses: {
           select: {
             detail: true,
+            provinces: {
+              select: {
+                name: true,
+              },
+            },
+            districts: {
+              select: {
+                name: true,
+              },
+            },
+            sub_districts: {
+              select: {
+                name: true,
+              },
+            },
+            zip_codes: {
+              select: {
+                code: true,
+              },
+            },
           },
         },
       },
@@ -230,11 +306,51 @@ export class UserService {
             addresses: {
               select: {
                 detail: true,
+                provinces: {
+                  select: {
+                    name: true,
+                  },
+                },
+                districts: {
+                  select: {
+                    name: true,
+                  },
+                },
+                sub_districts: {
+                  select: {
+                    name: true,
+                  },
+                },
+                zip_codes: {
+                  select: {
+                    code: true,
+                  },
+                },
               },
             },
             addresses_users_address_id_nationToaddresses: {
               select: {
                 detail: true,
+                provinces: {
+                  select: {
+                    name: true,
+                  },
+                },
+                districts: {
+                  select: {
+                    name: true,
+                  },
+                },
+                sub_districts: {
+                  select: {
+                    name: true,
+                  },
+                },
+                zip_codes: {
+                  select: {
+                    code: true,
+                  },
+                },
               },
             },
           },
