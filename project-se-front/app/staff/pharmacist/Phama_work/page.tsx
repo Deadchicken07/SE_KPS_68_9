@@ -156,10 +156,6 @@ export default function PharmacistWorkSchedulePage() {
     todayDateKey,
   } = usePharmacistWorkSchedule();
 
-  if (loading) {
-    return <PageSkeleton cards={[{ rows: 6 }, { rows: 8 }]} />;
-  }
-
   const scheduleMap = useMemo(
     () => new Map(scheduleEntries.map((entry) => [entry.workDate, entry])),
     [scheduleEntries],
@@ -168,6 +164,10 @@ export default function PharmacistWorkSchedulePage() {
   const calendarCells = useMemo(() => {
     return buildCalendarDays(month, selectedDate, todayDateKey, scheduleMap);
   }, [month, scheduleMap, selectedDate, todayDateKey]);
+
+  if (loading) {
+    return <PageSkeleton cards={[{ rows: 6 }, { rows: 8 }]} />;
+  }
 
   if (!hasAccess) {
     return null;
