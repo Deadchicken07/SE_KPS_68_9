@@ -1090,13 +1090,18 @@ export class StaffHomeService {
     }
 
     const workDates = this.getClinicHolidayDateKeys(month, weekday);
+    const editableMonthDates = this.getEditableMonthDateKeys(month);
+    const holidayDateSet = new Set(workDates);
+    const workingDates = editableMonthDates.filter(
+      (workDate) => !holidayDateSet.has(workDate),
+    );
     const staffIds = await this.getClinicHolidayTargetStaffIds(
       scope,
       input?.staffId,
     );
 
-    await this.prisma.$transaction(
-      staffIds.flatMap((staffId) =>
+    await this.prisma.$transaction([
+      ...staffIds.flatMap((staffId) =>
         workDates.map((workDate) =>
           this.prisma.schedule.upsert({
             where: {
@@ -1118,7 +1123,39 @@ export class StaffHomeService {
           }),
         ),
       ),
-    );
+      ...(workingDates.length
+        ? [
+            this.prisma.schedule.createMany({
+              data: staffIds.flatMap((staffId) =>
+                workingDates.map((workDate) => ({
+                  staff_id: staffId,
+                  work_date: this.toDateOnlyUtc(workDate),
+                  status: schedule_status.working,
+                  note: null,
+                })),
+              ),
+              skipDuplicates: true,
+            }),
+            ...staffIds.map((staffId) =>
+              this.prisma.schedule.updateMany({
+                where: {
+                  staff_id: staffId,
+                  work_date: {
+                    in: workingDates.map((workDate) => this.toDateOnlyUtc(workDate)),
+                  },
+                  status: {
+                    in: [schedule_status.working, schedule_status.holiday],
+                  },
+                },
+                data: {
+                  status: schedule_status.working,
+                  note: null,
+                },
+              }),
+            ),
+          ]
+        : []),
+    ]);
 
     return {
       message: 'บันทึกวันหยุดรายเดือนเรียบร้อยแล้ว',
@@ -1172,7 +1209,7 @@ export class StaffHomeService {
     return this.prisma.users.findMany({
       where: {
         NOT: {
-          OR: [{ role_id: 2 }, { role_id: null }],
+          OR: [{ role_id: 1 }, { role_id: 2 }, { role_id: null }],
         },
       },
       select: {
@@ -1195,7 +1232,7 @@ export class StaffHomeService {
     const staffRows = await this.prisma.users.findMany({
       where: {
         NOT: {
-          OR: [{ role_id: 2 }, { role_id: null }],
+          OR: [{ role_id: 1 }, { role_id: 2 }, { role_id: null }],
         },
       },
       select: {
@@ -1261,12 +1298,10 @@ export class StaffHomeService {
   }
 
   private getClinicHolidayDateKeys(month: string, weekday: number) {
-    const today = this.getClinicNowParts(new Date()).dateKey;
-    const { dayKeys } = this.getMonthBounds(month);
-    const matchingDates = dayKeys.filter((dateKey) => {
+    const matchingDates = this.getEditableMonthDateKeys(month).filter((dateKey) => {
       const dateValue = this.toDateOnlyUtc(dateKey);
 
-      return dateKey >= today && dateValue.getUTCDay() === weekday;
+      return dateValue.getUTCDay() === weekday;
     });
 
     if (!matchingDates.length) {
@@ -1276,6 +1311,13 @@ export class StaffHomeService {
     }
 
     return matchingDates;
+  }
+
+  private getEditableMonthDateKeys(month: string) {
+    const today = this.getClinicNowParts(new Date()).dateKey;
+    const { dayKeys } = this.getMonthBounds(month);
+
+    return dayKeys.filter((dateKey) => dateKey >= today);
   }
 
   private getAdminReportRange(from?: string, to?: string) {
