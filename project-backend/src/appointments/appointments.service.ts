@@ -35,6 +35,8 @@ type AppointmentScheduleItem = {
   receiptId?: number | null;
   totalPrice?: number | null;
   meetLink: string | null;
+  meet_url?: string | null;
+  meetUrl?: string | null;
   hasPrescription: boolean;
   hasConsultation: boolean;
 };
@@ -117,7 +119,9 @@ export class AppointmentsService {
             appointmentType: record.appointment_type ?? null,
             paymentStatus: record.status ?? null,
             medicinePaymentStatus: null,
-            meetLink: record.appointment_type === 'online' ? clinicMeetUrl : null,
+            meetLink: record.appointment_type === 'online' ? (record['meet_url'] || record['meetUrl'] || (record as any).meet_url || clinicMeetUrl) : null,
+            meet_url: record['meet_url'] || (record as any).meet_url || null,
+            meetUrl: record['meet_url'] || (record as any).meet_url || null,
             hasPrescription: false,
             hasConsultation: false,
           };

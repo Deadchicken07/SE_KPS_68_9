@@ -36,8 +36,8 @@ type AppointmentScheduleResponse = {
 };
 
 type AppointmentScheduleApiResponse = {
-  upcoming?: Array<Omit<AppointmentItem, "meetLink"> & { meetLink?: string | null }>;
-  past?: Array<Omit<AppointmentItem, "meetLink"> & { meetLink?: string | null }>;
+  upcoming?: Array<Omit<AppointmentItem, "meetLink"> & { meet_url?: string | null }>;
+  past?: Array<Omit<AppointmentItem, "meetLink"> & { meet_url?: string | null }>;
 };
 
 type ApiErrorPayload = {
@@ -62,6 +62,7 @@ type JoinAccessState =
 type JoinAccessInfo = {
   state: JoinAccessState;
   message: string;
+  isWaiting: boolean;
 };
 
 type EnrichedAppointment = AppointmentItem & {
@@ -86,8 +87,6 @@ type PaymentFormState = {
 };
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
-const DEFAULT_MEET_LINK =
-  process.env.NEXT_PUBLIC_CLINIC_MEET_URL ?? "https://meet.google.com/new";
 const JOIN_LEAD_MS = 30 * 60 * 1000;
 
 const statusText: Record<AppointmentStatus, string> = {
@@ -227,6 +226,7 @@ function getJoinAccessInfo(item: AppointmentItem, now: Date): JoinAccessInfo {
     return {
       state: "not-online",
       message: "นัดหมายที่คลินิก กรุณามาถึงก่อนเวลาประมาณ 10 นาที",
+      isWaiting: false,
     };
   }
 
@@ -235,11 +235,13 @@ function getJoinAccessInfo(item: AppointmentItem, now: Date): JoinAccessInfo {
       return {
         state: "payment-required",
         message: "อยู่ระหว่างการพิจารณาตรวจสอบการชำระเงินของท่าน โดยเจ้าหน้าที่",
+        isWaiting: false,
       };
     }
     return {
       state: "payment-required",
       message: "กรุณาชำระเงินก่อน จึงจะเปิดลิงก์ Google Meet ได้",
+      isWaiting: false,
     };
   }
 
@@ -247,6 +249,7 @@ function getJoinAccessInfo(item: AppointmentItem, now: Date): JoinAccessInfo {
     return {
       state: "invalid",
       message: "ไม่พบวันที่นัดหมาย กรุณาติดต่อเจ้าหน้าที่",
+      isWaiting: false,
     };
   }
 
@@ -256,6 +259,7 @@ function getJoinAccessInfo(item: AppointmentItem, now: Date): JoinAccessInfo {
     return {
       state: "invalid",
       message: "เวลานัดหมายไม่ถูกต้อง กรุณาติดต่อเจ้าหน้าที่",
+      isWaiting: false,
     };
   }
 
@@ -266,30 +270,47 @@ function getJoinAccessInfo(item: AppointmentItem, now: Date): JoinAccessInfo {
     return {
       state: "invalid",
       message: "เวลานัดหมายไม่ถูกต้อง กรุณาติดต่อเจ้าหน้าที่",
+      isWaiting: false,
     };
   }
 
   const openAt = new Date(startAt.getTime() - JOIN_LEAD_MS);
 
+  // If online, paid, and has a link, show the button
+  if (item.meetLink) {
+    const isWaiting = now < openAt;
+    return {
+      state: "open",
+      isWaiting,
+      message: isWaiting
+        ? `นัดหมายเวลา ${item.timeSelect} (สามารถเข้าห้องรอได้ทันที)`
+        : "ห้องประชุมเปิดแล้ว สามารถเข้าร่วมได้ทันที",
+    };
+  }
+
   if (now < openAt) {
     return {
       state: "waiting",
-      message: `จะเริ่มในอีก ${formatCountdown(openAt.getTime() - now.getTime())}`,
+      isWaiting: true,
+      message: `ห้องสนทนาจะเปิดในอีก ${formatCountdown(openAt.getTime() - now.getTime())}`,
     };
   }
 
   if (now >= openAt && now < endAt) {
     return {
       state: "open",
+      isWaiting: false,
       message: "ห้องประชุมเปิดแล้ว สามารถเข้าร่วมได้ทันที",
     };
   }
 
   return {
     state: "closed",
+    isWaiting: false,
     message: "หมดเวลานัดหมายแล้ว ลิงก์เข้าห้องถูกปิด",
   };
 }
+
 
 async function parseErrorMessage(response: Response): Promise<string> {
   const fallback = "ไม่สามารถดำเนินการรายการนี้ได้";
@@ -312,11 +333,11 @@ async function parseErrorMessage(response: Response): Promise<string> {
 }
 
 function normalizeApiItems(
-  items: Array<Omit<AppointmentItem, "meetLink"> & { meetLink?: string | null }> = [],
+  items: Array<Omit<AppointmentItem, "meetLink"> & { meet_url?: string | null; meetUrl?: string | null; meetLink?: string | null }> = [],
 ): AppointmentItem[] {
-  return items.map((item) => ({
+  return items.map((item: any) => ({
     ...item,
-    meetLink: item.meetLink ?? null,
+    meetLink: item.meet_url || item.meetUrl || item.meetLink || null,
   }));
 }
 
@@ -687,7 +708,7 @@ export default function AppointmentSchedulePage() {
       }
 
       setSuccessMessage(
-        `ยืนยันการชำระเงินสำเร็จ แนบสลิป "${slipFileName}" แล้ว ลิงก์ Google Meet จะเปิดก่อนเวลานัด 30 นาที`,
+        `ยืนยันการชำระเงินสำเร็จ แนบสลิป "${slipFileName}" แล้ว`,
       );
       closePaymentDialog();
       await fetchAppointments(false);
@@ -791,18 +812,16 @@ export default function AppointmentSchedulePage() {
             const isRescheduling = processingRescheduleId === item.id;
             const isPaying = processingPayId === item.id;
             const isBusy = isRescheduling || isPaying;
-            const joinLink = item.meetLink ?? DEFAULT_MEET_LINK;
+            const joinLink = item.meetLink ?? "";
             const secondaryActionLabel = !isPaid && !isPending
               ? "ชำระเงิน"
-              : canJoin
-                ? "เข้าร่วม Google Meet"
+              : canJoin || joinInfo.state === "waiting"
+                ? "เข้าร่วมการปรึกษา"
                 : joinInfo.state === "not-online"
                   ? "นัดที่คลินิก"
-                  : joinInfo.state === "waiting"
-                    ? "ยังไม่ถึงเวลาเข้า"
-                    : joinInfo.state === "closed"
-                      ? "หมดเวลาแล้ว"
-                      : "ไม่พร้อมใช้งาน";
+                  : joinInfo.state === "closed"
+                    ? "หมดเวลาแล้ว"
+                    : "ไม่พร้อมใช้งาน";
 
             return (
               <article
@@ -889,15 +908,16 @@ export default function AppointmentSchedulePage() {
                           <button className="appt-btn appt-btn--disabled" disabled type="button">
                             รอตรวจสอบสลิป
                           </button>
-                        ) : canJoin ? (
+                        ) : (canJoin || joinInfo.state === "waiting") ? (
                           <a
-                            className="appt-btn appt-btn--join"
+                            className={`appt-btn appt-btn--join ${joinInfo.isWaiting ? "is-waiting" : ""}`}
                             href={joinLink}
                             rel="noreferrer"
                             target="_blank"
                           >
                             {secondaryActionLabel}
                           </a>
+
                         ) : (
                           <button className="appt-btn appt-btn--disabled" disabled type="button">
                             {secondaryActionLabel}
