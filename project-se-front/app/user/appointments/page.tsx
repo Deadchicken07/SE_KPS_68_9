@@ -134,15 +134,31 @@ export default function AppointmentsPage() {
         }
     };
 
-    const allStaff: Staff[] = fetchedStaffs.map(s => ({
-        id: s.id,
-        name: s.name,
-        role: s.role,
-        specialty: s.specialty || '',
-        image: s.image || '/docterProfile/defaultPicture.png',
-        slots: availableSlotsMap[s.id] || [],
-        pricePerHour: (s as any).pricePerHour ?? 0,
-    }));
+    const allStaff: Staff[] = fetchedStaffs.map((s: any) => {
+        const staffId = s.id || s.user_id;
+        return {
+            id: staffId,
+            name: s.name,
+            role: s.role,
+            specialty: s.specialty || '',
+            image: s.image || '/docterProfile/defaultPicture.png',
+            slots: availableSlotsMap[staffId] || (availableSlotsMap as any)[String(staffId)] || [],
+            pricePerHour: (s as any).pricePerHour ?? 0,
+        };
+    });
+
+    const filterContiguousSlots = (slots: string[], duration: number) => {
+        if (duration === 30) return slots;
+        return slots.filter(s => {
+            const h = parseInt(s.substring(0, 2));
+            const m = parseInt(s.substring(3, 5));
+            const nextMin = h * 60 + m + 30;
+            const nextH = Math.floor(nextMin / 60).toString().padStart(2, '0');
+            const nextM = (nextMin % 60).toString().padStart(2, '0');
+            const nextSlot = `${nextH}:${nextM}`;
+            return slots.includes(nextSlot);
+        });
+    };
 
     useEffect(() => {
         let isMounted = true;
@@ -755,15 +771,18 @@ export default function AppointmentsPage() {
                                             <h2 style={{ marginTop: 8 }}>
                                                 เวลา <span style={{ fontSize: 14, fontWeight: 'normal', color: '#6b7280' }}>(แสดงเฉพาะเวลาที่ว่าง)</span>
                                             </h2>
-                                            {selectedStaff.slots.length > 0 ? (
-                                                <TimeSlotGrid
-                                                    slots={selectedStaff.slots}
-                                                    selected={selectedTime}
-                                                    onSelect={setSelectedTime}
-                                                />
-                                            ) : (
-                                                <p style={{ color: '#ef4444', marginTop: 10 }}>คุณหมอไม่ว่าง หรือ ไม่มีคิวว่างในวันที่เลือก</p>
-                                            )}
+                                            {(() => {
+                                                const displaySlots = filterContiguousSlots(selectedStaff.slots, selectedDuration);
+                                                return displaySlots.length > 0 ? (
+                                                    <TimeSlotGrid
+                                                        slots={displaySlots}
+                                                        selected={selectedTime}
+                                                        onSelect={setSelectedTime}
+                                                    />
+                                                ) : (
+                                                    <p style={{ color: '#ef4444', marginTop: 10 }}>คุณหมอไม่ว่าง หรือ ไม่มีคิวว่างติดต่อกัน {selectedDuration} นาทีในวันที่เลือก</p>
+                                                );
+                                            })()}
                                         </>
                                     )}
 
@@ -872,7 +891,7 @@ export default function AppointmentsPage() {
 
                                         return (
                                             <TimeSlotGrid
-                                                slots={uniqueTimes}
+                                                slots={filterContiguousSlots(uniqueTimes, selectedDuration)}
                                                 selected={timeSlot}
                                                 onSelect={handleTimeSlot}
                                             />

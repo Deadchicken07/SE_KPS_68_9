@@ -25,11 +25,12 @@ export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) { }
 
   @Get('available-slots')
-  async getAvailableSlots(@Query('date') date: string) {
+  async getAvailableSlots(@Req() req, @Query('date') date: string) {
     if (!date) {
       throw new BadRequestException('date query parameter is required');
     }
-    return this.appointmentsService.getAvailableSlots(date);
+    const userId = this.getUserIdFromRequest(req);
+    return this.appointmentsService.getAvailableSlots(date, userId);
   }
 
   @Get('payments')

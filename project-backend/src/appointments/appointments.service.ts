@@ -311,12 +311,45 @@ export class AppointmentsService {
     });
   }
 
-  async getAvailableSlots(dateString: string) {
+  async getAvailableSlots(dateString: string, userId?: number) {
     const trimmed = dateString?.trim();
     if (!trimmed || !/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
       throw new BadRequestException('date must be in YYYY-MM-DD format');
     }
     const dateValue = this.toDateOnlyUtc(trimmed);
+
+    // 1. Fetch staff that are not on leave
+    const staffs = await this.prisma.users.findMany({
+      where: {
+        roles: { name: { in: ['psychiatrist', 'psychologist'], mode: 'insensitive' } },
+      },
+      select: { user_id: true },
+    });
+    const staffIds = staffs.map((s) => s.user_id);
+
+    const leaves = await this.prisma.schedule.findMany({
+      where: {
+        work_date: dateValue,
+        status: { in: ['leave', 'holiday'] as any },
+        staff_id: { in: staffIds },
+      },
+    });
+    const staffOnLeave = new Set(leaves.map((l) => l.staff_id));
+
+    // 2. Fetch all appointments on this date
+    const allAppointments = await this.prisma.appointments.findMany({
+      where: {
+        appointment_date: dateValue,
+      },
+    });
+
+    const userBookedRanges = userId
+      ? allAppointments
+          .filter((a) => a.user_id === userId && a.time_select)
+          .map((a) => this.tryParseTimeRange(a.time_select))
+      : [];
+
+    const staffAppointments = allAppointments.filter(a => staffIds.includes(a.staff_id ?? 0));
 
     // Every 30 minutes slots map
     const allTimes = [
@@ -336,30 +369,6 @@ export class AppointmentsService {
       '16:30',
     ];
 
-    const staffs = await this.prisma.users.findMany({
-      where: {
-        roles: { name: { in: ['psychiatrist', 'psychologist'] } },
-      },
-      select: { user_id: true },
-    });
-
-    const staffIds = staffs.map((s) => s.user_id);
-
-    const leaves = await this.prisma.schedule.findMany({
-      where: {
-        work_date: dateValue,
-        status: { in: ['leave', 'holiday'] as any },
-        staff_id: { in: staffIds },
-      },
-    });
-    const staffOnLeave = new Set(leaves.map((l) => l.staff_id));
-
-    const appointments = await this.prisma.appointments.findMany({
-      where: {
-        appointment_date: dateValue,
-        staff_id: { in: staffIds },
-      },
-    });
 
     const result: Record<number, string[]> = {};
 
@@ -369,7 +378,7 @@ export class AppointmentsService {
         continue;
       }
 
-      const bookedRanges = appointments
+      const bookedRanges = allAppointments
         .filter((a) => a.staff_id === staffId && a.time_select)
         .map((a) => this.tryParseTimeRange(a.time_select));
 
@@ -379,12 +388,19 @@ export class AppointmentsService {
         const mm = parseInt(t.substring(3, 5), 10);
         const startMin = hh * 60 + mm;
 
-        // check if this slot is covered by any booked range
-        const isBooked = bookedRanges.some(
+        // 1. check if staff is booked
+        const isStaffBooked = bookedRanges.some(
           (r) => r && startMin >= r.startMinutes && startMin < r.endMinutes,
         );
+        if (isStaffBooked) return false;
 
-        // Also reject past times if it's today (using Bangkok timezone)
+        // 2. check if USER is already booked (new check!)
+        const isUserBooked = userBookedRanges.some(
+          (r) => r && startMin >= r.startMinutes && startMin < r.endMinutes,
+        );
+        if (isUserBooked) return false;
+
+        // 3. Reject past times if today
         const nowInThai = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
         const todayInThai = this.toLocalDateKey(nowInThai);
 
@@ -393,7 +409,7 @@ export class AppointmentsService {
           if (startMin <= nowMinutes) return false;
         }
 
-        return !isBooked;
+        return true;
       });
 
       result[staffId] = available;
