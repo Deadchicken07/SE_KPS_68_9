@@ -30,10 +30,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshMe = useCallback(async () => {
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
       const response = await axios.get<AuthMeResponse>(`${API_URL}/auth/me`, {
         withCredentials: true,
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const data = response.data;
       setMe({ ...data, role: mapRoleIdToRole(data.role_id) });
