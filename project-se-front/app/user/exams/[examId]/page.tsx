@@ -2,11 +2,12 @@
 
 import { useQuestionnaires } from "@/hooks/useQuestionnaire";
 import { useSubmitResponse } from "@/hooks/useSubmitResponse";
-import { App, Button, Card, Flex, Modal, Pagination, Radio, Spin, Tag, Typography } from "antd";
+import { App, Button, Card, Flex, Modal, Pagination, Radio, Tag, Typography } from "antd";
 import { useParams } from "next/navigation";
 import styles from "./page.module.css";
 import { useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 
 export default function QuestionsPage() {
   const { modal } = App.useApp();
@@ -47,13 +48,7 @@ export default function QuestionsPage() {
     setModalOpen(true);
   };
 
-  if (loading)
-    return (
-      <div className={styles.pageState}>
-        <Spin size="large" />
-        <Typography.Text type="secondary">กำลังโหลดแบบทดสอบ...</Typography.Text>
-      </div>
-    );
+  if (loading) return <PageSkeleton cards={[{ rows: 2 }, { rows: 5 }, { rows: 5 }]} />;
 
   if (error)
     return (
