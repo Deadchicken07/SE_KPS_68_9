@@ -40,22 +40,22 @@ const INPUT_CLASS =
   'min-h-[46px] w-full rounded-2xl border border-[rgba(15,118,110,0.18)] bg-[#f8fcfb] px-4 text-[#173630] outline-none transition focus:border-[#0f766e] focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]';
 const TEXTAREA_CLASS =
   'min-h-[144px] w-full rounded-2xl border border-[rgba(15,118,110,0.18)] bg-[#f8fcfb] px-4 py-3 text-[#173630] outline-none transition focus:border-[#0f766e] focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]';
-const WEEKDAY_LABELS = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
+const WEEKDAY_LABELS = ['เธญเธฒ.', 'เธ.', 'เธญ.', 'เธ.', 'เธเธค.', 'เธจ.', 'เธช.'];
 
 function getStatusLabel(status: ScheduleStatus | null) {
   if (status === 'working') {
-    return 'ทำงาน';
+    return 'เธ—เธณเธเธฒเธ';
   }
 
   if (status === 'leave') {
-    return 'ลา';
+    return 'เธฅเธฒ';
   }
 
   if (status === 'holiday') {
-    return 'ลา';
+    return 'เธงเธฑเธเธซเธขเธธเธ”';
   }
 
-  return 'ยังไม่ลงตาราง';
+  return 'เธขเธฑเธเนเธกเนเธฅเธเธ•เธฒเธฃเธฒเธ';
 }
 
 function getStatusBadgeClass(status: ScheduleStatus | null) {
@@ -127,6 +127,7 @@ export function ClinicalLeavePlanner({
     handleStatusChange,
     handleSubmit,
     hasAccess,
+    isHolidayLocked,
     isFetching,
     isLoading,
     month,
@@ -181,13 +182,13 @@ export function ClinicalLeavePlanner({
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <h2 className="text-[1.35rem] font-semibold text-[#173630]">
-                  ปฏิทินการลางานรายเดือน
+                  เธเธเธดเธ—เธดเธเธเธฒเธฃเธฅเธฒเธเธฒเธเธฃเธฒเธขเน€เธ”เธทเธญเธ
                 </h2>
               </div>
 
               <div className="min-w-[220px]">
                 <label className="mb-2 block text-sm font-bold text-[#33554d]">
-                  เดือน
+                  เน€เธ”เธทเธญเธ
                 </label>
                 <input
                   type="month"
@@ -255,19 +256,19 @@ export function ClinicalLeavePlanner({
           <article className={cx(PANEL_CLASS, 'p-5 md:p-6')}>
             <div className="flex flex-wrap items-start justify-between gap-3">
               <h2 className="text-[1.35rem] font-semibold text-[#173630]">
-                จัดการวันลา
+                เธเธฑเธ”เธเธฒเธฃเธงเธฑเธเธฅเธฒ
               </h2>
 
               <span className={getStatusBadgeClass(selectedSchedule?.status ?? null)}>
                 {selectedSchedule
                   ? getStatusLabel(selectedSchedule.status)
-                  : 'ยังไม่ลงตาราง'}
+                  : 'เธขเธฑเธเนเธกเนเธฅเธเธ•เธฒเธฃเธฒเธ'}
               </span>
             </div>
 
             <div className="mt-5 rounded-[24px] border border-[rgba(15,118,110,0.12)] bg-[#f7fbfa] p-4">
               <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#6a736c]">
-                วันที่เลือก
+                เธงเธฑเธเธ—เธตเนเน€เธฅเธทเธญเธ
               </p>
               <strong className="mt-2 block text-lg text-[#173630]">
                 {formatDateLabel(selectedDate)}
@@ -277,46 +278,58 @@ export function ClinicalLeavePlanner({
             <form className="mt-6 space-y-5" onSubmit={(event) => void handleSubmit(event)}>
               <div>
                 <label className="mb-2 block text-sm font-bold text-[#33554d]">
-                  สถานะตารางงาน
+                  เธชเธ–เธฒเธเธฐเธ•เธฒเธฃเธฒเธเธเธฒเธ
                 </label>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={() => handleStatusChange('working')}
+                {isHolidayLocked ? (
+                  <div
                     className={cx(
-                      'rounded-2xl border px-4 py-3 text-left transition',
-                      form.status === 'working'
-                        ? 'border-[#0f766e] bg-[#e6fffb] text-[#0f766e]'
-                        : 'border-[rgba(15,118,110,0.12)] bg-white text-[#173630]',
+                      INPUT_CLASS,
+                      'flex items-center font-semibold text-[#9a6700]',
                     )}
                   >
-                    <strong className="block text-sm">ทำงาน</strong>
-                  </button>
+                    เธงเธฑเธเธซเธขเธธเธ”
+                  </div>
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={() => handleStatusChange('working')}
+                      className={cx(
+                        'rounded-2xl border px-4 py-3 text-left transition',
+                        form.status === 'working'
+                          ? 'border-[#0f766e] bg-[#e6fffb] text-[#0f766e]'
+                          : 'border-[rgba(15,118,110,0.12)] bg-white text-[#173630]',
+                      )}
+                    >
+                      <strong className="block text-sm">เธ—เธณเธเธฒเธ</strong>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => handleStatusChange('leave')}
-                    className={cx(
-                      'rounded-2xl border px-4 py-3 text-left transition',
-                      form.status === 'leave'
-                        ? 'border-[#be123c] bg-[#fff1f2] text-[#be123c]'
-                        : 'border-[rgba(15,118,110,0.12)] bg-white text-[#173630]',
-                    )}
-                  >
-                    <strong className="block text-sm">ลา</strong>
-                  </button>
-                </div>
+                    <button
+                      type="button"
+                      onClick={() => handleStatusChange('leave')}
+                      className={cx(
+                        'rounded-2xl border px-4 py-3 text-left transition',
+                        form.status === 'leave'
+                          ? 'border-[#be123c] bg-[#fff1f2] text-[#be123c]'
+                          : 'border-[rgba(15,118,110,0.12)] bg-white text-[#173630]',
+                      )}
+                    >
+                      <strong className="block text-sm">เธฅเธฒ</strong>
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div>
                 <label className="mb-2 block text-sm font-bold text-[#33554d]">
-                  หมายเหตุ
+                  เธซเธกเธฒเธขเน€เธซเธ•เธธ
                 </label>
                 <textarea
                   value={form.note}
                   onChange={(event) => handleNoteChange(event.target.value)}
+                  readOnly={isHolidayLocked}
                   className={TEXTAREA_CLASS}
-                  placeholder="เหตุผล ผู้ติดต่อแทน หรือหมายเหตุสำหรับคลินิก"
+                  placeholder="เน€เธซเธ•เธธเธเธฅ เธเธนเนเธ•เธดเธ”เธ•เนเธญเนเธ—เธ เธซเธฃเธทเธญเธซเธกเธฒเธขเน€เธซเธ•เธธเธชเธณเธซเธฃเธฑเธเธเธฅเธดเธเธดเธ"
                 />
               </div>
 
@@ -329,20 +342,21 @@ export function ClinicalLeavePlanner({
               <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
                 <button
                   type="submit"
-                  disabled={submitting || isFetching}
+                  disabled={submitting || isFetching || isHolidayLocked}
                   className="min-h-[48px] rounded-2xl bg-[#0f766e] px-5 font-semibold text-white transition hover:bg-[#0d6760] disabled:cursor-wait disabled:opacity-70"
                 >
-                  {submitting ? 'กำลังบันทึก...' : 'บันทึกวันลา'}
+                  {submitting ? 'เธเธณเธฅเธฑเธเธเธฑเธเธ—เธถเธ...' : 'เธเธฑเธเธ—เธถเธเธงเธฑเธเธฅเธฒ'}
                 </button>
-
-                <button
-                  type="button"
-                  onClick={() => void handleDelete()}
-                  disabled={!selectedSchedule || deleting || isFetching}
-                  className="min-h-[48px] rounded-2xl border border-[rgba(15,118,110,0.18)] px-5 font-semibold text-[#173630] transition hover:border-[#0f766e] hover:text-[#0f766e] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {deleting ? 'กำลังล้างข้อมูล...' : 'ล้างข้อมูลวันดังกล่าว'}
-                </button>
+{selectedSchedule && selectedSchedule.status !== 'holiday' ? (
+                  <button
+                    type="button"
+                    onClick={() => void handleDelete()}
+                    disabled={deleting || isFetching}
+                    className="min-h-[48px] rounded-2xl border border-[rgba(15,118,110,0.18)] px-5 font-semibold text-[#173630] transition hover:border-[#0f766e] hover:text-[#0f766e] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {deleting ? 'เธเธณเธฅเธฑเธเธฅเนเธฒเธเธเนเธญเธกเธนเธฅ...' : 'เธฅเนเธฒเธเธเนเธญเธกเธนเธฅเธงเธฑเธเธ”เธฑเธเธเธฅเนเธฒเธง'}
+                  </button>
+                ) : null}
               </div>
             </form>
           </article>
@@ -350,8 +364,4 @@ export function ClinicalLeavePlanner({
       </div>
     </main>
   );
-}
-
-function ClinicalLeavePlannerSkeleton() {
-  return <PageSkeleton cards={[{ rows: 4 }, { rows: 8 }]} />;
 }

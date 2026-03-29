@@ -16,6 +16,10 @@ import {
 } from '@/utils/staffAdminHome';
 
 type ClinicalRole = 'psychiatrist' | 'psychologist';
+type ClinicalEditableStatus = Extract<
+  StaffScheduleFormState['status'],
+  'working' | 'leave'
+>;
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
@@ -142,6 +146,7 @@ export function useClinicalLeaveSchedule(role: ClinicalRole) {
       scheduleEntries.find((entry) => entry.workDate === selectedDate) ?? null,
     [scheduleEntries, selectedDate],
   );
+  const isHolidayLocked = selectedSchedule?.status === 'holiday';
 
   useEffect(() => {
     if (!me?.sub) {
@@ -195,7 +200,7 @@ export function useClinicalLeaveSchedule(role: ClinicalRole) {
     setFormError(null);
   };
 
-  const handleStatusChange = (status: StaffScheduleFormState['status']) => {
+  const handleStatusChange = (status: ClinicalEditableStatus) => {
     setForm((current) => ({
       ...current,
       status,
@@ -227,6 +232,11 @@ export function useClinicalLeaveSchedule(role: ClinicalRole) {
 
     if (form.workDate < todayDateKey) {
       setFormError('Past dates cannot be edited.');
+      return;
+    }
+
+    if (selectedSchedule?.status === 'holiday') {
+      setFormError('This date is marked as a clinic holiday.');
       return;
     }
 
@@ -285,6 +295,11 @@ export function useClinicalLeaveSchedule(role: ClinicalRole) {
       return;
     }
 
+    if (selectedSchedule.status === 'holiday') {
+      setFormError('This date is marked as a clinic holiday.');
+      return;
+    }
+
     setDeleting(true);
 
     try {
@@ -332,6 +347,7 @@ export function useClinicalLeaveSchedule(role: ClinicalRole) {
     handleSubmit,
     hasAccess,
     isFetching,
+    isHolidayLocked,
     isLoading,
     month,
     scheduleEntries,

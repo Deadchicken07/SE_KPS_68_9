@@ -614,10 +614,6 @@ export default function AppointmentSchedulePage() {
     setPaymentFormError(null);
   }, []);
 
-  if (loading) {
-    return <PageSkeleton cards={[{ rows: 4 }, { rows: 10 }]} />;
-  }
-
   const handleRescheduleSubmit = useCallback(async () => {
     if (!rescheduleForm) {
       return;
@@ -743,6 +739,10 @@ export default function AppointmentSchedulePage() {
       window.clearInterval(timer);
     };
   }, []);
+
+  if (loading) {
+    return <PageSkeleton cards={[{ rows: 4 }, { rows: 10 }]} />;
+  }
 
   return (
     <section className="appt-shell">

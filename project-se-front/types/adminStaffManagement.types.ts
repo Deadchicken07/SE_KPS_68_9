@@ -3,6 +3,7 @@ export type AdminStaffStatus = "ACTIVE" | "INACTIVE";
 
 export interface AdminStaffRecord {
   id: number;
+  title: string | null;
   name: string;
   surName: string;
   fullName: string;
@@ -20,6 +21,7 @@ export interface AdminStaffRecord {
 
 export interface AdminStaffFormValues {
   email: string;
+  title?: string;
   name: string;
   surName: string;
   password?: string;

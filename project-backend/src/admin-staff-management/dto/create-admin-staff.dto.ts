@@ -1,5 +1,6 @@
 export class CreateAdminStaffDto {
   email!: string;
+  title?: string;
   name!: string;
   surName!: string;
   password!: string;

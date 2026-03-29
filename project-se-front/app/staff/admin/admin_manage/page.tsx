@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { ColumnsType } from "antd/es/table";
 import {
   Button,
@@ -61,15 +62,25 @@ const activateActionButtonStyle = {
   color: "#52c41a",
 } as const;
 
+const readOnlySelectStyle = {
+  width: "100%",
+} as const;
+
 const staffStatusLabelMap: Record<AdminStaffRecord["status"], string> = {
   ACTIVE: "ปฏิบัติงาน",
-  INACTIVE: "พ้นสภาพ",
+  INACTIVE: "ลบ",
 };
+
+type StaffNotice = {
+  type: "success" | "error";
+  content: string;
+} | null;
 
 export default function AdminManagePage() {
   const [messageApi, contextHolder] = message.useMessage();
   const [modalApi, modalContextHolder] = Modal.useModal();
   const [staffForm] = Form.useForm<AdminStaffFormValues>();
+  const [notice, setNotice] = useState<StaffNotice>(null);
   const {
     hasAccess,
     staffs,
@@ -94,6 +105,18 @@ export default function AdminManagePage() {
     label: staffStatusLabelMap[item.value as AdminStaffRecord["status"]],
   }));
 
+  useEffect(() => {
+    if (!notice) {
+      return;
+    }
+
+    messageApi.open({
+      type: notice.type,
+      content: notice.content,
+    });
+    setNotice(null);
+  }, [messageApi, notice]);
+
   if (isLoading) {
     return <PageSkeleton cards={[{ rows: 4 }, { rows: 10 }]} />;
   }
@@ -101,6 +124,7 @@ export default function AdminManagePage() {
   const handleOpenEdit = (record: AdminStaffRecord) => {
     staffForm.setFieldsValue({
       email: record.email ?? "",
+      title: record.title ?? "",
       name: record.name,
       surName: record.surName,
       roleId: record.roleId,
@@ -115,7 +139,10 @@ export default function AdminManagePage() {
 
   const handleSaveStaff = async () => {
     if (!editingStaff) {
-      messageApi.error("ไม่พบข้อมูลบุคลากรที่ต้องการแก้ไข");
+      setNotice({
+        type: "error",
+        content: "ไม่พบข้อมูลบุคลากรที่ต้องการแก้ไข",
+      });
       return;
     }
 
@@ -123,19 +150,19 @@ export default function AdminManagePage() {
     const result = await updateStaff(editingStaff.id, values);
 
     if (result.ok) {
-      messageApi.success(result.message);
+      setNotice({ type: "success", content: result.message });
       staffForm.resetFields();
       return;
     }
 
-    messageApi.error(result.message);
+    setNotice({ type: "error", content: result.message });
   };
 
   const handleSearch = async () => {
     const result = await fetchStaffs();
 
     if (!result.ok) {
-      messageApi.error(result.message);
+      setNotice({ type: "error", content: result.message });
     }
   };
 
@@ -150,11 +177,11 @@ export default function AdminManagePage() {
         onOk: async () => {
           const result = await deactivateStaff(record.id);
           if (result.ok) {
-            messageApi.success(result.message);
+            setNotice({ type: "success", content: result.message });
             return;
           }
 
-          messageApi.error(result.message);
+          setNotice({ type: "error", content: result.message });
         },
       });
       return;
@@ -168,11 +195,11 @@ export default function AdminManagePage() {
       onOk: async () => {
         const result = await setStaffStatus(record.id, "ACTIVE");
         if (result.ok) {
-          messageApi.success(result.message);
+          setNotice({ type: "success", content: result.message });
           return;
         }
 
-        messageApi.error(result.message);
+        setNotice({ type: "error", content: result.message });
       },
     });
   };
@@ -323,7 +350,15 @@ export default function AdminManagePage() {
       >
         <Form form={staffForm} layout="vertical">
           <Row gutter={16}>
-            <Col xs={24} md={12}>
+            <Col xs={24} md={8}>
+              <Form.Item name="title" label="คำนำหน้าชื่อ">
+                <Input
+                  className="input"
+                  placeholder="เช่น นาย, นางสาว, นพ., พญ."
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={8}>
               <Form.Item
                 name="name"
                 label="ชื่อ"
@@ -332,7 +367,7 @@ export default function AdminManagePage() {
                 <Input className="input" placeholder="ชื่อ" />
               </Form.Item>
             </Col>
-            <Col xs={24} md={12}>
+            <Col xs={24} md={8}>
               <Form.Item
                 name="surName"
                 label="นามสกุล"
@@ -350,7 +385,7 @@ export default function AdminManagePage() {
                   { type: "email", message: "รูปแบบอีเมลไม่ถูกต้อง" },
                 ]}
               >
-                <Input className="input" placeholder="example@jitdee.com" />
+                <Input className="input" placeholder="example@jitdee.com" disabled />
               </Form.Item>
             </Col>
             <Col xs={24} md={12}>
@@ -359,7 +394,12 @@ export default function AdminManagePage() {
                 label="ตำแหน่ง"
                 rules={[{ required: true, message: "กรุณาเลือกตำแหน่ง" }]}
               >
-                <Select options={ADMIN_STAFF_ROLE_OPTIONS} />
+                <Select
+                  options={ADMIN_STAFF_ROLE_OPTIONS}
+                  disabled
+                  suffixIcon={null}
+                  style={readOnlySelectStyle}
+                />
               </Form.Item>
             </Col>
             <Col xs={24} md={12}>
@@ -373,7 +413,7 @@ export default function AdminManagePage() {
             </Col>
             <Col xs={24} md={12}>
               <Form.Item name="phone" label="เบอร์โทรศัพท์">
-                <Input className="input" placeholder="08X-XXX-XXXX" />
+                <Input className="input" placeholder="08X-XXX-XXXX" disabled />
               </Form.Item>
             </Col>
             <Col xs={24} md={12}>
