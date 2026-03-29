@@ -99,13 +99,10 @@ export class PhamaHomeService {
 
   async getOrders() {
     const where: Prisma.consultationsWhereInput = {
-      prescription_items: {
-        some: {},
-      },
       receipts: {
         some: {},
       },
-    }
+    };
 
     const consultations = await this.prisma.consultations.findMany({
       ...consultationArgs,
