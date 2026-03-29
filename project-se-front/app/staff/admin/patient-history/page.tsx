@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { message } from "antd";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 import styles from "./page.module.css";
 import { usePharmacistPatientHistory } from "@/hooks/usePharmacistPatientHistory";
 
@@ -59,6 +60,10 @@ export default function PatientHistoryPage() {
       messageApi.error(result.message);
     }
   };
+
+  if (loading) {
+    return <PageSkeleton cards={[{ rows: 4 }, { rows: 8 }]} />;
+  }
 
   return (
     <main className={styles.page}>
