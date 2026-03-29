@@ -42,6 +42,7 @@ export const roleLinks: Record<Roles, NavLinks[]> = {
     { name: "Clinic Holiday", href: "/staff/admin/admin_work" },
     { name: "Admin Report", href: "/staff/admin/admin-report" },
     { name: "Add Staff", href: "/staff/admin/add-staff" },
+    { name: "Manage Staff", href: "/staff/admin/admin_manage" },
     { name: "Patient History", href: "/staff/admin/patient-history" },
     { name: "Payment Verification", href: "/staff/admin/payment-verification" },
     { name: "Walk-in Appointment", href: "/staff/admin/walkin-appointment" },

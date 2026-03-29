@@ -17,6 +17,7 @@ import { ResponsesModule } from './responses/responses.module';
 import { ConsultationsModule } from './consultations/consultations.module';
 import { PharmacistModule } from './pharmacist/pharmacist.module';
 import { JitsiMeetModule } from './jitsi-meet/jitsi-meet.module';
+import { AdminStaffManagementModule } from './admin-staff-management/admin-staff-management.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { JitsiMeetModule } from './jitsi-meet/jitsi-meet.module';
     ConsultationsModule,
     PharmacistModule,
     JitsiMeetModule,
+    AdminStaffManagementModule,
   ],
   controllers: [AppController],
   providers: [AppService],

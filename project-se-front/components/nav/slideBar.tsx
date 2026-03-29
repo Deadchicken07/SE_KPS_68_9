@@ -40,6 +40,7 @@ const navNameIconMap = {
   "med inventory": AppstoreOutlined,
   "payment verification": AuditOutlined,
   "add staff": UserAddOutlined,
+  "manage staff": UserAddOutlined,
   "walk-in appointment": FileDoneOutlined,
 } as const;
 
@@ -47,6 +48,7 @@ const navHrefIconMap = {
   "/staff/admin/admin-home": HomeOutlined,
   "/staff/admin/admin_work": CalendarOutlined,
   "/staff/admin/admin-report": FileTextOutlined,
+  "/staff/admin/admin_manage": UserAddOutlined,
   "/staff/admin/add-staff": UserAddOutlined,
   "/staff/admin/patient-history": FolderOpenOutlined,
   "/staff/admin/payment-verification": AuditOutlined,
