@@ -5,7 +5,7 @@ import {
   PHARMACIST_HOME_STATUS_META,
   formatPharmacistHomeDateTime,
   formatPharmacistHomeMoney,
-  pharmacistHomeConsultationTotal,
+  pharmacistHomeMedicineTotal,
   pharmacistHomeDeliveryModeLabel,
   pharmacistHomeDisplayStatus,
   pharmacistHomeFullName,
@@ -101,9 +101,9 @@ export function PharmacistHomeQueueCard({
             active={active}
           />
           <QueueMeta
-            label="ยอดรวม"
+            label="ค่ายา"
             value={formatPharmacistHomeMoney(
-              pharmacistHomeConsultationTotal(consultation),
+              pharmacistHomeMedicineTotal(consultation),
             )}
             active={active}
           />

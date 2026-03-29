@@ -83,15 +83,9 @@ export function pharmacistHomeTextValue(
     : String(value)
 }
 
-export function pharmacistHomeConsultationTotal(
+export function pharmacistHomeMedicineTotal(
   consultation: PharmacistHomeConsultation,
 ) {
-  const receipt = consultation.receipts[0] ?? null
-
-  if (receipt?.total !== null && receipt?.total !== undefined) {
-    return receipt.total
-  }
-
   return consultation.prescription_items.reduce((sum, item) => {
     return sum + (item.medication?.retail ?? 0) * (item.quantity ?? 0)
   }, 0)
