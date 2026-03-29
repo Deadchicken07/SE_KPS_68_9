@@ -113,7 +113,7 @@ export const useStaffAdminHome = () => {
           },
         );
 
-        const payload = await response.json().catch(() => null);
+        const payload = await response.json().catch(() => { return null; });
 
         if (!response.ok) {
           if (response.status === 401 || response.status === 403) {

@@ -198,12 +198,12 @@ export default function PaymentVerificationPage() {
             title: 'เวลานัด',
             dataIndex: 'time',
             key: 'time',
-            render: (time: string) => <span>{time} น.</span>,
+            render: (time: string) => <span>{time ? time + ' น.' : '-'}</span>,
         },
         {
             title: 'ค่าบริการ',
-            dataIndex: 'price',
-            key: 'price',
+            dataIndex: 'amount',
+            key: 'amount',
             render: (val: number) => <span>{val ? val.toLocaleString() + ' ฿' : '-'}</span>,
         },
         {
@@ -239,13 +239,13 @@ export default function PaymentVerificationPage() {
             key: 'action',
             render: (_: any, record: any) => (
                 <Popconfirm
-                    title="ยืนยันการยกเลิกการนัดหมายนี้?"
+                    title="ปฏิเสธการชำระเงิน ของนัดหมายนี้?"
                     onConfirm={() => handleReject(record.id)}
-                    okText="ยืนยัน"
+                    okText="ยืนยันปฏิเสธ"
                     cancelText="ยกเลิก"
                     placement="left"
                 >
-                    <Button danger size="small">ยกเลิกนัดหมาย</Button>
+                    <Button danger size="small">ปฏิเสธการชำระเงิน</Button>
                 </Popconfirm>
             ),
         },
@@ -407,7 +407,7 @@ export default function PaymentVerificationPage() {
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed #d1d5db', paddingTop: 8, marginTop: 4 }}>
                                 <span style={{ fontWeight: 700, color: '#4b5563' }}>ยอดค่าบริการ</span>
-                                <span style={{ fontWeight: 800, color: '#059669', fontSize: 18 }}>{selectedAppointment.price ? selectedAppointment.price.toLocaleString() : '0'} ฿</span>
+                                <span style={{ fontWeight: 800, color: '#059669', fontSize: 18 }}>{selectedAppointment.amount ? selectedAppointment.amount.toLocaleString() : '0'} ฿</span>
                             </div>
                         </div>
 

@@ -263,39 +263,58 @@ export class AppointmentsService {
   }
 
   async getAllPaidAppointments(): Promise<any[]> {
-    const receipts = await this.prisma.receipts.findMany({
-      where: { payment_status: 'Paid' },
+    // Fetch all fees to map by id manually
+    const fees = await this.prisma.fees.findMany();
+    const feeMap = new Map(fees.map((f) => [f.id, Number(f.price_per_hours || 0)]));
+
+    // Admin needs to see all appointments for verification history
+    const appointments = (await this.prisma.appointments.findMany({
       include: {
-        users: {
+        users_appointments_user_idTousers: {
           select: { name: true, sur_name: true, user_id: true, title: true },
         },
-        consultations: {
+        users_appointments_staff_idTousers: {
           include: {
-            users_consultations_staff_idTousers: {
-              select: { name: true, sur_name: true },
-            },
-            prescription_items: { include: { medications: true } },
+            roles: true,
           },
         },
       },
+      orderBy: { id: 'desc' },
+    })) as any[];
+
+    const defaultRate = 500;
+
+    return appointments.map((a) => {
+      let amount = defaultRate;
+      const range = this.tryParseTimeRange(a.time_select);
+      if (range) {
+        const durationHours = (range.endMinutes - range.startMinutes) / 60;
+        const feeId = a.users_appointments_staff_idTousers?.roles?.fee_id;
+        const hourlyRate =
+          feeId && feeMap.has(feeId) ? feeMap.get(feeId)! : defaultRate;
+        amount = durationHours * hourlyRate;
+      }
+
+      return {
+        id: a.id,
+        patientName: this.buildPatientName(
+          a.users_appointments_user_idTousers?.title,
+          a.users_appointments_user_idTousers?.name,
+          a.users_appointments_user_idTousers?.sur_name,
+          a.users_appointments_user_idTousers?.user_id || a.user_id || 0,
+        ),
+        staffName: this.buildConsultantName(
+          a.users_appointments_staff_idTousers?.name,
+          a.users_appointments_staff_idTousers?.sur_name,
+        ),
+        date: a.appointment_date ? this.dateToIsoDate(a.appointment_date) : null,
+        time: a.time_select,
+        appointmentType: a.appointment_type,
+        status: a.status,
+        slipUrl: a.deposit_slip_file,
+        amount,
+      };
     });
-    return receipts.map((r) => ({
-      id: r.id,
-      patientName: this.buildPatientName(
-        r.users?.title,
-        r.users?.name,
-        r.users?.sur_name,
-        r.users?.user_id || r.user_id || 0,
-      ),
-      staffName: this.buildConsultantName(
-        r.consultations?.users_consultations_staff_idTousers?.name,
-        r.consultations?.users_consultations_staff_idTousers?.sur_name,
-      ),
-      medicineCost: r.total ? Number(r.total) : 0,
-      paymentStatus: r.payment_status,
-      fulfillmentStatus: r.status,
-      createdAt: r.created_at,
-    }));
   }
 
   async getAllMedicinePayments(): Promise<any[]> {
@@ -432,7 +451,10 @@ export class AppointmentsService {
   async rejectPayment(appointmentId: number) {
     return this.prisma.appointments.update({
       where: { id: appointmentId },
-      data: { status: 'Not_paying' } as any,
+      data: {
+        status: 'Not_paying',
+        deposit_slip_file: null,
+      } as any,
     });
   }
 
@@ -462,7 +484,7 @@ export class AppointmentsService {
   ) {
     return this.prisma.appointments.update({
       where: { id: appointmentId },
-      data: { status: 'Paid', slip_file: slipUrl } as any,
+      data: { status: 'Paid', deposit_slip_file: slipUrl } as any,
     });
   }
 

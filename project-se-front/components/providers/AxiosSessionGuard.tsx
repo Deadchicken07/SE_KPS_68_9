@@ -24,6 +24,15 @@ export default function AxiosSessionGuard() {
   const isRedirectingRef = useRef(false);
 
   useEffect(() => {
+    const requestInterceptorId = axios.interceptors.request.use((config) => {
+      const token = localStorage.getItem("access_token");
+      if (token) {
+        config.headers = config.headers ?? {};
+        config.headers["Authorization"] = `Bearer ${token}`;
+      }
+      return config;
+    });
+
     const interceptorId = axios.interceptors.response.use(
       (response) => response,
       (error) => {
@@ -55,6 +64,7 @@ export default function AxiosSessionGuard() {
     );
 
     return () => {
+      axios.interceptors.request.eject(requestInterceptorId);
       axios.interceptors.response.eject(interceptorId);
     };
   }, []);

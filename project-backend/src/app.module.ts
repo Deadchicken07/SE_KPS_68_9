@@ -21,8 +21,11 @@ import { PhamaHomeModule } from './phama-home/phama-home.module';
 import { JitsiMeetModule } from './jitsi-meet/jitsi-meet.module';
 import { AdminStaffManagementModule } from './admin-staff-management/admin-staff-management.module';
 
+import { ConfigModule } from '@nestjs/config';
+
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     UserModule,
     PrismaModule,
     AuthModule,
