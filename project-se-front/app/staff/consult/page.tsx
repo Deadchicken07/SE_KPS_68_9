@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import {
   Card,
   Select,
@@ -30,7 +30,7 @@ const { TextArea } = Input;
 
 let nextId = 1;
 
-export default function ConsultPage() {
+function ConsultPageContent() {
    const router = useRouter();
   const [messageApi, contextHolder] = message.useMessage();
   const { user, loading } = useUser();
@@ -306,5 +306,13 @@ export default function ConsultPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function ConsultPage() {
+  return (
+    <Suspense fallback={null}>
+      <ConsultPageContent />
+    </Suspense>
   );
 }

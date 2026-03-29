@@ -5,13 +5,17 @@ import {
   AdminReportErrorPanel,
   AdminReportFilterSection,
   AdminReportHeader,
-  AdminReportLoadingSection,
   AdminReportSummarySection,
 } from "@/components/staff/AdminReport";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 import { useAdminReport } from "@/hooks/useAdminReport";
 
 export default function AdminReportPage() {
   const state = useAdminReport();
+
+  if (state.loading) {
+    return <PageSkeleton cards={[{ rows: 4 }, { rows: 5 }, { rows: 8 }]} />;
+  }
 
   if (!state.hasAccess) {
     return null;
@@ -23,8 +27,6 @@ export default function AdminReportPage() {
         <AdminReportHeader />
         <AdminReportFilterSection state={state} />
         <AdminReportErrorPanel state={state} />
-
-        {state.loading ? <AdminReportLoadingSection /> : null}
 
         {!state.loading && state.data ? (
           <>

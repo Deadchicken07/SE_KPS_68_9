@@ -19,6 +19,7 @@ const consultationArgs = Prisma.validator<Prisma.consultationsDefaultArgs>()({
     users_consultations_user_idTousers: {
       select: {
         user_id: true,
+        title: true,
         name: true,
         sur_name: true,
         email: true,
@@ -29,6 +30,7 @@ const consultationArgs = Prisma.validator<Prisma.consultationsDefaultArgs>()({
     users_consultations_staff_idTousers: {
       select: {
         user_id: true,
+        title: true,
         name: true,
         sur_name: true,
         info: true,
@@ -42,6 +44,7 @@ const consultationArgs = Prisma.validator<Prisma.consultationsDefaultArgs>()({
     users_consultations_pharmacist_idTousers: {
       select: {
         user_id: true,
+        title: true,
         name: true,
         sur_name: true,
         info: true,
@@ -258,6 +261,7 @@ export class PhamaHomeService {
       patient: consultation.users_consultations_user_idTousers
         ? {
             user_id: consultation.users_consultations_user_idTousers.user_id,
+            title: consultation.users_consultations_user_idTousers.title,
             name: consultation.users_consultations_user_idTousers.name,
             sur_name: consultation.users_consultations_user_idTousers.sur_name,
             email: consultation.users_consultations_user_idTousers.email,
@@ -269,6 +273,7 @@ export class PhamaHomeService {
       staff: consultation.users_consultations_staff_idTousers
         ? {
             user_id: consultation.users_consultations_staff_idTousers.user_id,
+            title: consultation.users_consultations_staff_idTousers.title,
             name: consultation.users_consultations_staff_idTousers.name,
             sur_name: consultation.users_consultations_staff_idTousers.sur_name,
             info: consultation.users_consultations_staff_idTousers.info,
@@ -281,6 +286,8 @@ export class PhamaHomeService {
         ? {
             user_id:
               consultation.users_consultations_pharmacist_idTousers.user_id,
+            title:
+              consultation.users_consultations_pharmacist_idTousers.title,
             name: consultation.users_consultations_pharmacist_idTousers.name,
             sur_name:
               consultation.users_consultations_pharmacist_idTousers.sur_name,

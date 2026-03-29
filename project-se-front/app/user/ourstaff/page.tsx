@@ -1,6 +1,7 @@
 'use client';
 
 import { useStaff } from '@/hooks/useStaff';
+import PageSkeleton from '@/components/ui/PageSkeleton';
 
 const roleColorMap: Record<string, { badge: string; accent: string }> = {
     'จิตแพทย์': { badge: '#e0e7ff', accent: '#4f46e5' },
@@ -9,6 +10,10 @@ const roleColorMap: Record<string, { badge: string; accent: string }> = {
 
 const App = () => {
     const { staffs: staffList, loading, error } = useStaff();
+
+    if (loading) {
+        return <PageSkeleton cards={[{ rows: 4 }, { rows: 8 }]} />;
+    }
 
     return (
         <>

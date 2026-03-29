@@ -20,6 +20,7 @@ import {
   usePharmacistMedications,
   type MedicationFormValues,
 } from "@/hooks/usePharmacistMedications";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 import type { Medication } from "@/types/pharmacist.types";
 
 const currencyFormatter = new Intl.NumberFormat("th-TH", {
@@ -53,6 +54,10 @@ export default function PharmacistMedicationPage() {
     openEditMedicationModal,
     closeMedicationModal,
   } = usePharmacistMedications();
+
+  if (medicationsLoading) {
+    return <PageSkeleton cards={[{ rows: 4 }, { rows: 10 }]} />;
+  }
 
   const handleOpenCreate = () => {
     medicationForm.resetFields();

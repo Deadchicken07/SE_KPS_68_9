@@ -65,7 +65,7 @@ type TimeRange = {
 
 @Injectable()
 export class AppointmentsService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async getMySchedule(userId: number): Promise<AppointmentScheduleResponse> {
     try {
@@ -113,11 +113,13 @@ export class AppointmentsService {
               record.users_appointments_staff_idTousers?.name,
               record.users_appointments_staff_idTousers?.sur_name,
             ),
-            avatarUrl: record.users_appointments_staff_idTousers?.file_name ?? null,
+            avatarUrl:
+              record.users_appointments_staff_idTousers?.file_name ?? null,
             appointmentType: record.appointment_type ?? null,
             paymentStatus: record.status ?? null,
             medicinePaymentStatus: null,
-            meetLink: record.appointment_type === 'online' ? clinicMeetUrl : null,
+            meetLink:
+              record.appointment_type === 'online' ? clinicMeetUrl : null,
             hasPrescription: false,
             hasConsultation: false,
           };
@@ -127,7 +129,12 @@ export class AppointmentsService {
             sortValue: this.getSortValue(appointmentDate, parsedRange),
           };
         })
-        .filter((entry): entry is { item: AppointmentScheduleItem; sortValue: number } => entry !== null)
+        .filter(
+          (
+            entry,
+          ): entry is { item: AppointmentScheduleItem; sortValue: number } =>
+            entry !== null,
+        )
         .sort((a, b) => a.sortValue - b.sortValue)
         .map((entry) => entry.item);
 
@@ -166,13 +173,18 @@ export class AppointmentsService {
 
       const pastMapped = consultationRecords
         .map((c) => {
-          const dateKey = c.created_at ? this.dateToIsoDate(c.created_at) : null;
+          const dateKey = c.created_at
+            ? this.dateToIsoDate(c.created_at)
+            : null;
 
           // Try to link this consultation back to an appointment item for the frontend modal
           // Logic: Match by staff_id and dateKey
-          const matchedAppt = appointmentRecords.find(a =>
-            a.staff_id === c.staff_id &&
-            (a.appointment_date ? this.dateToIsoDate(a.appointment_date) : null) === dateKey
+          const matchedAppt = appointmentRecords.find(
+            (a) =>
+              a.staff_id === c.staff_id &&
+              (a.appointment_date
+                ? this.dateToIsoDate(a.appointment_date)
+                : null) === dateKey,
           );
 
           const consultantName = this.buildConsultantName(
@@ -183,8 +195,12 @@ export class AppointmentsService {
           const firstReceipt = c.receipts?.[0];
           const medicineTotal = firstReceipt?.receipt_details
             ? firstReceipt.receipt_details
-              .filter((d: any) => d.item_type === 'medicine')
-              .reduce((sum: number, d: any) => sum + (d.total_price ? Number(d.total_price) : 0), 0)
+                .filter((d: any) => d.item_type === 'medicine')
+                .reduce(
+                  (sum: number, d: any) =>
+                    sum + (d.total_price ? Number(d.total_price) : 0),
+                  0,
+                )
             : null;
 
           const item: AppointmentScheduleItem = {
@@ -381,7 +397,9 @@ export class AppointmentsService {
         );
 
         // Also reject past times if it's today (using Bangkok timezone)
-        const nowInThai = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
+        const nowInThai = new Date(
+          new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }),
+        );
         const todayInThai = this.toLocalDateKey(nowInThai);
 
         if (todayInThai === trimmed) {
@@ -482,8 +500,8 @@ export class AppointmentsService {
         },
       },
       orderBy: {
-        id: 'desc'
-      }
+        id: 'desc',
+      },
     });
 
     return records.map((r) => {
@@ -522,7 +540,7 @@ export class AppointmentsService {
   async getAllMedicinePayments() {
     const receipts = await this.prisma.receipts.findMany({
       orderBy: {
-        id: 'desc'
+        id: 'desc',
       },
       include: {
         users: {
@@ -589,7 +607,11 @@ export class AppointmentsService {
     });
   }
 
-  async getAppointmentDetails(userId: number, appointmentId: number, isAdmin = false) {
+  async getAppointmentDetails(
+    userId: number,
+    appointmentId: number,
+    isAdmin = false,
+  ) {
     const appointment = await this.prisma.appointments.findUnique({
       where: { id: appointmentId },
       include: {
@@ -679,7 +701,9 @@ export class AppointmentsService {
       });
     } catch (error) {
       console.error('Failed to delete appointment on reject:', error);
-      throw new BadRequestException('Cannot delete appointment. It may have dependent data.');
+      throw new BadRequestException(
+        'Cannot delete appointment. It may have dependent data.',
+      );
     }
 
     return {
@@ -697,7 +721,8 @@ export class AppointmentsService {
       throw new NotFoundException('Receipt not found');
     }
 
-    const newStatus = receipt.status === 'pending_delivery' ? 'delivered' : 'picked_up';
+    const newStatus =
+      receipt.status === 'pending_delivery' ? 'delivered' : 'picked_up';
 
     await this.prisma.receipts.update({
       where: { id: receiptId },
@@ -729,7 +754,9 @@ export class AppointmentsService {
       });
     } catch (error) {
       console.error('Failed to delete receipt on reject:', error);
-      throw new BadRequestException('Cannot delete receipt. It may have dependent data.');
+      throw new BadRequestException(
+        'Cannot delete receipt. It may have dependent data.',
+      );
     }
 
     return {
@@ -1138,8 +1165,8 @@ export class AppointmentsService {
         record.users_appointments_user_idTousers?.name,
         record.users_appointments_user_idTousers?.sur_name,
         record.users_appointments_user_idTousers?.user_id ??
-        record.user_id ??
-        null,
+          record.user_id ??
+          null,
       ),
       appointmentDate: record.appointment_date
         ? this.dateToIsoDate(record.appointment_date)
@@ -1260,7 +1287,12 @@ export class AppointmentsService {
     }
 
     if (!consultation) {
-      return { consultation: null, prescriptionItems: [], receipt: null, receiptDetails: [] };
+      return {
+        consultation: null,
+        prescriptionItems: [],
+        receipt: null,
+        receiptDetails: [],
+      };
     }
 
     const prescriptionItems = consultation.prescription_items.map((item) => ({
@@ -1268,18 +1300,23 @@ export class AppointmentsService {
       medicationName: item.medications?.name ?? '-',
       quantity: item.quantity ?? 0,
       comment: item.comment ?? '',
-      price: item.medications?.retail ? Number(item.medications.retail) : (item.medications?.price ? Number(item.medications.price) : 0),
+      price: item.medications?.retail
+        ? Number(item.medications.retail)
+        : item.medications?.price
+          ? Number(item.medications.price)
+          : 0,
     }));
 
     const receipt = consultation.receipts?.[0] ?? null;
-    const receiptDetails = receipt?.receipt_details?.map((d) => ({
-      id: d.id,
-      itemName: d.item_name ?? '-',
-      itemType: d.item_type ?? null,
-      quantity: d.quantity ?? 0,
-      unitPrice: d.unit_price ? Number(d.unit_price) : 0,
-      totalPrice: d.total_price ? Number(d.total_price) : 0,
-    })) ?? [];
+    const receiptDetails =
+      receipt?.receipt_details?.map((d) => ({
+        id: d.id,
+        itemName: d.item_name ?? '-',
+        itemType: d.item_type ?? null,
+        quantity: d.quantity ?? 0,
+        unitPrice: d.unit_price ? Number(d.unit_price) : 0,
+        totalPrice: d.total_price ? Number(d.total_price) : 0,
+      })) ?? [];
 
     const serviceFee = receiptDetails
       .filter((d) => d.itemType === 'fee' || d.itemType === 'service')
@@ -1296,12 +1333,14 @@ export class AppointmentsService {
         createdAt: consultation.created_at,
       },
       prescriptionItems,
-      receipt: receipt ? {
-        id: receipt.id,
-        total: receipt.total ? Number(receipt.total) : 0,
-        status: receipt.status,
-        tracking: receipt.tracking,
-      } : null,
+      receipt: receipt
+        ? {
+            id: receipt.id,
+            total: receipt.total ? Number(receipt.total) : 0,
+            status: receipt.status,
+            tracking: receipt.tracking,
+          }
+        : null,
       receiptDetails,
       serviceFee,
       medicineCost,

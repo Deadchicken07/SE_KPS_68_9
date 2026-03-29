@@ -19,6 +19,7 @@ import {
   receiptStatusSelectOptions,
   type ReceiptStatus,
 } from "@/types/receipt-status.types";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 
 const currencyFormatter = new Intl.NumberFormat("th-TH", {
   style: "currency",
@@ -48,6 +49,10 @@ export default function PharmacistDeliveryHistoryPage() {
     setDeliveryStatus,
     fetchDeliveries,
   } = usePharmacistDeliveryHistory();
+
+  if (deliveriesLoading) {
+    return <PageSkeleton cards={[{ rows: 4 }, { rows: 10 }]} />;
+  }
 
   const deliveryColumns: ColumnsType<DeliveryHistory> = [
     { title: "เลขใบเสร็จ", dataIndex: "receiptId", width: 110 },
