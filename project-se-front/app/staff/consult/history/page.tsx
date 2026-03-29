@@ -1,4 +1,5 @@
 "use client";
+import { Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useConsultations } from "@/hooks/useConsultation";
@@ -22,7 +23,7 @@ import axios from "axios";
 const API = process.env.NEXT_PUBLIC_API_URL;
 import { ResponseDetail, ResponseSummary } from "@/types/response.types";
 
-export default function ConsultHistoryPage() {
+function ConsultHistoryPageContent() {
   const searchParams = useSearchParams();
   const userId = Number(searchParams.get("userId"));
   const router = useRouter();
@@ -317,5 +318,13 @@ export default function ConsultHistoryPage() {
         ))}
       </Modal>
     </div>
+  );
+}
+
+export default function ConsultHistoryPage() {
+  return (
+    <Suspense fallback={null}>
+      <ConsultHistoryPageContent />
+    </Suspense>
   );
 }

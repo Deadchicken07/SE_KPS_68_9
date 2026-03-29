@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import {
   Button,
   Card,
@@ -64,7 +64,7 @@ const renderStatusTag = (status: string | null) => {
   return <Tag color={receiptStatusColorMap[typedStatus] ?? "default"}>{status}</Tag>;
 };
 
-export default function PharmacistOrderPage() {
+function PharmacistOrderPageContent() {
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm<OrderFormValues>();
   const [selectedConsultationId, setSelectedConsultationId] = useState<number | null>(null);
@@ -424,5 +424,13 @@ export default function PharmacistOrderPage() {
         </Col>
       </Row>
     </main>
+  );
+}
+
+export default function PharmacistOrderPage() {
+  return (
+    <Suspense fallback={null}>
+      <PharmacistOrderPageContent />
+    </Suspense>
   );
 }
