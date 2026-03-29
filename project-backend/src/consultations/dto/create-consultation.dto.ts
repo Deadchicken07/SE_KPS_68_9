@@ -8,5 +8,6 @@ export class CreateConsultationDto {
   staff_id: number;
   note: string;
   is_online: boolean;
+  appointment_id?: number;
   prescription_item? : CreatePrescriptionItemDto[];
 }

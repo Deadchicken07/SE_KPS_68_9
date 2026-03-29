@@ -1,7 +1,6 @@
 .wrapper {
   min-height: calc(100vh - 120px);
   padding: 32px 24px;
-  background: linear-gradient(135deg, #f0faf8 0%, #eef5ff 100%);
 }
 
 .examCard {

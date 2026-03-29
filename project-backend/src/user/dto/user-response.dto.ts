@@ -1,6 +1,8 @@
 export class UserResponseDto {
   userId: number;
+  title: string | null;
   name: string;
+  sur_name: string | null;
   email: string | null;
 }
 
