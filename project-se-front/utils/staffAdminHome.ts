@@ -164,6 +164,13 @@ export function parseErrorMessage(payload: unknown) {
   return "โหลดข้อมูลไม่สำเร็จ";
 }
 
+export const parseStaffAdminHomeErrorMessage = parseErrorMessage;
+
+export function normalizeScheduleNoteText(value?: string | null) {
+  const trimmed = value?.trim();
+  return trimmed ?? "";
+}
+
 function toDateKey(value: Date) {
   return [
     value.getUTCFullYear(),

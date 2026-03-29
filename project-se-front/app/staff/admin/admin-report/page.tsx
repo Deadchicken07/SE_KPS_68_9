@@ -28,8 +28,6 @@ export default function AdminReportPage() {
         <AdminReportFilterSection state={state} />
         <AdminReportErrorPanel state={state} />
 
-        {state.loading ? <AdminReportLoadingSection /> : null}
-
         {!state.loading && state.data ? (
           <>
             <AdminReportSummarySection state={state} />

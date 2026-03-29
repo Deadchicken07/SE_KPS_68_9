@@ -17,6 +17,7 @@ export const userProtectedPrefixes = [
   "/user/profile",
   "/user/schedule",
   "/user/payment",
+  "/user/payment-medicine",
 ] as const;
 
 export const mapRoleIdToRole = (roleId: number | null): Roles | null => {
