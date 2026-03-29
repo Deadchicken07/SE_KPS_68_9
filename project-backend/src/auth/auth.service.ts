@@ -9,7 +9,6 @@ import * as bcrypt from 'bcrypt';
 import { CreateDoctorDto, RegisterDto } from './dto/register.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { Prisma } from '@prisma/client';
-import { MailService } from '../mail/mail.service';
 import {
   normalizeEmail,
   normalizeOptionalText,
@@ -20,7 +19,6 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-    private mailService: MailService,
   ) {}
 
   async login(email: string, password: string) {
@@ -260,7 +258,6 @@ export class AuthService {
 
   async resetPasswordByOtp(email: string, newPassword: string) {
     const normalizedEmail = normalizeEmail(email);
-    this.mailService.consumeVerifiedEmail(normalizedEmail);
 
     const user = await this.prisma.users.findUnique({
       where: { email: normalizedEmail },
