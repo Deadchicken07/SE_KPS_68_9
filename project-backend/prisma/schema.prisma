@@ -63,6 +63,8 @@ model consultations {
   pharmacist_id                            Int?
   note                                     String?
   created_at                               DateTime?            @default(now()) @db.Timestamp(6)
+  appointment_id                           Int?
+  appointments                             appointments?        @relation(fields: [appointment_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "appointment_fkey")
   users_consultations_pharmacist_idTousers users?               @relation("consultations_pharmacist_idTousers", fields: [pharmacist_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
   users_consultations_staff_idTousers      users?               @relation("consultations_staff_idTousers", fields: [staff_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
   users_consultations_user_idTousers       users?               @relation("consultations_user_idTousers", fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
