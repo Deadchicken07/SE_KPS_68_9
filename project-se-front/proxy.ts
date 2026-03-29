@@ -53,7 +53,7 @@ async function getSession(request: NextRequest): Promise<SessionPayload | null> 
   }
 
   try {
-    const response = await fetch(`${API_URL}/auth/me`, {
+    const response = await fetch(`${API_URL}/auth/session`, {
       headers: {
         cookie,
       },

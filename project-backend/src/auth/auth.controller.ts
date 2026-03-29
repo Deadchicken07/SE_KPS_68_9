@@ -35,6 +35,16 @@ export class AuthController {
   getMe(@Req() req) {
     return this.authService.getMe(req.user.sub);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('session')
+  getSession(@Req() req) {
+    return {
+      sub: req.user?.sub ?? null,
+      email: req.user?.email ?? null,
+      role_id: req.user?.role_id ?? null,
+    };
+  }
   @Post('logout')
   logout(@Res({ passthrough: true }) res: Response) {
     res.clearCookie('_pgsmcmsss');
