@@ -13,7 +13,16 @@ import { CreateDoctorDto, RegisterDto } from './dto/register.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { RolesGuard } from './roles.guard';
-import type { Response } from 'express';
+import type { CookieOptions, Response } from 'express';
+
+const isProduction = process.env.NODE_ENV === 'production';
+const authCookieOptions: CookieOptions = {
+  httpOnly: true,
+  sameSite: isProduction ? 'none' : 'lax',
+  secure: isProduction,
+  path: '/',
+};
+
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
@@ -22,11 +31,7 @@ export class AuthController {
   async login(@Body() body, @Res({ passthrough: true }) res: Response) {
     const result = await this.authService.login(body.email, body.password);
 
-    res.cookie('_pgsmcmsss', result.access_token, {
-      httpOnly: true,
-      sameSite: 'none',
-      secure: true,
-    });
+    res.cookie('_pgsmcmsss', result.access_token, authCookieOptions);
 
     return { message: 'login success', access_token: result.access_token };
   }
@@ -47,7 +52,19 @@ export class AuthController {
   }
   @Post('logout')
   logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie('_pgsmcmsss');
+    res.clearCookie('_pgsmcmsss', authCookieOptions);
+    res.clearCookie('_pgsmcmsss', {
+      httpOnly: true,
+      sameSite: 'none',
+      secure: true,
+      path: '/',
+    });
+    res.clearCookie('_pgsmcmsss', {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: false,
+      path: '/',
+    });
     return { message: 'logout success' };
   }
   @Post('register')
