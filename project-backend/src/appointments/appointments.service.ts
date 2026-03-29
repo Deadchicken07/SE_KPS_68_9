@@ -265,7 +265,9 @@ export class AppointmentsService {
   async getAllPaidAppointments(): Promise<any[]> {
     // Fetch all fees to map by id manually
     const fees = await this.prisma.fees.findMany();
-    const feeMap = new Map(fees.map((f) => [f.id, Number(f.price_per_hours || 0)]));
+    const feeMap = new Map(
+      fees.map((f) => [f.id, Number(f.price_per_hours || 0)]),
+    );
 
     // Admin needs to see all appointments for verification history
     const appointments = (await this.prisma.appointments.findMany({
@@ -307,7 +309,9 @@ export class AppointmentsService {
           a.users_appointments_staff_idTousers?.name,
           a.users_appointments_staff_idTousers?.sur_name,
         ),
-        date: a.appointment_date ? this.dateToIsoDate(a.appointment_date) : null,
+        date: a.appointment_date
+          ? this.dateToIsoDate(a.appointment_date)
+          : null,
         time: a.time_select,
         appointmentType: a.appointment_type,
         status: a.status,
@@ -524,21 +528,47 @@ export class AppointmentsService {
     appointmentId: number,
     isAdmin: boolean,
   ) {
+    const fees = await this.prisma.fees.findMany();
+    const feeMap = new Map(
+      fees.map((f) => [f.id, Number(f.price_per_hours || 0)]),
+    );
     const appt = await this.prisma.appointments.findUnique({
       where: { id: appointmentId },
       include: {
         users_appointments_staff_idTousers: {
-          select: { name: true, sur_name: true, file_name: true, email: true },
+          include: {
+            roles: true,
+          },
         },
       },
     });
     if (!appt) throw new NotFoundException('Appointment not found');
+
+    const timeRange = this.tryParseTimeRange(appt.time_select);
+    const durationMinutes = timeRange
+      ? timeRange.endMinutes - timeRange.startMinutes
+      : 0;
+    const defaultRate = 500;
+    const feeId = appt.users_appointments_staff_idTousers?.roles?.fee_id;
+    const hourlyRate =
+      feeId && feeMap.has(feeId) ? feeMap.get(feeId)! : defaultRate;
+    const price =
+      durationMinutes > 0 ? (durationMinutes / 60) * hourlyRate : defaultRate;
+    const staffName = this.buildConsultantName(
+      appt.users_appointments_staff_idTousers?.name,
+      appt.users_appointments_staff_idTousers?.sur_name,
+    );
+
     return {
       ...appt,
-      consultantName: this.buildConsultantName(
-        appt.users_appointments_staff_idTousers?.name,
-        appt.users_appointments_staff_idTousers?.sur_name,
-      ),
+      consultantName: staffName,
+      staffName,
+      date: appt.appointment_date
+        ? this.dateToIsoDate(appt.appointment_date)
+        : null,
+      time: appt.time_select ?? null,
+      duration: durationMinutes,
+      price,
     };
   }
 
