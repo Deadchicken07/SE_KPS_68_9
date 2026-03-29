@@ -62,7 +62,7 @@ export default function AdminMedicationPaymentPage() {
         withCredentials: true,
       });
       
-      const data = res.data || [];
+      const data = (await res.data) || [];
       // Group by payment status (we only want ones that aren't paid yet)
       const pending = data.filter((r: any) => 
         r.payment_status !== "Paid" && 
@@ -203,13 +203,21 @@ export default function AdminMedicationPaymentPage() {
   ];
 
   return (
-    <div style={{ padding: 24, background: "#f8fafc", minHeight: "100vh" }}>
+    <div
+      style={{
+        padding: "32px 24px",
+        background:
+          "radial-gradient(circle at top left, rgba(63, 127, 109, 0.14), transparent 34%), radial-gradient(circle at bottom right, rgba(192, 144, 87, 0.12), transparent 28%), linear-gradient(180deg, #f7f1ea 0%, #f3ede4 100%)",
+        minHeight: "100vh",
+      }}
+    >
+      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
       {contextHolder}
       <Card variant="borderless" style={{ borderRadius: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, flexWrap: "wrap", gap: 16 }}>
           <div>
             <Title level={2} style={{ margin: 0, color: "#1e1b4b" }}>
-              💳 ชำระค่ายา (On-site / Walk-in)
+            ชำระค่ายา (On-site / Walk-in)
             </Title>
             <Text type="secondary">จัดการการรับชำระเงินและจ่ายยาแก่ผู้ป่วยที่คลินิก</Text>
           </div>
@@ -407,6 +415,7 @@ export default function AdminMedicationPaymentPage() {
           </div>
         )}
       </Modal>
+    </div>
     </div>
   );
 }

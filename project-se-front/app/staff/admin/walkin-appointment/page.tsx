@@ -53,7 +53,37 @@ export default function WalkinAppointmentPage() {
       const res = await axios.get(`${API}/appointments/available-slots?date=${dateStr}`, {
         withCredentials: true,
       });
-      setAvailableSlotsMap(res.data);
+      
+      const data = res.data; // Expected { bookedSlots: [...] }
+      const bookedSlots = data.bookedSlots || [];
+
+      // Define all possible working slots
+      const allPossibleSlots = [
+          '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+          '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'
+      ];
+
+      const mapFromBooked: Record<number, string[]> = {};
+
+      // Map slots to each staff
+      staffs.forEach((s: any) => {
+          const staffId = s.id || s.user_id;
+
+          // Filter booked times for this staff
+          const matchedBookings = bookedSlots
+              .filter((booking: string) => booking.startsWith(`${staffId}_`))
+              .map((booking: string) => {
+                  const timeStr = booking.split('_')[1];
+                  return timeStr ? timeStr.split(' - ')[0].trim() : '';
+              });
+
+          // Calculate available slots
+          mapFromBooked[staffId] = allPossibleSlots.filter(
+              slot => !matchedBookings.includes(slot)
+          );
+      });
+
+      setAvailableSlotsMap(mapFromBooked);
     } catch (error) {
       console.error(error);
       messageApi.error("ไม่สามารถดึงข้อมูลเวลาว่างได้");
@@ -218,7 +248,7 @@ export default function WalkinAppointmentPage() {
                 >
                   {patients.map(p => (
                     <Select.Option key={p.userId} value={p.userId}>
-                      {p.name} {p.email ? `(${p.email})` : ''} - [ID: {p.userId}]
+                      {p.name} {p.email ? `(${p.email})` : ''}
                     </Select.Option>
                   ))}
                 </Select>
