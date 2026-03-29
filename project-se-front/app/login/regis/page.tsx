@@ -1,18 +1,16 @@
 "use client";
 
-import {  useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Button, Card, Flex, Layout, notification, Typography } from "antd";
+import { Button, Card, Flex, Layout, notification, Typography } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { useNationCheck } from "@/hooks/useNationCheck";
 import { useRegister } from "@/hooks/useRegister";
 import { useLocationDropdown } from "@/hooks/useLocationDropdown";
-import { useOtpVerification } from "@/hooks/useOtpVerification";
 import type { FormErrors, RegisterForm } from "@/types/Register.types";
 import RegisterStep1Nation from "@/components/register/RegisterStep1Nation";
 import RegisterStep2Form from "@/components/register/RegisterStep2Form";
-import RegisterStep3Otp from "@/components/register/RegisterStep3Otp";
 
 
 
@@ -26,21 +24,11 @@ export default function RegisterPage() {
   const current = useLocationDropdown();
   const nation = useLocationDropdown();
 
-  const {
-    sendOtp,
-    verifyOtp,
-    sendOtpLoading,
-    verifyOtpLoading,
-    cooldown,
-    error: otpError,
-  } = useOtpVerification();
-
   const [registering, setRegistering] = useState(false);
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2>(1);
   const [errors, setErrors] = useState<FormErrors>({});
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [otp, setOtp] = useState("");
- const [api, contextHolder] = notification.useNotification();
+  const [api, contextHolder] = notification.useNotification();
   const [form, setForm] = useState<RegisterForm>({
     nationId: "",
     email: "",
@@ -217,10 +205,7 @@ export default function RegisterPage() {
       return;
     }
 
-    const otpSent = await sendOtp(form.email);
-    if (otpSent) {
-      setStep(3);
-    }
+    await registerUser();
   };
 
   const registerUser = async () => {
@@ -348,8 +333,6 @@ export default function RegisterPage() {
 
           </Flex>
 
-          {otpError && <Alert style={{ marginBottom: 24 }} type="error" title={otpError} showIcon />}
-
           {step === 1 && (
             <RegisterStep1Nation
               form={form}
@@ -367,27 +350,11 @@ export default function RegisterPage() {
               setForm={setForm}
               titles={titles}
               handleSubmit={handleSubmit}
-              sendOtpLoading={sendOtpLoading}
+              submitLoading={registerLoading || registering}
               registerLoading={registerLoading}
               successMessage={successMessage}
               current={current}
               nation={nation}
-            />
-          )}
-
-          {step === 3 && (
-            <RegisterStep3Otp
-              otp={otp}
-              setOtp={setOtp}
-              verifyOtp={verifyOtp}
-              verifyOtpLoading={verifyOtpLoading}
-              sendOtp={sendOtp}
-              sendOtpLoading={sendOtpLoading}
-              cooldown={cooldown}
-              otpError={otpError || undefined}
-              registering={registering}
-              registerUser={registerUser}
-              email={form.email}
             />
           )}
         </Card>
