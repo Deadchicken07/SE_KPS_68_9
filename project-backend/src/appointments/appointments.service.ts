@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
 
@@ -41,8 +41,32 @@ interface TimeRange {
   endMinutes: number;
 }
 
+interface GetAvailableSlotsOptions {
+  excludeAppointmentId?: number;
+  staffId?: number;
+  durationMins?: number;
+  requestUserId?: number;
+}
+
 @Injectable()
 export class AppointmentsService {
+  private readonly clinicTimeSlots: string[] = [
+    '09:00',
+    '09:30',
+    '10:00',
+    '10:30',
+    '11:00',
+    '11:30',
+    '13:00',
+    '13:30',
+    '14:00',
+    '14:30',
+    '15:00',
+    '15:30',
+    '16:00',
+    '16:30',
+  ];
+
   constructor(private readonly prisma: PrismaService) {}
 
   // --- Helper Methods ---
@@ -65,6 +89,172 @@ export class AppointmentsService {
       startMinutes: parseInt(match[1]) * 60 + parseInt(match[2]),
       endMinutes: parseInt(match[3]) * 60 + parseInt(match[4]),
     };
+  }
+
+  private minutesToTimeText(totalMinutes: number): string {
+    const hours = Math.floor(totalMinutes / 60)
+      .toString()
+      .padStart(2, '0');
+    const minutes = (totalMinutes % 60).toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
+
+  private toDateOnlyUtc(dateKey: string): Date {
+    return new Date(`${dateKey}T00:00:00.000Z`);
+  }
+
+  private expandRangeToSlotStarts(range: TimeRange): string[] {
+    const slots: string[] = [];
+
+    for (let minute = range.startMinutes; minute < range.endMinutes; minute += 30) {
+      slots.push(this.minutesToTimeText(minute));
+    }
+
+    return slots;
+  }
+
+  private isOverlappingRange(a: TimeRange, b: TimeRange): boolean {
+    return a.startMinutes < b.endMinutes && b.startMinutes < a.endMinutes;
+  }
+
+  private async ensureStaffTimeAvailable(
+    staffId: number | null | undefined,
+    appointmentDate: string | Date,
+    timeSelect: string,
+    excludedAppointmentId?: number,
+  ) {
+    if (!staffId) {
+      throw new BadRequestException('Staff is required');
+    }
+
+    const requestedRange = this.tryParseTimeRange(timeSelect);
+
+    if (!requestedRange) {
+      throw new BadRequestException('Invalid time range');
+    }
+
+    const targetDate =
+      appointmentDate instanceof Date ? new Date(appointmentDate) : new Date(appointmentDate);
+
+    if (Number.isNaN(targetDate.getTime())) {
+      throw new BadRequestException('Invalid appointment date');
+    }
+
+    const startOfDay = new Date(targetDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(targetDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const appointments = await this.prisma.appointments.findMany({
+      where: {
+        staff_id: staffId,
+        appointment_date: { gte: startOfDay, lte: endOfDay },
+        status: { not: 'Not_paying' },
+        ...(excludedAppointmentId ? { id: { not: excludedAppointmentId } } : {}),
+      },
+      select: {
+        id: true,
+        time_select: true,
+      },
+    });
+
+    const hasConflict = appointments.some((appointment) => {
+      const occupiedRange = this.tryParseTimeRange(appointment.time_select);
+      return occupiedRange
+        ? this.isOverlappingRange(requestedRange, occupiedRange)
+        : false;
+    });
+
+    if (hasConflict) {
+      throw new BadRequestException('Selected time slot is no longer available');
+    }
+  }
+
+  private async ensureStaffScheduleAvailable(
+    staffId: number | null | undefined,
+    appointmentDate: string | Date,
+  ) {
+    if (!staffId) {
+      throw new BadRequestException('Staff is required');
+    }
+
+    const dateKey =
+      appointmentDate instanceof Date
+        ? this.dateToIsoDate(appointmentDate)
+        : appointmentDate;
+
+    const scheduleEntry = await this.prisma.schedule.findUnique({
+      where: {
+        staff_id_work_date: {
+          staff_id: staffId,
+          work_date: this.toDateOnlyUtc(dateKey),
+        },
+      },
+      select: {
+        status: true,
+      },
+    });
+
+    if (scheduleEntry?.status && scheduleEntry.status !== 'working') {
+      throw new BadRequestException('Staff is not available on the selected date');
+    }
+  }
+
+  private async ensureUserTimeAvailable(
+    userId: number | null | undefined,
+    appointmentDate: string | Date,
+    timeSelect: string,
+    excludedAppointmentId?: number,
+  ) {
+    if (!userId) {
+      return;
+    }
+
+    const requestedRange = this.tryParseTimeRange(timeSelect);
+
+    if (!requestedRange) {
+      throw new BadRequestException('Invalid time range');
+    }
+
+    const targetDate =
+      appointmentDate instanceof Date
+        ? new Date(appointmentDate)
+        : new Date(appointmentDate);
+
+    if (Number.isNaN(targetDate.getTime())) {
+      throw new BadRequestException('Invalid appointment date');
+    }
+
+    const startOfDay = new Date(targetDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(targetDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const userAppointments = await this.prisma.appointments.findMany({
+      where: {
+        user_id: userId,
+        appointment_date: { gte: startOfDay, lte: endOfDay },
+        status: { not: 'Not_paying' },
+        ...(excludedAppointmentId ? { id: { not: excludedAppointmentId } } : {}),
+      },
+      select: {
+        id: true,
+        time_select: true,
+      },
+    });
+
+    const hasConflict = userAppointments.some((appointment) => {
+      const occupiedRange = this.tryParseTimeRange(appointment.time_select);
+      return occupiedRange
+        ? this.isOverlappingRange(requestedRange, occupiedRange)
+        : false;
+    });
+
+    if (hasConflict) {
+      throw new BadRequestException(
+        'You already have another appointment during the selected time',
+      );
+    }
   }
 
   private buildConsultantName(name?: string, sur_name?: string): string {
@@ -243,7 +433,11 @@ export class AppointmentsService {
     return { upcoming: upcomingMapped, past: pastMapped };
   }
 
-  async getAvailableSlots(date: string, userId: number): Promise<any> {
+  async getAvailableSlots(
+    date: string,
+    userId: number,
+    options: GetAvailableSlotsOptions = {},
+  ): Promise<any> {
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(date);
@@ -253,13 +447,97 @@ export class AppointmentsService {
       where: {
         appointment_date: { gte: startOfDay, lte: endOfDay },
         status: { not: 'Not_paying' },
+        ...(options.excludeAppointmentId
+          ? { id: { not: options.excludeAppointmentId } }
+          : {}),
       },
     });
 
-    const bookedSlots = appointments.map(
-      (a) => `${a.staff_id}_${a.time_select}`,
+    const bookedSlots = appointments.flatMap((appointment) => {
+      if (!appointment.staff_id) {
+        return [];
+      }
+
+      const range = this.tryParseTimeRange(appointment.time_select);
+
+      if (!range) {
+        return appointment.time_select
+          ? [`${appointment.staff_id}_${appointment.time_select}`]
+          : [];
+      }
+
+      return this.expandRangeToSlotStarts(range).map(
+        (slot) => `${appointment.staff_id}_${slot}`,
+      );
+    });
+
+    if (!options.staffId || !options.durationMins) {
+      return { bookedSlots };
+    }
+
+    const scheduleEntry = await this.prisma.schedule.findUnique({
+      where: {
+        staff_id_work_date: {
+          staff_id: options.staffId,
+          work_date: this.toDateOnlyUtc(date),
+        },
+      },
+      select: {
+        status: true,
+      },
+    });
+
+    if (scheduleEntry?.status && scheduleEntry.status !== 'working') {
+      return { bookedSlots, availableTimes: [] };
+    }
+
+    const occupiedSlots = new Set(
+      bookedSlots
+        .filter((booking) => booking.startsWith(`${options.staffId}_`))
+        .map((booking) => booking.slice(`${options.staffId}_`.length))
+        .filter((slot) => /^\d{2}:\d{2}$/.test(slot)),
     );
-    return { bookedSlots };
+
+    let availableTimes = this.clinicTimeSlots.filter(
+      (slot) => !occupiedSlots.has(slot),
+    );
+
+    if (options.requestUserId) {
+      const userAppointments = await this.prisma.appointments.findMany({
+        where: {
+          user_id: options.requestUserId,
+          appointment_date: { gte: startOfDay, lte: endOfDay },
+          status: { not: 'Not_paying' },
+          ...(options.excludeAppointmentId
+            ? { id: { not: options.excludeAppointmentId } }
+            : {}),
+        },
+        select: {
+          time_select: true,
+        },
+      });
+
+      const userOccupiedSlots = new Set(
+        userAppointments.flatMap((appointment) => {
+          const range = this.tryParseTimeRange(appointment.time_select);
+          return range ? this.expandRangeToSlotStarts(range) : [];
+        }),
+      );
+
+      availableTimes = availableTimes.filter(
+        (slot) => !userOccupiedSlots.has(slot),
+      );
+    }
+
+    if (options.durationMins === 60) {
+      availableTimes = availableTimes.filter((slot) => {
+        const [hh, mm] = slot.split(':').map(Number);
+        const nextSlot = this.minutesToTimeText(hh * 60 + mm + 30);
+        return availableTimes.includes(nextSlot);
+      });
+    }
+
+    return { bookedSlots, availableTimes };
   }
 
   async getAllPaidAppointments(): Promise<any[]> {
@@ -385,6 +663,18 @@ export class AppointmentsService {
   }
 
   async createAppointment(userId: number, data: any) {
+    await this.ensureStaffScheduleAvailable(data.staffId, data.appointmentDate);
+    await this.ensureStaffTimeAvailable(
+      data.staffId,
+      data.appointmentDate,
+      data.timeSelect,
+    );
+    await this.ensureUserTimeAvailable(
+      userId,
+      data.appointmentDate,
+      data.timeSelect,
+    );
+
     return this.prisma.appointments.create({
       data: {
         user_id: userId,
@@ -417,6 +707,35 @@ export class AppointmentsService {
     appointmentId: number,
     dto: RescheduleAppointmentDto,
   ) {
+    const appointment = await this.prisma.appointments.findUnique({
+      where: { id: appointmentId },
+      select: {
+        id: true,
+        staff_id: true,
+      },
+    });
+
+    if (!appointment) {
+      throw new NotFoundException('Appointment not found');
+    }
+
+    await this.ensureStaffScheduleAvailable(
+      appointment.staff_id,
+      dto.appointmentDate,
+    );
+    await this.ensureStaffTimeAvailable(
+      appointment.staff_id,
+      dto.appointmentDate,
+      dto.timeSelect,
+      appointmentId,
+    );
+    await this.ensureUserTimeAvailable(
+      userId,
+      dto.appointmentDate,
+      dto.timeSelect,
+      appointmentId,
+    );
+
     return this.prisma.appointments.update({
       where: { id: appointmentId },
       data: {
