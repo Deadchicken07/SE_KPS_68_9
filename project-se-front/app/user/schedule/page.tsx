@@ -1,6 +1,13 @@
 "use client";
 
-import { CSSProperties, Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  CSSProperties,
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import Link from "next/link";
 import "./schedule-ui.css";
 import Badge from "@/components/ui/Badge";
@@ -37,8 +44,12 @@ type AppointmentScheduleResponse = {
 };
 
 type AppointmentScheduleApiResponse = {
-  upcoming?: Array<Omit<AppointmentItem, "meetLink"> & { meet_url?: string | null }>;
-  past?: Array<Omit<AppointmentItem, "meetLink"> & { meet_url?: string | null }>;
+  upcoming?: Array<
+    Omit<AppointmentItem, "meetLink"> & { meet_url?: string | null }
+  >;
+  past?: Array<
+    Omit<AppointmentItem, "meetLink"> & { meet_url?: string | null }
+  >;
 };
 
 type ApiErrorPayload = {
@@ -97,7 +108,10 @@ const statusText: Record<AppointmentStatus, string> = {
   waiting: "รอการตรวจสอบ",
 };
 
-const appointmentTypeText: Record<NonNullable<AppointmentItem["appointmentType"]>, string> = {
+const appointmentTypeText: Record<
+  NonNullable<AppointmentItem["appointmentType"]>,
+  string
+> = {
   online: "ออนไลน์",
   onsite: "ที่คลินิก",
 };
@@ -106,8 +120,6 @@ const defaultSchedule: AppointmentScheduleResponse = {
   upcoming: [],
   past: [],
 };
-
-
 
 function formatDate(dateKey: string | null): string {
   if (!dateKey) {
@@ -235,7 +247,8 @@ function getJoinAccessInfo(item: AppointmentItem, now: Date): JoinAccessInfo {
     if (item.paymentStatus === "Pending") {
       return {
         state: "payment-required",
-        message: "อยู่ระหว่างการพิจารณาตรวจสอบการชำระเงินของท่าน โดยเจ้าหน้าที่",
+        message:
+          "อยู่ระหว่างการพิจารณาตรวจสอบการชำระเงินของท่าน โดยเจ้าหน้าที่",
         isWaiting: false,
       };
     }
@@ -312,7 +325,6 @@ function getJoinAccessInfo(item: AppointmentItem, now: Date): JoinAccessInfo {
   };
 }
 
-
 async function parseErrorMessage(response: Response): Promise<string> {
   const fallback = "ไม่สามารถดำเนินการรายการนี้ได้";
 
@@ -334,7 +346,13 @@ async function parseErrorMessage(response: Response): Promise<string> {
 }
 
 function normalizeApiItems(
-  items: Array<Omit<AppointmentItem, "meetLink"> & { meet_url?: string | null; meetUrl?: string | null; meetLink?: string | null }> = [],
+  items: Array<
+    Omit<AppointmentItem, "meetLink"> & {
+      meet_url?: string | null;
+      meetUrl?: string | null;
+      meetLink?: string | null;
+    }
+  > = [],
 ): AppointmentItem[] {
   return items.map((item: any) => ({
     ...item,
@@ -342,9 +360,13 @@ function normalizeApiItems(
   }));
 }
 
-function buildInitialRescheduleForm(item: AppointmentItem): RescheduleFormState {
+function buildInitialRescheduleForm(
+  item: AppointmentItem,
+): RescheduleFormState {
   const parsedRange = parseTimeRange(item.timeSelect);
-  const durationMins = parsedRange ? parsedRange.endMinutes - parsedRange.startMinutes : 30;
+  const durationMins = parsedRange
+    ? parsedRange.endMinutes - parsedRange.startMinutes
+    : 30;
 
   return {
     appointmentId: item.id,
@@ -367,15 +389,19 @@ function buildInitialPaymentForm(item: AppointmentItem): PaymentFormState {
 
 export default function AppointmentSchedulePage() {
   const [activeTab, setActiveTab] = useState<TabKey>("upcoming");
-  const [schedule, setSchedule] = useState<AppointmentScheduleResponse>(defaultSchedule);
+  const [schedule, setSchedule] =
+    useState<AppointmentScheduleResponse>(defaultSchedule);
   const [clock, setClock] = useState<Date>(() => new Date());
   const [loading, setLoading] = useState(true);
   const [isAuthRequired, setIsAuthRequired] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [processingRescheduleId, setProcessingRescheduleId] = useState<number | null>(null);
+  const [processingRescheduleId, setProcessingRescheduleId] = useState<
+    number | null
+  >(null);
   const [processingPayId, setProcessingPayId] = useState<number | null>(null);
-  const [rescheduleForm, setRescheduleForm] = useState<RescheduleFormState | null>(null);
+  const [rescheduleForm, setRescheduleForm] =
+    useState<RescheduleFormState | null>(null);
   const [isRescheduleDialogOpen, setIsRescheduleDialogOpen] = useState(false);
   const [paymentForm, setPaymentForm] = useState<PaymentFormState | null>(null);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
@@ -400,15 +426,23 @@ export default function AppointmentSchedulePage() {
   type ConsultationData = {
     consultation: { id: number; note: string; createdAt: string } | null;
     prescriptionItems: PrescriptionItem[];
-    receipt: { id: number; total: number; status: string; tracking: string | null } | null;
+    receipt: {
+      id: number;
+      total: number;
+      status: string;
+      tracking: string | null;
+    } | null;
     receiptDetails: ReceiptDetail[];
     serviceFee: number;
     medicineCost: number;
   };
   const [isConsultationModalOpen, setIsConsultationModalOpen] = useState(false);
-  const [consultationData, setConsultationData] = useState<ConsultationData | null>(null);
+  const [consultationData, setConsultationData] =
+    useState<ConsultationData | null>(null);
   const [consultationLoading, setConsultationLoading] = useState(false);
-  const [consultationAppointmentId, setConsultationAppointmentId] = useState<number | null>(null);
+  const [consultationAppointmentId, setConsultationAppointmentId] = useState<
+    number | null
+  >(null);
 
   // ── Tracking modal state ──
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
@@ -422,9 +456,12 @@ export default function AppointmentSchedulePage() {
     setConsultationLoading(true);
     setConsultationData(null);
     try {
-      const resp = await fetch(`${API_BASE_URL}/appointments/${appointmentId}/consultation`, {
-        credentials: "include",
-      });
+      const resp = await fetch(
+        `${API_BASE_URL}/appointments/${appointmentId}/consultation`,
+        {
+          credentials: "include",
+        },
+      );
       if (resp.ok) {
         const data = await resp.json();
         setConsultationData(data);
@@ -452,9 +489,12 @@ export default function AppointmentSchedulePage() {
     setTrackingNumber(null);
     setTrackingMedicines([]);
     try {
-      const resp = await fetch(`${API_BASE_URL}/appointments/${appointmentId}/consultation`, {
-        credentials: "include",
-      });
+      const resp = await fetch(
+        `${API_BASE_URL}/appointments/${appointmentId}/consultation`,
+        {
+          credentials: "include",
+        },
+      );
       if (resp.ok) {
         const data = await resp.json();
         setTrackingNumber(data?.receipt?.tracking ?? null);
@@ -477,34 +517,44 @@ export default function AppointmentSchedulePage() {
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
   const [fetchingTimes, setFetchingTimes] = useState(false);
 
-  const fetchAvailableTimes = useCallback(async (dateStr: string, staffId: number, durationMins: number) => {
-    setFetchingTimes(true);
-    try {
-      const resp = await fetch(`${API_BASE_URL}/appointments/available-slots?date=${dateStr}`, {
-        credentials: "include"
-      });
-      if (resp.ok) {
-        const data = await resp.json();
-        const baseSlots: string[] = data[staffId] || [];
+  const fetchAvailableTimes = useCallback(
+    async (dateStr: string, staffId: number, durationMins: number) => {
+      setFetchingTimes(true);
+      try {
+        const resp = await fetch(
+          `${API_BASE_URL}/appointments/available-slots?date=${dateStr}`,
+          {
+            credentials: "include",
+          },
+        );
+        if (resp.ok) {
+          const data = await resp.json();
+          const baseSlots: string[] = data[staffId] || [];
 
-        let validSlots = baseSlots;
-        if (durationMins === 60) {
-          validSlots = baseSlots.filter(t => {
-            const [hh, mm] = t.split(":");
-            const nextSlot = dayjs().hour(Number(hh)).minute(Number(mm)).add(30, "minute").format("HH:mm");
-            return baseSlots.includes(nextSlot);
-          });
+          let validSlots = baseSlots;
+          if (durationMins === 60) {
+            validSlots = baseSlots.filter((t) => {
+              const [hh, mm] = t.split(":");
+              const nextSlot = dayjs()
+                .hour(Number(hh))
+                .minute(Number(mm))
+                .add(30, "minute")
+                .format("HH:mm");
+              return baseSlots.includes(nextSlot);
+            });
+          }
+          setAvailableTimes(validSlots);
+        } else {
+          setAvailableTimes([]);
         }
-        setAvailableTimes(validSlots);
-      } else {
+      } catch {
         setAvailableTimes([]);
+      } finally {
+        setFetchingTimes(false);
       }
-    } catch {
-      setAvailableTimes([]);
-    } finally {
-      setFetchingTimes(false);
-    }
-  }, []);
+    },
+    [],
+  );
 
   const normalizedSchedule = useMemo<AppointmentScheduleResponse>(() => {
     const all = [...schedule.upcoming, ...schedule.past];
@@ -582,14 +632,21 @@ export default function AppointmentSchedulePage() {
     }
   }, []);
 
-  const openRescheduleDialog = useCallback((item: AppointmentItem) => {
-    const initForm = buildInitialRescheduleForm(item);
-    setRescheduleForm(initForm);
-    setIsRescheduleDialogOpen(true);
-    if (initForm.appointmentDate && initForm.staffId) {
-      void fetchAvailableTimes(initForm.appointmentDate, initForm.staffId, initForm.durationMins);
-    }
-  }, [fetchAvailableTimes]);
+  const openRescheduleDialog = useCallback(
+    (item: AppointmentItem) => {
+      const initForm = buildInitialRescheduleForm(item);
+      setRescheduleForm(initForm);
+      setIsRescheduleDialogOpen(true);
+      if (initForm.appointmentDate && initForm.staffId) {
+        void fetchAvailableTimes(
+          initForm.appointmentDate,
+          initForm.staffId,
+          initForm.durationMins,
+        );
+      }
+    },
+    [fetchAvailableTimes],
+  );
 
   const closeRescheduleDialog = useCallback(() => {
     setIsRescheduleDialogOpen(false);
@@ -635,7 +692,9 @@ export default function AppointmentSchedulePage() {
 
     const [hh, mm] = normalizedStart.split(":").map(Number);
     const endTotalMins = hh * 60 + mm + item.durationMins;
-    const endHh = Math.floor(endTotalMins / 60).toString().padStart(2, "0");
+    const endHh = Math.floor(endTotalMins / 60)
+      .toString()
+      .padStart(2, "0");
     const endMm = (endTotalMins % 60).toString().padStart(2, "0");
     const normalizedEnd = `${endHh}:${endMm}`;
 
@@ -646,17 +705,20 @@ export default function AppointmentSchedulePage() {
     setSuccessMessage(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/appointments/${item.appointmentId}/reschedule`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `${API_BASE_URL}/appointments/${item.appointmentId}/reschedule`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            appointmentDate: normalizedDate,
+            timeSelect: normalizedTime,
+          }),
         },
-        credentials: "include",
-        body: JSON.stringify({
-          appointmentDate: normalizedDate,
-          timeSelect: normalizedTime,
-        }),
-      });
+      );
 
       if (!response.ok) {
         throw new Error(await parseErrorMessage(response));
@@ -666,7 +728,8 @@ export default function AppointmentSchedulePage() {
       closeRescheduleDialog();
       await fetchAppointments(false);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "ไม่สามารถเลื่อนนัดหมายได้";
+      const message =
+        err instanceof Error ? err.message : "ไม่สามารถเลื่อนนัดหมายได้";
       setError(message);
     } finally {
       setProcessingRescheduleId(null);
@@ -704,10 +767,13 @@ export default function AppointmentSchedulePage() {
 
     const slipFileName = paymentForm.slipFile.name;
     try {
-      const response = await fetch(`${API_BASE_URL}/appointments/${paymentForm.appointmentId}/pay`, {
-        method: "PATCH",
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/appointments/${paymentForm.appointmentId}/pay`,
+        {
+          method: "PATCH",
+          credentials: "include",
+        },
+      );
 
       if (!response.ok) {
         throw new Error(await parseErrorMessage(response));
@@ -719,7 +785,8 @@ export default function AppointmentSchedulePage() {
       closePaymentDialog();
       await fetchAppointments(false);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "ไม่สามารถยืนยันการชำระเงินได้";
+      const message =
+        err instanceof Error ? err.message : "ไม่สามารถยืนยันการชำระเงินได้";
       setError(message);
     } finally {
       setProcessingPayId(null);
@@ -795,9 +862,14 @@ export default function AppointmentSchedulePage() {
       )}
 
       {activeTab === "upcoming" ? (
-        <section className="appt-support-grid" aria-label="ข้อมูลเตรียมตัวก่อนพบผู้เชี่ยวชาญ">
+        <section
+          className="appt-support-grid"
+          aria-label="ข้อมูลเตรียมตัวก่อนพบผู้เชี่ยวชาญ"
+        >
           <article className="appt-support-card">
-            <h2 className="appt-support-card__title">ก่อนเริ่มนัดหมายออนไลน์</h2>
+            <h2 className="appt-support-card__title">
+              ก่อนเริ่มนัดหมายออนไลน์
+            </h2>
             <ul className="appt-checklist">
               <li>เลือกสถานที่เงียบและเป็นส่วนตัว</li>
               <li>ทดสอบอินเทอร์เน็ต กล้อง และไมโครโฟน</li>
@@ -810,7 +882,9 @@ export default function AppointmentSchedulePage() {
         <div className="appt-feedback">กำลังโหลดข้อมูลนัดหมาย...</div>
       ) : appointments.length === 0 ? (
         <div className="appt-feedback">
-          {activeTab === "upcoming" ? "ยังไม่มีนัดหมายที่กำลังจะมาถึง" : "ยังไม่มีประวัติการปรึกษา"}
+          {activeTab === "upcoming"
+            ? "ยังไม่มีนัดหมายที่กำลังจะมาถึง"
+            : "ยังไม่มีประวัติการปรึกษา"}
         </div>
       ) : (
         <div className="appt-list">
@@ -823,15 +897,17 @@ export default function AppointmentSchedulePage() {
             const isPaying = processingPayId === item.id;
             const isBusy = isRescheduling || isPaying;
             const joinLink = item.meetLink ?? "";
-            const secondaryActionLabel = !isPaid && !isPending
-              ? "ชำระเงิน"
-              : canJoin || joinInfo.state === "waiting"
-                ? "เข้าร่วมการปรึกษา"
-                : joinInfo.state === "not-online"
-                  ? "นัดที่คลินิก"
-                  : joinInfo.state === "closed"
-                    ? "หมดเวลาแล้ว"
-                    : "ไม่พร้อมใช้งาน";
+            const hasJoinLink = joinLink.trim().length > 0;
+            const secondaryActionLabel =
+              !isPaid && !isPending
+                ? "ชำระเงิน"
+                : hasJoinLink && (canJoin || joinInfo.state === "waiting")
+                  ? "เข้าร่วมการปรึกษา"
+                  : joinInfo.state === "not-online"
+                    ? "นัดที่คลินิก"
+                    : joinInfo.state === "closed"
+                      ? "หมดเวลาแล้ว"
+                      : "ไม่พร้อมใช้งาน";
 
             return (
               <article
@@ -861,7 +937,11 @@ export default function AppointmentSchedulePage() {
                     </p>
                     <p className="appt-meta__line">
                       รูปแบบ:{" "}
-                      <span>{item.appointmentType ? appointmentTypeText[item.appointmentType] : "-"}</span>
+                      <span>
+                        {item.appointmentType
+                          ? appointmentTypeText[item.appointmentType]
+                          : "-"}
+                      </span>
                     </p>
                     <p className="appt-meta__line">
                       ติดต่อ: <span>{item.contact}</span>
@@ -872,24 +952,47 @@ export default function AppointmentSchedulePage() {
                 <div className="appt-card__right">
                   <p className="appt-status">
                     สถานะ:{" "}
-                    <span className={`appt-status__pill is-${item.status}`}>{statusText[item.status]}</span>
+                    <span className={`appt-status__pill is-${item.status}`}>
+                      {statusText[item.status]}
+                    </span>
                   </p>
 
                   <p className="appt-payment">
                     การชำระเงิน:{" "}
-                    <span className={`appt-payment__pill ${isPaid ? "is-paid" : isPending ? "is-pending" : "is-unpaid"}`}>
-                      {isPaid ? "ชำระแล้ว" : isPending ? "รอตรวจสอบ" : "ยังไม่ชำระ"}
+                    <span
+                      className={`appt-payment__pill ${isPaid ? "is-paid" : isPending ? "is-pending" : "is-unpaid"}`}
+                    >
+                      {isPaid
+                        ? "ชำระแล้ว"
+                        : isPending
+                          ? "รอตรวจสอบ"
+                          : "ยังไม่ชำระ"}
                     </span>
                   </p>
 
                   {activeTab === "past" && item.hasPrescription && (
-                    <p className="appt-payment medicine-payment" style={{ marginTop: 4 }}>
+                    <p
+                      className="appt-payment medicine-payment"
+                      style={{ marginTop: 4 }}
+                    >
                       ชำระค่ายา:{" "}
-                      <span className={`appt-payment__pill ${item.medicinePaymentStatus === "Paid" ? "is-paid" : item.medicinePaymentStatus === "Pending" ? "is-pending" : "is-unpaid"}`}>
-                        {item.medicinePaymentStatus === "Paid" ? "ชำระแล้ว" : item.medicinePaymentStatus === "Pending" ? "รอตรวจสอบ" : "ยังไม่ชำระ"}
+                      <span
+                        className={`appt-payment__pill ${item.medicinePaymentStatus === "Paid" ? "is-paid" : item.medicinePaymentStatus === "Pending" ? "is-pending" : "is-unpaid"}`}
+                      >
+                        {item.medicinePaymentStatus === "Paid"
+                          ? "ชำระแล้ว"
+                          : item.medicinePaymentStatus === "Pending"
+                            ? "รอตรวจสอบ"
+                            : "ยังไม่ชำระ"}
                       </span>
                       {item.totalPrice !== null && (
-                        <span style={{ fontSize: '0.85em', marginLeft: 4, color: '#6b7280' }}>
+                        <span
+                          style={{
+                            fontSize: "0.85em",
+                            marginLeft: 4,
+                            color: "#6b7280",
+                          }}
+                        >
                           ({item.totalPrice?.toLocaleString()} บาท)
                         </span>
                       )}
@@ -915,10 +1018,15 @@ export default function AppointmentSchedulePage() {
                             ไปหน้าชำระเงิน
                           </Link>
                         ) : isPending ? (
-                          <button className="appt-btn appt-btn--disabled" disabled type="button">
+                          <button
+                            className="appt-btn appt-btn--disabled"
+                            disabled
+                            type="button"
+                          >
                             รอตรวจสอบสลิป
                           </button>
-                        ) : (canJoin || joinInfo.state === "waiting") ? (
+                        ) : hasJoinLink &&
+                          (canJoin || joinInfo.state === "waiting") ? (
                           <a
                             className={`appt-btn appt-btn--join ${joinInfo.isWaiting ? "is-waiting" : ""}`}
                             href={joinLink}
@@ -927,9 +1035,12 @@ export default function AppointmentSchedulePage() {
                           >
                             {secondaryActionLabel}
                           </a>
-
                         ) : (
-                          <button className="appt-btn appt-btn--disabled" disabled type="button">
+                          <button
+                            className="appt-btn appt-btn--disabled"
+                            disabled
+                            type="button"
+                          >
                             {secondaryActionLabel}
                           </button>
                         )}
@@ -940,7 +1051,10 @@ export default function AppointmentSchedulePage() {
                     <>
                       {/* Show Receipt button if consultation occurred */}
                       {item.hasConsultation && (
-                        <div className="appt-actions" style={{ marginBottom: 8 }}>
+                        <div
+                          className="appt-actions"
+                          style={{ marginBottom: 8 }}
+                        >
                           <button
                             className="appt-btn appt-btn--ghost"
                             onClick={() => void openConsultationModal(item.id)}
@@ -949,25 +1063,33 @@ export default function AppointmentSchedulePage() {
                             ใบเสร็จการชำระเงิน
                           </button>
                           {/* Show 'Pay' button only if has medicine and not yet Paid/Pending */}
-                          {item.hasPrescription && item.medicinePaymentStatus !== 'Paid' && item.medicinePaymentStatus !== 'Pending' && (
-                            <Link
-                              className="appt-btn appt-btn--primary"
-                              href={`/user/payment-medicine?receiptId=${item.receiptId}`}
-                            >
-                              ชำระค่ายา
-                            </Link>
-                          )}
+                          {item.hasPrescription &&
+                            item.medicinePaymentStatus !== "Paid" &&
+                            item.medicinePaymentStatus !== "Pending" && (
+                              <Link
+                                className="appt-btn appt-btn--primary"
+                                href={`/user/payment-medicine?receiptId=${item.receiptId}`}
+                              >
+                                ชำระค่ายา
+                              </Link>
+                            )}
                           {/* Show tracking button if prescription paid */}
-                          {item.hasPrescription && (item.medicinePaymentStatus === 'Paid' || item.medicinePaymentStatus === 'Pending') && (
-                            <button
-                              className="appt-btn appt-btn--ghost"
-                              onClick={() => void openTrackingModal(item.id)}
-                              type="button"
-                              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-                            >
-                              📦 ยาของฉัน
-                            </button>
-                          )}
+                          {item.hasPrescription &&
+                            (item.medicinePaymentStatus === "Paid" ||
+                              item.medicinePaymentStatus === "Pending") && (
+                              <button
+                                className="appt-btn appt-btn--ghost"
+                                onClick={() => void openTrackingModal(item.id)}
+                                type="button"
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 6,
+                                }}
+                              >
+                                📦 ยาของฉัน
+                              </button>
+                            )}
                         </div>
                       )}
 
@@ -1004,30 +1126,55 @@ export default function AppointmentSchedulePage() {
           onClick={closeRescheduleDialog}
           role="dialog"
         >
-          <div className="appt-modal" onClick={(event) => event.stopPropagation()}>
+          <div
+            className="appt-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
             <h3 className="appt-modal__title">เลื่อนนัดหมาย</h3>
-            <p className="appt-modal__subtitle">{rescheduleForm.consultantName}</p>
+            <p className="appt-modal__subtitle">
+              {rescheduleForm.consultantName}
+            </p>
 
             <label className="appt-modal__label" htmlFor="appt-date">
               วันที่
             </label>
             <DatePicker
-              style={{ width: "100%", height: 42, marginBottom: 16, fontFamily: "inherit" }}
+              style={{
+                width: "100%",
+                height: 42,
+                marginBottom: 16,
+                fontFamily: "inherit",
+              }}
               format="YYYY-MM-DD"
-              value={rescheduleForm.appointmentDate ? dayjs(rescheduleForm.appointmentDate) : null}
-              disabledDate={(current) => current && current < dayjs().startOf('day')}
-              getPopupContainer={(triggerNode) => triggerNode.parentNode as HTMLElement}
+              value={
+                rescheduleForm.appointmentDate
+                  ? dayjs(rescheduleForm.appointmentDate)
+                  : null
+              }
+              disabledDate={(current) =>
+                current && current < dayjs().startOf("day")
+              }
+              getPopupContainer={(triggerNode) =>
+                triggerNode.parentNode as HTMLElement
+              }
               onChange={(date) => {
                 setRescheduleForm((prev) => {
                   if (!prev) return prev;
-                  const newDate = date ? date.format("YYYY-MM-DD") : prev.appointmentDate;
+                  const newDate = date
+                    ? date.format("YYYY-MM-DD")
+                    : prev.appointmentDate;
                   if (prev.staffId && newDate !== prev.appointmentDate) {
-                    void fetchAvailableTimes(newDate, prev.staffId, prev.durationMins);
+                    void fetchAvailableTimes(
+                      newDate,
+                      prev.staffId,
+                      prev.durationMins,
+                    );
                   }
                   return {
                     ...prev,
                     appointmentDate: newDate,
-                    startTime: newDate !== prev.appointmentDate ? "" : prev.startTime,
+                    startTime:
+                      newDate !== prev.appointmentDate ? "" : prev.startTime,
                   };
                 });
               }}
@@ -1043,14 +1190,16 @@ export default function AppointmentSchedulePage() {
                 placeholder="เลือกเวลา"
                 loading={fetchingTimes}
                 style={{ width: "100%", height: 42 }}
-                getPopupContainer={(triggerNode) => triggerNode.parentNode as HTMLElement}
+                getPopupContainer={(triggerNode) =>
+                  triggerNode.parentNode as HTMLElement
+                }
                 onChange={(val) =>
                   setRescheduleForm((prev) =>
                     prev
                       ? {
-                        ...prev,
-                        startTime: val,
-                      }
+                          ...prev,
+                          startTime: val,
+                        }
                       : prev,
                   )
                 }
@@ -1063,23 +1212,32 @@ export default function AppointmentSchedulePage() {
                   ))
                 ) : (
                   <Select.Option disabled value={rescheduleForm.startTime}>
-                    {rescheduleForm.startTime || "ไม่มีเวลาว่าง"} {rescheduleForm.startTime ? "(เวลาเดิม)" : ""}
+                    {rescheduleForm.startTime || "ไม่มีเวลาว่าง"}{" "}
+                    {rescheduleForm.startTime ? "(เวลาเดิม)" : ""}
                   </Select.Option>
                 )}
               </Select>
             </div>
 
             <div className="appt-modal__actions">
-              <button className="appt-modal__btn is-ghost" onClick={closeRescheduleDialog} type="button">
+              <button
+                className="appt-modal__btn is-ghost"
+                onClick={closeRescheduleDialog}
+                type="button"
+              >
                 ยกเลิก
               </button>
               <button
                 className="appt-modal__btn is-primary"
-                disabled={processingRescheduleId === rescheduleForm.appointmentId}
+                disabled={
+                  processingRescheduleId === rescheduleForm.appointmentId
+                }
                 onClick={() => void handleRescheduleSubmit()}
                 type="button"
               >
-                {processingRescheduleId === rescheduleForm.appointmentId ? "กำลังบันทึก..." : "บันทึก"}
+                {processingRescheduleId === rescheduleForm.appointmentId
+                  ? "กำลังบันทึก..."
+                  : "บันทึก"}
               </button>
             </div>
           </div>
@@ -1093,7 +1251,10 @@ export default function AppointmentSchedulePage() {
           onClick={closePaymentDialog}
           role="dialog"
         >
-          <div className="appt-modal appt-pay-modal" onClick={(event) => event.stopPropagation()}>
+          <div
+            className="appt-modal appt-pay-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
             <h3 className="appt-modal__title">คิวอาร์โค้ดชำระเงิน</h3>
             <p className="appt-modal__subtitle">{paymentForm.consultantName}</p>
 
@@ -1103,7 +1264,9 @@ export default function AppointmentSchedulePage() {
                 className="appt-qr-image"
                 src="/images/payment/mock-qr.png"
               />
-              <p className="appt-pay-box__label">สแกนคิวอาร์เพื่อจำลองการชำระเงิน</p>
+              <p className="appt-pay-box__label">
+                สแกนคิวอาร์เพื่อจำลองการชำระเงิน
+              </p>
               <p className="appt-pay-box__meta">ยอดชำระ (จำลอง): 500.00 บาท</p>
             </div>
 
@@ -1125,9 +1288,10 @@ export default function AppointmentSchedulePage() {
                     URL.revokeObjectURL(prev.slipPreviewUrl);
                   }
 
-                  const previewUrl = file && file.type.startsWith("image/")
-                    ? URL.createObjectURL(file)
-                    : null;
+                  const previewUrl =
+                    file && file.type.startsWith("image/")
+                      ? URL.createObjectURL(file)
+                      : null;
 
                   return {
                     ...prev,
@@ -1141,7 +1305,9 @@ export default function AppointmentSchedulePage() {
             />
 
             {paymentForm.slipFile ? (
-              <p className="appt-modal__file-name">ไฟล์ที่เลือก: {paymentForm.slipFile.name}</p>
+              <p className="appt-modal__file-name">
+                ไฟล์ที่เลือก: {paymentForm.slipFile.name}
+              </p>
             ) : null}
 
             {paymentForm.slipPreviewUrl ? (
@@ -1152,10 +1318,16 @@ export default function AppointmentSchedulePage() {
               />
             ) : null}
 
-            {paymentFormError ? <p className="appt-modal__error">{paymentFormError}</p> : null}
+            {paymentFormError ? (
+              <p className="appt-modal__error">{paymentFormError}</p>
+            ) : null}
 
             <div className="appt-modal__actions">
-              <button className="appt-modal__btn is-ghost" onClick={closePaymentDialog} type="button">
+              <button
+                className="appt-modal__btn is-ghost"
+                onClick={closePaymentDialog}
+                type="button"
+              >
                 ยกเลิก
               </button>
               <button
@@ -1164,7 +1336,9 @@ export default function AppointmentSchedulePage() {
                 onClick={() => void handleConfirmMockPayment()}
                 type="button"
               >
-                {processingPayId === paymentForm.appointmentId ? "กำลังยืนยัน..." : "ยืนยันการชำระเงิน"}
+                {processingPayId === paymentForm.appointmentId
+                  ? "กำลังยืนยัน..."
+                  : "ยืนยันการชำระเงิน"}
               </button>
             </div>
           </div>
@@ -1178,34 +1352,69 @@ export default function AppointmentSchedulePage() {
           onClick={closeConsultationModal}
           role="dialog"
         >
-          <div className="appt-modal" style={{ width: 'min(640px, 100%)' }} onClick={(e) => e.stopPropagation()}>
+          <div
+            className="appt-modal"
+            style={{ width: "min(640px, 100%)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="appt-modal__title">รายละเอียดการปรึกษา</h3>
             <p className="appt-modal__subtitle">ใบสั่งยาและค่าใช้จ่าย</p>
 
             {consultationLoading ? (
-              <div style={{ textAlign: 'center', padding: '32px 0', color: '#6b7280' }}>
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "32px 0",
+                  color: "#6b7280",
+                }}
+              >
                 กำลังโหลดข้อมูล...
               </div>
             ) : consultationData?.consultation === null ? (
-              <div style={{ textAlign: 'center', padding: '32px 0', color: '#9ca3af' }}>
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "32px 0",
+                  color: "#9ca3af",
+                }}
+              >
                 <div style={{ fontSize: 48, marginBottom: 12 }}>📋</div>
-                <p style={{ fontSize: 16, fontWeight: 600, color: '#6b7280' }}>ยังไม่มีข้อมูลการปรึกษาสำหรับนัดหมายนี้</p>
+                <p style={{ fontSize: 16, fontWeight: 600, color: "#6b7280" }}>
+                  ยังไม่มีข้อมูลการปรึกษาสำหรับนัดหมายนี้
+                </p>
               </div>
             ) : consultationData ? (
               <>
                 {/* Consultation Note */}
                 {consultationData.consultation?.note ? (
-                  <div style={{
-                    backgroundColor: '#f0fdf4',
-                    border: '1.5px solid #a7f3d0',
-                    borderRadius: 12,
-                    padding: '14px 18px',
-                    marginBottom: 20,
-                  }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#065f46', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 1 }}>
+                  <div
+                    style={{
+                      backgroundColor: "#f0fdf4",
+                      border: "1.5px solid #a7f3d0",
+                      borderRadius: 12,
+                      padding: "14px 18px",
+                      marginBottom: 20,
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 700,
+                        color: "#065f46",
+                        marginBottom: 4,
+                        textTransform: "uppercase",
+                        letterSpacing: 1,
+                      }}
+                    >
                       บันทึกจากแพทย์
                     </div>
-                    <div style={{ fontSize: 15, color: '#374151', lineHeight: 1.6 }}>
+                    <div
+                      style={{
+                        fontSize: 15,
+                        color: "#374151",
+                        lineHeight: 1.6,
+                      }}
+                    >
                       {consultationData.consultation.note}
                     </div>
                   </div>
@@ -1213,65 +1422,250 @@ export default function AppointmentSchedulePage() {
 
                 {/* Prescription Items */}
                 <div style={{ marginBottom: 20 }}>
-                  <h4 style={{ fontSize: 16, fontWeight: 700, color: '#1e1b4b', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <h4
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 700,
+                      color: "#1e1b4b",
+                      margin: "0 0 12px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
                     <span style={{ fontSize: 20 }}>💊</span> ใบสั่งยา
                   </h4>
                   {consultationData.prescriptionItems.length > 0 ? (
-                    <div style={{ borderRadius: 12, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+                    <div
+                      style={{
+                        borderRadius: 12,
+                        border: "1px solid #e5e7eb",
+                        overflow: "hidden",
+                      }}
+                    >
+                      <table
+                        style={{
+                          width: "100%",
+                          borderCollapse: "collapse",
+                          fontSize: 14,
+                        }}
+                      >
                         <thead>
-                          <tr style={{ backgroundColor: '#f9fafb' }}>
-                            <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 700, color: '#374151', borderBottom: '1px solid #e5e7eb' }}>ชื่อยา</th>
-                            <th style={{ padding: '10px 14px', textAlign: 'center', fontWeight: 700, color: '#374151', borderBottom: '1px solid #e5e7eb', width: 70 }}>จำนวน</th>
-                            <th style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 700, color: '#374151', borderBottom: '1px solid #e5e7eb', width: 100 }}>ราคา/หน่วย</th>
-                            <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 700, color: '#374151', borderBottom: '1px solid #e5e7eb' }}>หมายเหตุ</th>
+                          <tr style={{ backgroundColor: "#f9fafb" }}>
+                            <th
+                              style={{
+                                padding: "10px 14px",
+                                textAlign: "left",
+                                fontWeight: 700,
+                                color: "#374151",
+                                borderBottom: "1px solid #e5e7eb",
+                              }}
+                            >
+                              ชื่อยา
+                            </th>
+                            <th
+                              style={{
+                                padding: "10px 14px",
+                                textAlign: "center",
+                                fontWeight: 700,
+                                color: "#374151",
+                                borderBottom: "1px solid #e5e7eb",
+                                width: 70,
+                              }}
+                            >
+                              จำนวน
+                            </th>
+                            <th
+                              style={{
+                                padding: "10px 14px",
+                                textAlign: "right",
+                                fontWeight: 700,
+                                color: "#374151",
+                                borderBottom: "1px solid #e5e7eb",
+                                width: 100,
+                              }}
+                            >
+                              ราคา/หน่วย
+                            </th>
+                            <th
+                              style={{
+                                padding: "10px 14px",
+                                textAlign: "left",
+                                fontWeight: 700,
+                                color: "#374151",
+                                borderBottom: "1px solid #e5e7eb",
+                              }}
+                            >
+                              หมายเหตุ
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
-                          {consultationData.prescriptionItems.map((item, idx) => (
-                            <tr key={item.id} style={{ backgroundColor: idx % 2 === 0 ? '#fff' : '#f9fafb' }}>
-                              <td style={{ padding: '10px 14px', fontWeight: 600, color: '#1e1b4b' }}>{item.medicationName}</td>
-                              <td style={{ padding: '10px 14px', textAlign: 'center', color: '#374151' }}>{item.quantity}</td>
-                              <td style={{ padding: '10px 14px', textAlign: 'right', color: '#374151' }}>{item.price.toLocaleString()} ฿</td>
-                              <td style={{ padding: '10px 14px', color: '#6b7280', fontSize: 13 }}>{item.comment || '-'}</td>
-                            </tr>
-                          ))}
+                          {consultationData.prescriptionItems.map(
+                            (item, idx) => (
+                              <tr
+                                key={item.id}
+                                style={{
+                                  backgroundColor:
+                                    idx % 2 === 0 ? "#fff" : "#f9fafb",
+                                }}
+                              >
+                                <td
+                                  style={{
+                                    padding: "10px 14px",
+                                    fontWeight: 600,
+                                    color: "#1e1b4b",
+                                  }}
+                                >
+                                  {item.medicationName}
+                                </td>
+                                <td
+                                  style={{
+                                    padding: "10px 14px",
+                                    textAlign: "center",
+                                    color: "#374151",
+                                  }}
+                                >
+                                  {item.quantity}
+                                </td>
+                                <td
+                                  style={{
+                                    padding: "10px 14px",
+                                    textAlign: "right",
+                                    color: "#374151",
+                                  }}
+                                >
+                                  {item.price.toLocaleString()} ฿
+                                </td>
+                                <td
+                                  style={{
+                                    padding: "10px 14px",
+                                    color: "#6b7280",
+                                    fontSize: 13,
+                                  }}
+                                >
+                                  {item.comment || "-"}
+                                </td>
+                              </tr>
+                            ),
+                          )}
                         </tbody>
                       </table>
                     </div>
                   ) : (
-                    <div style={{ color: '#9ca3af', fontSize: 14, padding: '8px 0' }}>ไม่มีรายการสั่งยา</div>
+                    <div
+                      style={{
+                        color: "#9ca3af",
+                        fontSize: 14,
+                        padding: "8px 0",
+                      }}
+                    >
+                      ไม่มีรายการสั่งยา
+                    </div>
                   )}
                 </div>
 
                 {/* Receipt - Cost Summary */}
                 <div>
-                  <h4 style={{ fontSize: 16, fontWeight: 700, color: '#1e1b4b', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <h4
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 700,
+                      color: "#1e1b4b",
+                      margin: "0 0 12px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
                     <span style={{ fontSize: 20 }}>🧾</span> สรุปค่าใช้จ่าย
                   </h4>
-                  <div style={{
-                    borderRadius: 12,
-                    border: '1.5px solid #e5e7eb',
-                    padding: '18px 20px',
-                    background: '#fafafa',
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                      <span style={{ fontSize: 15, color: '#374151' }}>ค่าบริการ</span>
-                      <span style={{ fontSize: 15, fontWeight: 700, color: '#0f766e' }}>
+                  <div
+                    style={{
+                      borderRadius: 12,
+                      border: "1.5px solid #e5e7eb",
+                      padding: "18px 20px",
+                      background: "#fafafa",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: 10,
+                      }}
+                    >
+                      <span style={{ fontSize: 15, color: "#374151" }}>
+                        ค่าบริการ
+                      </span>
+                      <span
+                        style={{
+                          fontSize: 15,
+                          fontWeight: 700,
+                          color: "#0f766e",
+                        }}
+                      >
                         {consultationData.serviceFee.toLocaleString()} ฿
                       </span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                      <span style={{ fontSize: 15, color: '#374151' }}>ค่ายา</span>
-                      <span style={{ fontSize: 15, fontWeight: 700, color: '#0f766e' }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: 10,
+                      }}
+                    >
+                      <span style={{ fontSize: 15, color: "#374151" }}>
+                        ค่ายา
+                      </span>
+                      <span
+                        style={{
+                          fontSize: 15,
+                          fontWeight: 700,
+                          color: "#0f766e",
+                        }}
+                      >
                         {consultationData.medicineCost.toLocaleString()} ฿
                       </span>
                     </div>
-                    <div style={{ borderTop: '1.5px solid #d1d5db', paddingTop: 10, marginTop: 4 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: 17, fontWeight: 800, color: '#1e1b4b' }}>รวมทั้งหมด</span>
-                        <span style={{ fontSize: 20, fontWeight: 800, color: '#059669' }}>
-                          {consultationData.receipt?.total?.toLocaleString() ?? (consultationData.serviceFee + consultationData.medicineCost).toLocaleString()} ฿
+                    <div
+                      style={{
+                        borderTop: "1.5px solid #d1d5db",
+                        paddingTop: 10,
+                        marginTop: 4,
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: 17,
+                            fontWeight: 800,
+                            color: "#1e1b4b",
+                          }}
+                        >
+                          รวมทั้งหมด
+                        </span>
+                        <span
+                          style={{
+                            fontSize: 20,
+                            fontWeight: 800,
+                            color: "#059669",
+                          }}
+                        >
+                          {consultationData.receipt?.total?.toLocaleString() ??
+                            (
+                              consultationData.serviceFee +
+                              consultationData.medicineCost
+                            ).toLocaleString()}{" "}
+                          ฿
                         </span>
                       </div>
                     </div>
@@ -1280,8 +1674,15 @@ export default function AppointmentSchedulePage() {
               </>
             ) : null}
 
-            <div className="appt-modal__actions" style={{ gridTemplateColumns: '1fr', marginTop: 20 }}>
-              <button className="appt-modal__btn is-primary" onClick={closeConsultationModal} type="button">
+            <div
+              className="appt-modal__actions"
+              style={{ gridTemplateColumns: "1fr", marginTop: 20 }}
+            >
+              <button
+                className="appt-modal__btn is-primary"
+                onClick={closeConsultationModal}
+                type="button"
+              >
                 ปิด
               </button>
             </div>
@@ -1297,60 +1698,169 @@ export default function AppointmentSchedulePage() {
           onClick={closeTrackingModal}
           role="dialog"
         >
-          <div className="appt-modal" style={{ width: 'min(440px, 100%)' }} onClick={(e) => e.stopPropagation()}>
+          <div
+            className="appt-modal"
+            style={{ width: "min(440px, 100%)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="appt-modal__title">📦 ยาของฉัน</h3>
             <p className="appt-modal__subtitle">สถานะการจัดส่งยา</p>
 
             {trackingLoading ? (
-              <div style={{ textAlign: 'center', padding: '32px 0', color: '#6b7280' }}>กำลังโหลดข้อมูล...</div>
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "32px 0",
+                  color: "#6b7280",
+                }}
+              >
+                กำลังโหลดข้อมูล...
+              </div>
             ) : (
               <>
-                <div style={{
-                  background: '#f0fdf4',
-                  border: '1.5px solid #a7f3d0',
-                  borderRadius: 12,
-                  padding: '20px 24px',
-                  margin: '16px 0 20px',
-                  textAlign: 'center',
-                }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#065f46', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>
+                <div
+                  style={{
+                    background: "#f0fdf4",
+                    border: "1.5px solid #a7f3d0",
+                    borderRadius: 12,
+                    padding: "20px 24px",
+                    margin: "16px 0 20px",
+                    textAlign: "center",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 700,
+                      color: "#065f46",
+                      marginBottom: 8,
+                      textTransform: "uppercase",
+                      letterSpacing: 1,
+                    }}
+                  >
                     หมายเลขติดตามพัสดุ
                   </div>
                   {trackingNumber ? (
-                    <div style={{ fontSize: 22, fontWeight: 800, color: '#0f766e', letterSpacing: 2, wordBreak: 'break-all' }}>
+                    <div
+                      style={{
+                        fontSize: 22,
+                        fontWeight: 800,
+                        color: "#0f766e",
+                        letterSpacing: 2,
+                        wordBreak: "break-all",
+                      }}
+                    >
                       {trackingNumber}
                     </div>
                   ) : (
-                    <div style={{ fontSize: 15, color: '#9ca3af', fontWeight: 600 }}>
-                      ยังไม่มีหมายเลขติดตาม<br />
-                      <span style={{ fontSize: 13, fontWeight: 400 }}>กรุณารอเภสัชกรอัปเดตข้อมูลการจัดส่ง</span>
+                    <div
+                      style={{
+                        fontSize: 15,
+                        color: "#9ca3af",
+                        fontWeight: 600,
+                      }}
+                    >
+                      ยังไม่มีหมายเลขติดตาม
+                      <br />
+                      <span style={{ fontSize: 13, fontWeight: 400 }}>
+                        กรุณารอเภสัชกรอัปเดตข้อมูลการจัดส่ง
+                      </span>
                     </div>
                   )}
                 </div>
 
                 <div style={{ marginTop: 20 }}>
-                  <h4 style={{ fontSize: 15, fontWeight: 700, color: '#1e1b4b', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <h4
+                    style={{
+                      fontSize: 15,
+                      fontWeight: 700,
+                      color: "#1e1b4b",
+                      margin: "0 0 12px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                  >
                     💊 รายการยาที่ได้รับ
                   </h4>
                   {trackingMedicines.length > 0 ? (
-                    <div style={{ border: '1.5px solid #e5e7eb', borderRadius: 12, overflow: 'hidden' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-                        <thead style={{ background: '#f8fafc', borderBottom: '1.5px solid #e5e7eb' }}>
+                    <div
+                      style={{
+                        border: "1.5px solid #e5e7eb",
+                        borderRadius: 12,
+                        overflow: "hidden",
+                      }}
+                    >
+                      <table
+                        style={{
+                          width: "100%",
+                          borderCollapse: "collapse",
+                          fontSize: 14,
+                        }}
+                      >
+                        <thead
+                          style={{
+                            background: "#f8fafc",
+                            borderBottom: "1.5px solid #e5e7eb",
+                          }}
+                        >
                           <tr>
-                            <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 700, color: '#475569' }}>ชื่อยา</th>
-                            <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700, color: '#475569' }}>จำนวน</th>
+                            <th
+                              style={{
+                                padding: "10px 12px",
+                                textAlign: "left",
+                                fontWeight: 700,
+                                color: "#475569",
+                              }}
+                            >
+                              ชื่อยา
+                            </th>
+                            <th
+                              style={{
+                                padding: "10px 12px",
+                                textAlign: "center",
+                                fontWeight: 700,
+                                color: "#475569",
+                              }}
+                            >
+                              จำนวน
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
                           {trackingMedicines.map((m, i) => (
                             <Fragment key={i}>
-                              <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                <td style={{ padding: '10px 12px', color: '#1e293b', fontWeight: 600 }}>{m.medicationName}</td>
-                                <td style={{ padding: '10px 12px', textAlign: 'center', color: '#334155' }}>{m.quantity}</td>
+                              <tr style={{ borderBottom: "1px solid #f1f5f9" }}>
+                                <td
+                                  style={{
+                                    padding: "10px 12px",
+                                    color: "#1e293b",
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  {m.medicationName}
+                                </td>
+                                <td
+                                  style={{
+                                    padding: "10px 12px",
+                                    textAlign: "center",
+                                    color: "#334155",
+                                  }}
+                                >
+                                  {m.quantity}
+                                </td>
                               </tr>
                               {m.comment ? (
                                 <tr>
-                                  <td colSpan={2} style={{ padding: '0 12px 10px', fontSize: 13, color: '#0f766e', fontStyle: 'italic' }}>
+                                  <td
+                                    colSpan={2}
+                                    style={{
+                                      padding: "0 12px 10px",
+                                      fontSize: 13,
+                                      color: "#0f766e",
+                                      fontStyle: "italic",
+                                    }}
+                                  >
                                     💡 คำแนะนำ: {m.comment}
                                   </td>
                                 </tr>
@@ -1361,14 +1871,30 @@ export default function AppointmentSchedulePage() {
                       </table>
                     </div>
                   ) : (
-                    <p style={{ fontSize: 14, color: '#9ca3af', textAlign: 'center', padding: '10px 0' }}>ไม่พบข้อมูลรายการยา</p>
+                    <p
+                      style={{
+                        fontSize: 14,
+                        color: "#9ca3af",
+                        textAlign: "center",
+                        padding: "10px 0",
+                      }}
+                    >
+                      ไม่พบข้อมูลรายการยา
+                    </p>
                   )}
                 </div>
               </>
             )}
 
-            <div className="appt-modal__actions" style={{ gridTemplateColumns: '1fr', marginTop: 0 }}>
-              <button className="appt-modal__btn is-primary" onClick={closeTrackingModal} type="button">
+            <div
+              className="appt-modal__actions"
+              style={{ gridTemplateColumns: "1fr", marginTop: 0 }}
+            >
+              <button
+                className="appt-modal__btn is-primary"
+                onClick={closeTrackingModal}
+                type="button"
+              >
                 ปิด
               </button>
             </div>
