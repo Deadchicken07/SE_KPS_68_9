@@ -119,11 +119,15 @@ export const useAdminWorkSchedule = () => {
         date: selectedDate,
       });
 
+      const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+      const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
       try {
         const response = await fetch(
           `${API_URL}/staff-home/clinic-schedule?${query.toString()}`,
           {
             credentials: "include",
+            headers: { ...authHeaders },
           },
         );
 
@@ -316,6 +320,9 @@ export const useAdminWorkSchedule = () => {
 
     setSubmitting(true);
 
+    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+    const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
     try {
       const payload = buildClinicHolidayPayload();
       const response = await fetch(`${API_URL}/staff-home/clinic-holiday`, {
@@ -323,6 +330,7 @@ export const useAdminWorkSchedule = () => {
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
+          ...authHeaders,
         },
         body: JSON.stringify({
           ...payload,
@@ -358,6 +366,9 @@ export const useAdminWorkSchedule = () => {
 
     setDeleting(true);
 
+    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+    const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
     try {
       const payload = buildClinicHolidayPayload();
       const response = await fetch(`${API_URL}/staff-home/clinic-holiday`, {
@@ -365,6 +376,7 @@ export const useAdminWorkSchedule = () => {
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
+          ...authHeaders,
         },
         body: JSON.stringify(payload),
       });

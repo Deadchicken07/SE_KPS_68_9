@@ -602,7 +602,7 @@ export class AppointmentsService {
   }
 
   async findByPatient(userId: number, staffId?: number) {
-    return this.prisma.appointments.findMany({
+    const records = await this.prisma.appointments.findMany({
       where: {
         user_id: userId,
         ...(staffId ? { staff_id: staffId } : {}),
@@ -611,18 +611,64 @@ export class AppointmentsService {
         users_appointments_staff_idTousers: {
           select: { name: true, sur_name: true },
         },
+        consultations: { select: { appointment_id: true } },
       },
+      orderBy: { appointment_date: 'asc' },
     });
+
+    const consultedIds = new Set(
+      records
+        .flatMap((r) => r.consultations.map((c) => c.appointment_id))
+        .filter(Boolean),
+    );
+
+    return records
+      .filter((r) => !consultedIds.has(r.id))
+      .map((r) => ({
+        id: r.id,
+        appointmentDate: r.appointment_date
+          ? this.dateToIsoDate(r.appointment_date)
+          : null,
+        timeSelect: r.time_select,
+        appointmentType: r.appointment_type,
+      }));
   }
 
   async findAllByStaff(staffId: number) {
-    return this.prisma.appointments.findMany({
+    const records = await this.prisma.appointments.findMany({
       where: { staff_id: staffId },
       include: {
         users_appointments_user_idTousers: {
           select: { name: true, sur_name: true, title: true },
         },
+        consultations: { select: { id: true, appointment_id: true } },
       },
+      orderBy: { appointment_date: 'asc' },
+    });
+
+    const consultationAppointmentIds = new Set(
+      records
+        .flatMap((r) => r.consultations.map((c) => c.appointment_id))
+        .filter(Boolean),
+    );
+
+    return records.map((r) => {
+      const u = r.users_appointments_user_idTousers;
+      const patientName = [u?.title, u?.name, u?.sur_name].filter(Boolean).join(' ');
+      return {
+        id: r.id,
+        userId: r.user_id,
+        staffId: r.staff_id,
+        patientName,
+        appointmentDate: r.appointment_date
+          ? this.dateToIsoDate(r.appointment_date)
+          : null,
+        appointmentType: r.appointment_type,
+        status: r.status,
+        timeSelect: r.time_select,
+        meetUrl: r.meet_url,
+        hasConsultation: consultationAppointmentIds.has(r.id),
+      };
     });
   }
 }

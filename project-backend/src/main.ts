@@ -12,6 +12,7 @@ async function bootstrap() {
       process.env.FRONTEND_URL,
     ].filter(Boolean) as string[],
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   app.use(cookieParser());

@@ -48,6 +48,7 @@ export default function StaffTopBar() {
       // Redirect even if session cleanup already happened.
     } finally {
       localStorage.removeItem("access_token");
+      document.cookie = "access_token=; path=/; max-age=0";
       setMe(null);
       router.push("/login");
       router.refresh();

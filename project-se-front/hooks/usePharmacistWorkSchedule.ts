@@ -93,11 +93,15 @@ export const usePharmacistWorkSchedule = () => {
         staffId: String(staffId),
       })
 
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
+      const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+
       try {
         const response = await fetch(
           `${API_URL}/phama-home/clinic-schedule?${query.toString()}`,
           {
             credentials: 'include',
+            headers: { ...authHeaders },
           },
         )
 
@@ -276,12 +280,16 @@ export const usePharmacistWorkSchedule = () => {
 
     setSubmitting(true)
 
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
+    const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+
     try {
       const response = await fetch(`${API_URL}/phama-home/schedule`, {
         method: 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          ...authHeaders,
         },
         body: JSON.stringify({
           staffId: me.sub,
@@ -331,12 +339,16 @@ export const usePharmacistWorkSchedule = () => {
 
     setDeleting(true)
 
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
+    const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+
     try {
       const response = await fetch(`${API_URL}/phama-home/schedule`, {
         method: 'DELETE',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          ...authHeaders,
         },
         body: JSON.stringify({
           staffId: me.sub,

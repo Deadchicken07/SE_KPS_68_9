@@ -134,7 +134,7 @@ function PsychiatistPageInner() {
               <AppointmentCard
                 key={a.id}
                 a={a}
-                onConsult={() => router.push(`/staff/consult/history?userId=${a.patientId}`)}
+                onConsult={() => router.push(`/staff/consult/history?userId=${a.userId}`)}
                 onAddLink={() => meetUrl.openAddModal(a.id)}
                 onViewLink={() => meetUrl.openViewModal(a.meetUrl, a.id)}
               />

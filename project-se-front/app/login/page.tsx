@@ -68,9 +68,9 @@ export default function LoginPage() {
   const handleFinish = async (values: { email: string; password: string }) => {
     try {
       const me = await login(values.email, values.password);
-      router.push(redirectTarget || getRedirectPathByRoleId(me.role_id));
-    } catch {
-      // handled by hook
+      router.push(getRedirectPathByRoleId(me.role_id));
+    } catch (e) {
+      console.error("login error:", e);
     }
   };
 
