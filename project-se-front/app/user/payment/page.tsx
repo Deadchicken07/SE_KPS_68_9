@@ -112,7 +112,24 @@ function PaymentContent() {
             });
 
             if (!response.ok) {
-                throw new Error('บันทึกข้อมูลการชำระเงินไม่สำเร็จ');
+                const rawMessage = await response.text();
+                let backendMessage = rawMessage.trim();
+
+                try {
+                    const parsed = JSON.parse(rawMessage);
+                    backendMessage =
+                        parsed?.message ||
+                        parsed?.error ||
+                        backendMessage;
+                } catch {
+                    // Keep the raw response body when it is not JSON.
+                }
+
+                throw new Error(
+                    backendMessage
+                        ? `บันทึกข้อมูลการชำระเงินไม่สำเร็จ: ${backendMessage}`
+                        : `บันทึกข้อมูลการชำระเงินไม่สำเร็จ (${response.status})`,
+                );
             }
 
             setStep('success');
