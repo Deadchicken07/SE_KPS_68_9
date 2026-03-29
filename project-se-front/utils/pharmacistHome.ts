@@ -147,9 +147,15 @@ export function isOutstandingPharmacistHomeStatus(
 export function isPaidOutstandingPharmacistHomeConsultation(
   consultation: PharmacistHomeConsultation,
 ) {
+  const status = pharmacistHomeDisplayStatus(consultation)
+
+  if (status === 'pending_pickup') {
+    return true
+  }
+
   return (
     pharmacistHomeLatestPaymentStatus(consultation) === 'Paid' &&
-    isOutstandingPharmacistHomeStatus(pharmacistHomeDisplayStatus(consultation))
+    status === 'pending_delivery'
   )
 }
 
