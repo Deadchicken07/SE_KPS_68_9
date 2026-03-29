@@ -215,7 +215,7 @@ export function AdminReportFilterSection({
 }) {
   return (
     <Card
-      className="staff-content-card overflow-hidden"
+      className="staff-content-card !mx-0 !max-w-none w-full overflow-hidden"
       variant="borderless"
       styles={{
         body: {
@@ -224,7 +224,7 @@ export function AdminReportFilterSection({
         },
       }}
     >
-      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_280px]">
+      <div className="grid items-stretch gap-5 xl:grid-cols-2">
         <div className="grid gap-3">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div className="min-w-0">
@@ -261,7 +261,7 @@ export function AdminReportFilterSection({
           </div>
         </div>
 
-        <div className="grid gap-4 rounded-[24px] border border-[rgba(15,118,110,0.12)] bg-white/80 p-4">
+        <div className="grid h-full content-start gap-4 rounded-[24px] border border-[rgba(15,118,110,0.12)] bg-white/80 p-4">
           {state.reportMode === "month" ? (
             <label className="grid gap-2">
               <span className="text-[0.88rem] font-bold text-[#33554d]">
@@ -312,7 +312,10 @@ export function AdminReportErrorPanel({
   }
 
   return (
-    <Card className="staff-content-card" variant="borderless">
+    <Card
+      className="staff-content-card !mx-0 !max-w-none w-full"
+      variant="borderless"
+    >
       <div className="rounded-2xl border border-[#fecaca] bg-[#fff1f2] px-5 py-4 text-[#be123c]">
         <p className="m-0 font-semibold">{state.error}</p>
         {state.authRequired ? (
@@ -331,7 +334,10 @@ export function AdminReportErrorPanel({
 
 export function AdminReportLoadingSection() {
   return (
-    <Card className="staff-content-card" variant="borderless">
+    <Card
+      className="staff-content-card !mx-0 !max-w-none w-full"
+      variant="borderless"
+    >
       <div className="flex flex-col items-center justify-center gap-4 py-10 text-center">
         <Spin size="large" />
         <Typography.Text className="staff-section-muted">
@@ -377,7 +383,7 @@ export function AdminReportDashboardSection({
     <section className="mt-5 grid gap-5">
       <TrendOverviewCard state={state} />
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_300px]">
+      <div className="grid items-stretch gap-5 xl:grid-cols-3">
         <div className="min-w-0">
           <BreakdownDonutCard
             title="ช่องทางการนัดหมาย"
@@ -636,7 +642,7 @@ function TrendOverviewCard({ state }: { state: AdminReportState }) {
           </div>
         </div>
       ) : (
-        <div className="mt-5">
+        <div className="mt-5 flex h-full items-center">
           <Empty description="ยังไม่มีข้อมูลแนวโน้มในช่วงที่เลือก" />
         </div>
       )}
@@ -654,13 +660,17 @@ function BreakdownDonutCard({
   const total = items.reduce((sum, item) => sum + item.count, 0);
 
   return (
-    <Card className="staff-content-card !mt-0 h-full min-w-0 overflow-hidden" variant="borderless">
+    <Card
+      className="staff-content-card !mt-0 !mx-0 !max-w-none w-full h-full min-w-0 overflow-hidden"
+      variant="borderless"
+      styles={{ body: { height: "100%" } }}
+    >
       <Typography.Title level={4} style={{ margin: 0 }}>
         {title}
       </Typography.Title>
 
       {items.length ? (
-        <div className="mt-5 grid gap-5">
+        <div className="mt-5 grid h-full content-start gap-5">
           <div className="flex items-center justify-center">
             <div
               className="relative h-[180px] w-[180px] rounded-full"
@@ -706,7 +716,7 @@ function BreakdownDonutCard({
           </div>
         </div>
       ) : (
-        <div className="mt-5">
+        <div className="mt-5 flex h-full items-center">
           <Empty description="ยังไม่มีข้อมูลในช่วงที่เลือก" />
         </div>
       )}
@@ -722,7 +732,11 @@ function TopStaffCard({ state }: { state: AdminReportState }) {
   );
 
   return (
-    <Card className="staff-content-card !mt-0 h-full min-w-0 overflow-hidden" variant="borderless">
+    <Card
+      className="staff-content-card !mt-0 !mx-0 !max-w-none w-full h-full min-w-0 overflow-hidden"
+      variant="borderless"
+      styles={{ body: { height: "100%" } }}
+    >
       <Typography.Title level={4} style={{ margin: 0 }}>
         บุคลากรที่มีภาระงานสูงสุด
       </Typography.Title>
@@ -773,7 +787,7 @@ function TopStaffCard({ state }: { state: AdminReportState }) {
           ))}
         </div>
       ) : (
-        <div className="mt-5">
+        <div className="mt-5 flex h-full items-center">
           <Empty description="ยังไม่มีข้อมูลภาระงานในช่วงที่เลือก" />
         </div>
       )}
@@ -785,12 +799,16 @@ function ReportSnapshotCard({ state }: { state: AdminReportState }) {
   const summary = state.data?.summary;
 
   return (
-    <Card className="staff-content-card !mt-0 h-full min-w-0 overflow-hidden" variant="borderless">
+    <Card
+      className="staff-content-card !mt-0 !mx-0 !max-w-none w-full h-full min-w-0 overflow-hidden"
+      variant="borderless"
+      styles={{ body: { height: "100%" } }}
+    >
       <Typography.Title level={4} style={{ margin: 0 }}>
         ภาพรวมช่วงรายงาน
       </Typography.Title>
 
-      <div className="mt-5 grid gap-3">
+      <div className="mt-5 grid h-full content-start gap-3">
         <SnapshotItem
           label="รูปแบบ"
           value={state.reportMode === "month" ? "รายเดือน" : "รายปี"}

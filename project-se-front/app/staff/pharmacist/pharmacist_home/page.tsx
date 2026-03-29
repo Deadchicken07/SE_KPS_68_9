@@ -6,6 +6,7 @@ import {
   PharmacistHomeDetailModal,
   PharmacistHomeQueueCard,
 } from '@/components/staff/PharmacistHome'
+import PageSkeleton from '@/components/ui/PageSkeleton'
 import { usePharmacistHome } from '@/hooks/usePharmacistHome'
 
 export default function PharmacistHomePage() {
@@ -22,6 +23,10 @@ export default function PharmacistHomePage() {
     selected,
     closeDetailModal,
   } = usePharmacistHome()
+
+  if (loading) {
+    return <PageSkeleton cards={[{ rows: 4 }, { rows: 10 }]} />
+  }
 
   if (!hasAccess) {
     return null

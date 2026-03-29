@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Modal, Button, Input, DatePicker, ConfigProvider } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import Badge from '@/components/ui/Badge';
+import PageSkeleton from '@/components/ui/PageSkeleton';
 import 'dayjs/locale/th';
 import buddhistEra from 'dayjs/plugin/buddhistEra';
 import locale from 'antd/locale/th_TH';
@@ -341,7 +342,7 @@ export default function AppointmentsPage() {
         d.isBefore(dayjs().startOf('day')) || d.day() === 0 || d.day() === 6;
 
     if (isAuthChecking) {
-        return null;
+        return <PageSkeleton cards={[{ rows: 4 }, { rows: 8 }]} />;
     }
 
     return (

@@ -1,6 +1,7 @@
 "use client";
 
 import { Typography } from "antd";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 import { useAdminWorkSchedule } from "@/hooks/useAdminWorkSchedule";
 import type { ScheduleStatus } from "@/types/staffAdminHome.types";
 
@@ -58,6 +59,10 @@ export default function AdminWorkSchedulePage() {
     submitting,
     weekdayOptions,
   } = useAdminWorkSchedule();
+
+  if (loading) {
+    return <PageSkeleton cards={[{ rows: 6 }, { rows: 8 }]} />;
+  }
 
   if (!hasAccess) {
     return null;

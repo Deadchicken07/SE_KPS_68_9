@@ -4,6 +4,7 @@ import { CSSProperties, Fragment, useCallback, useEffect, useMemo, useState } fr
 import Link from "next/link";
 import "./schedule-ui.css";
 import Badge from "@/components/ui/Badge";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 import { DatePicker, Select } from "antd";
 import dayjs from "dayjs";
 
@@ -612,6 +613,10 @@ export default function AppointmentSchedulePage() {
     });
     setPaymentFormError(null);
   }, []);
+
+  if (loading) {
+    return <PageSkeleton cards={[{ rows: 4 }, { rows: 10 }]} />;
+  }
 
   const handleRescheduleSubmit = useCallback(async () => {
     if (!rescheduleForm) {

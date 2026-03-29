@@ -104,6 +104,7 @@ export class PharmacistService {
         users_consultations_user_idTousers: {
           select: {
             user_id: true,
+            title: true,
             name: true,
             sur_name: true,
             phone: true,
@@ -123,6 +124,7 @@ export class PharmacistService {
         users_consultations_pharmacist_idTousers: {
           select: {
             user_id: true,
+            title: true,
             name: true,
             sur_name: true,
           },
@@ -208,6 +210,7 @@ export class PharmacistService {
           users: {
             select: {
               user_id: true,
+              title: true,
               name: true,
               sur_name: true,
             },
@@ -285,6 +288,7 @@ export class PharmacistService {
         users: {
           select: {
             user_id: true,
+            title: true,
             name: true,
             sur_name: true,
           },
@@ -294,6 +298,7 @@ export class PharmacistService {
             id: true,
             users_consultations_pharmacist_idTousers: {
               select: {
+                title: true,
                 name: true,
                 sur_name: true,
               },
@@ -320,10 +325,12 @@ export class PharmacistService {
       consultationId: receipt.consultation_id ?? null,
       patientId: receipt.users?.user_id ?? receipt.user_id ?? null,
       patientName: this.buildFullName(
+        receipt.users?.title,
         receipt.users?.name,
         receipt.users?.sur_name,
       ),
       pharmacistName: this.buildFullName(
+        receipt.consultations?.users_consultations_pharmacist_idTousers?.title,
         receipt.consultations?.users_consultations_pharmacist_idTousers?.name,
         receipt.consultations?.users_consultations_pharmacist_idTousers
           ?.sur_name,
@@ -368,6 +375,7 @@ export class PharmacistService {
         users_consultations_user_idTousers: {
           select: {
             user_id: true,
+            title: true,
             name: true,
             sur_name: true,
             phone: true,
@@ -377,6 +385,7 @@ export class PharmacistService {
         },
         users_consultations_pharmacist_idTousers: {
           select: {
+            title: true,
             name: true,
             sur_name: true,
           },
@@ -421,6 +430,7 @@ export class PharmacistService {
         note: consultation.note ?? null,
         createdAt: this.toIsoString(consultation.created_at),
         pharmacistName: this.buildFullName(
+          consultation.users_consultations_pharmacist_idTousers?.title,
           consultation.users_consultations_pharmacist_idTousers?.name,
           consultation.users_consultations_pharmacist_idTousers?.sur_name,
         ),
@@ -444,7 +454,11 @@ export class PharmacistService {
       if (!existing) {
         grouped.set(patientId, {
           patientId,
-          patientName: this.buildFullName(patient.name, patient.sur_name),
+          patientName: this.buildFullName(
+            patient.title,
+            patient.name,
+            patient.sur_name,
+          ),
           phone: patient.phone ?? null,
           medicalCondition: patient.medical_condition ?? null,
           allergyDrug: patient.allergy_drug ?? null,
@@ -621,8 +635,12 @@ export class PharmacistService {
     return Number(value.toString());
   }
 
-  private buildFullName(firstName?: string | null, lastName?: string | null) {
-    const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
+  private buildFullName(
+    title?: string | null,
+    firstName?: string | null,
+    lastName?: string | null,
+  ) {
+    const fullName = [title, firstName, lastName].filter(Boolean).join(' ').trim();
     return fullName || '-';
   }
 
@@ -661,6 +679,7 @@ export class PharmacistService {
         users_consultations_user_idTousers: {
           select: {
             user_id: true;
+            title: true;
             name: true;
             sur_name: true;
             phone: true;
@@ -680,6 +699,7 @@ export class PharmacistService {
         users_consultations_pharmacist_idTousers: {
           select: {
             user_id: true;
+            title: true;
             name: true;
             sur_name: true;
           };
@@ -712,13 +732,18 @@ export class PharmacistService {
     return {
       consultationId: consultation.id,
       patientId: patient?.user_id ?? consultation.user_id ?? null,
-      patientName: this.buildFullName(patient?.name, patient?.sur_name),
+      patientName: this.buildFullName(
+        patient?.title,
+        patient?.name,
+        patient?.sur_name,
+      ),
       patientPhone: patient?.phone ?? null,
       patientAddress: this.buildAddress(patient?.addresses),
       medicalCondition: patient?.medical_condition ?? null,
       allergyDrug: patient?.allergy_drug ?? null,
       pharmacistId: pharmacist?.user_id ?? consultation.pharmacist_id ?? null,
       pharmacistName: this.buildFullName(
+        pharmacist?.title,
         pharmacist?.name,
         pharmacist?.sur_name,
       ),
@@ -869,6 +894,7 @@ export class PharmacistService {
         users: {
           select: {
             user_id: true;
+            title: true;
             name: true;
             sur_name: true;
           };
@@ -891,6 +917,7 @@ export class PharmacistService {
       consultationId: receipt.consultation_id ?? null,
       patientId: receipt.users?.user_id ?? receipt.user_id ?? null,
       patientName: this.buildFullName(
+        receipt.users?.title,
         receipt.users?.name,
         receipt.users?.sur_name,
       ),

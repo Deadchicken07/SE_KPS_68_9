@@ -91,6 +91,7 @@ export type PharmacistHomeDisplayStatus = ReceiptStatus | "no_receipt";
 
 export interface PharmacistHomePerson {
   user_id: number;
+  title?: string | null;
   name: string;
   sur_name: string;
   email?: string | null;

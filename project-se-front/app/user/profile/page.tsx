@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 import styles from "./page.module.css";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
@@ -88,6 +89,10 @@ export default function UserProfilePage() {
 
     void fetchProfile();
   }, []);
+
+  if (isLoading) {
+    return <PageSkeleton cards={[{ rows: 4 }, { rows: 4 }, { rows: 4 }]} />;
+  }
 
   return (
     <main className={styles.page}>
