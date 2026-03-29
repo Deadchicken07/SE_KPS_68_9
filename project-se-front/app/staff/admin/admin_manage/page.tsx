@@ -123,6 +123,7 @@ export default function AdminManagePage() {
   const handleOpenEdit = (record: AdminStaffRecord) => {
     staffForm.setFieldsValue({
       email: record.email ?? "",
+      title: record.title ?? "",
       name: record.name,
       surName: record.surName,
       roleId: record.roleId,
@@ -348,7 +349,15 @@ export default function AdminManagePage() {
       >
         <Form form={staffForm} layout="vertical">
           <Row gutter={16}>
-            <Col xs={24} md={12}>
+            <Col xs={24} md={8}>
+              <Form.Item name="title" label="คำนำหน้าชื่อ">
+                <Input
+                  className="input"
+                  placeholder="เช่น นาย, นางสาว, นพ., พญ."
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={8}>
               <Form.Item
                 name="name"
                 label="ชื่อ"
@@ -357,7 +366,7 @@ export default function AdminManagePage() {
                 <Input className="input" placeholder="ชื่อ" />
               </Form.Item>
             </Col>
-            <Col xs={24} md={12}>
+            <Col xs={24} md={8}>
               <Form.Item
                 name="surName"
                 label="นามสกุล"

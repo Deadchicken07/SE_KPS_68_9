@@ -16,8 +16,15 @@ export class AdminStaffManagementService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  private buildFullName(firstName: string | null | undefined, lastName: string | null | undefined) {
-    return [firstName?.trim(), lastName?.trim()].filter(Boolean).join(' ').trim();
+  private buildFullName(
+    title: string | null | undefined,
+    firstName: string | null | undefined,
+    lastName: string | null | undefined,
+  ) {
+    return [title?.trim(), firstName?.trim(), lastName?.trim()]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
   }
 
   private isManageableStaffRoleId(roleId: number | null | undefined) {
@@ -92,6 +99,7 @@ export class AdminStaffManagementService {
             OR: [
               { name: { contains: search, mode: 'insensitive' } },
               { sur_name: { contains: search, mode: 'insensitive' } },
+              { title: { contains: search, mode: 'insensitive' } },
               { email: { contains: search, mode: 'insensitive' } },
               { phone: { contains: search, mode: 'insensitive' } },
               { info: { contains: search, mode: 'insensitive' } },
@@ -107,6 +115,7 @@ export class AdminStaffManagementService {
       orderBy: [{ status: 'asc' }, { user_id: 'asc' }],
       select: {
         user_id: true,
+        title: true,
         name: true,
         sur_name: true,
         email: true,
@@ -123,9 +132,10 @@ export class AdminStaffManagementService {
 
     return staffs.map((staff) => ({
       id: staff.user_id,
+      title: staff.title,
       name: staff.name,
       surName: staff.sur_name,
-      fullName: this.buildFullName(staff.name, staff.sur_name),
+      fullName: this.buildFullName(staff.title, staff.name, staff.sur_name),
       email: staff.email,
       roleId: staff.role_id,
       roleName: this.toRoleLabel(staff.role_id),
@@ -161,6 +171,7 @@ export class AdminStaffManagementService {
       const staff = await this.prisma.users.create({
         data: {
           email,
+          title: normalizeOptionalText(body.title),
           name,
           sur_name: surName,
           password_hash: hashedPassword,
@@ -214,6 +225,10 @@ export class AdminStaffManagementService {
       }
 
       data.name = name;
+    }
+
+    if (body.title !== undefined) {
+      data.title = normalizeOptionalText(body.title);
     }
 
     if (body.surName !== undefined) {
