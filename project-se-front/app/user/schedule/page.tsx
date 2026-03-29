@@ -388,6 +388,11 @@ export default function AppointmentSchedulePage() {
   const [consultationLoading, setConsultationLoading] = useState(false);
   const [consultationAppointmentId, setConsultationAppointmentId] = useState<number | null>(null);
 
+  // ── Tracking modal state ──
+  const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
+  const [trackingNumber, setTrackingNumber] = useState<string | null>(null);
+  const [trackingLoading, setTrackingLoading] = useState(false);
+
   const openConsultationModal = useCallback(async (appointmentId: number) => {
     setConsultationAppointmentId(appointmentId);
     setIsConsultationModalOpen(true);
@@ -416,6 +421,30 @@ export default function AppointmentSchedulePage() {
     setIsConsultationModalOpen(false);
     setConsultationData(null);
     setConsultationAppointmentId(null);
+  }, []);
+
+  const openTrackingModal = useCallback(async (appointmentId: number) => {
+    setIsTrackingModalOpen(true);
+    setTrackingLoading(true);
+    setTrackingNumber(null);
+    try {
+      const resp = await fetch(`${API_BASE_URL}/appointments/${appointmentId}/consultation`, {
+        credentials: "include",
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        setTrackingNumber(data?.receipt?.tracking ?? null);
+      }
+    } catch {
+      setTrackingNumber(null);
+    } finally {
+      setTrackingLoading(false);
+    }
+  }, []);
+
+  const closeTrackingModal = useCallback(() => {
+    setIsTrackingModalOpen(false);
+    setTrackingNumber(null);
   }, []);
 
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
@@ -898,6 +927,17 @@ export default function AppointmentSchedulePage() {
                               ชำระค่ายา
                             </Link>
                           )}
+                          {/* Show tracking button if prescription paid */}
+                          {item.hasPrescription && item.medicinePaymentStatus === 'Paid' && (
+                            <button
+                              className="appt-btn appt-btn--ghost"
+                              onClick={() => void openTrackingModal(item.id)}
+                              type="button"
+                              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                            >
+                              📦 ยาของฉัน
+                            </button>
+                          )}
                         </div>
                       )}
 
@@ -1212,6 +1252,54 @@ export default function AppointmentSchedulePage() {
 
             <div className="appt-modal__actions" style={{ gridTemplateColumns: '1fr', marginTop: 20 }}>
               <button className="appt-modal__btn is-primary" onClick={closeConsultationModal} type="button">
+                ปิด
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* ── Tracking Modal ── */}
+      {isTrackingModalOpen ? (
+        <div
+          aria-modal="true"
+          className="appt-modal-backdrop"
+          onClick={closeTrackingModal}
+          role="dialog"
+        >
+          <div className="appt-modal" style={{ width: 'min(440px, 100%)' }} onClick={(e) => e.stopPropagation()}>
+            <h3 className="appt-modal__title">📦 ยาของฉัน</h3>
+            <p className="appt-modal__subtitle">สถานะการจัดส่งยา</p>
+
+            {trackingLoading ? (
+              <div style={{ textAlign: 'center', padding: '32px 0', color: '#6b7280' }}>กำลังโหลดข้อมูล...</div>
+            ) : (
+              <div style={{
+                background: '#f0fdf4',
+                border: '1.5px solid #a7f3d0',
+                borderRadius: 12,
+                padding: '20px 24px',
+                margin: '16px 0 20px',
+                textAlign: 'center',
+              }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#065f46', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>
+                  หมายเลขติดตามพัสดุ
+                </div>
+                {trackingNumber ? (
+                  <div style={{ fontSize: 22, fontWeight: 800, color: '#0f766e', letterSpacing: 2, wordBreak: 'break-all' }}>
+                    {trackingNumber}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 15, color: '#9ca3af', fontWeight: 600 }}>
+                    ยังไม่มีหมายเลขติดตาม<br />
+                    <span style={{ fontSize: 13, fontWeight: 400 }}>กรุณารอเภสัชกรอัปเดตข้อมูลการจัดส่ง</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="appt-modal__actions" style={{ gridTemplateColumns: '1fr', marginTop: 0 }}>
+              <button className="appt-modal__btn is-primary" onClick={closeTrackingModal} type="button">
                 ปิด
               </button>
             </div>

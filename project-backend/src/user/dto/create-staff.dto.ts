@@ -10,4 +10,5 @@ export class CreateStaffDto {
   license?: string;
   fileName?: string;
   status?: string;
+  title?: string;
 }

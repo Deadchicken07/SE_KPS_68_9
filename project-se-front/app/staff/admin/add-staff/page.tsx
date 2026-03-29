@@ -26,6 +26,7 @@ export default function AddStaffPage() {
     degree: "",
     license: "",
     fileName: "",
+    title: "",
   });
 
   const [profileImage, setProfileImage] = useState<File | null>(null);
@@ -72,7 +73,7 @@ export default function AddStaffPage() {
         const { data: { publicUrl } } = supabase.storage
           .from('Paid_appointment')
           .getPublicUrl(filePath);
-        
+
         imageUrl = publicUrl;
       }
 
@@ -81,18 +82,18 @@ export default function AddStaffPage() {
       });
 
       api.success({
-        message: "เพิ่มบุคลากรสำเร็จ",
+        title: "เพิ่มบุคลากรสำเร็จ",
         description: `เพิ่ม ${form.name} ${form.surName} เข้าสู่ระบบเรียบร้อยแล้ว`,
         placement: "topRight",
       });
 
       // Clear form or redirect
       setTimeout(() => {
-        router.push("/staff/admin"); // Adjust path as needed
+        router.push("/staff/admin/admin-home"); // Adjust path as needed
       }, 2000);
     } catch (error: any) {
       api.error({
-        message: "เกิดข้อผิดพลาด",
+        title: "เกิดข้อผิดพลาด",
         description: error.response?.data?.message || "ไม่สามารถเพิ่มข้อมูลบุคลากรได้",
         placement: "topRight",
       });
@@ -135,6 +136,26 @@ export default function AddStaffPage() {
         </div>
 
         <form onSubmit={handleSubmit} className={styles.formGrid}>
+          <div className={`${styles.formGroup} ${styles.fullWidth}`}>
+            <label className={styles.label}>คำนำหน้า (Title)</label>
+            <select
+              name="title"
+              className={`${styles.input} ${styles.select}`}
+              value={form.title}
+              onChange={handleChange}
+            >
+              <option value="">— ไม่ระบุ —</option>
+              <option value="นาย">นาย</option>
+              <option value="นาง">นาง</option>
+              <option value="นางสาว">นางสาว</option>
+              <option value="ดร.">ดร.</option>
+              <option value="รศ.ดร.">รศ.ดร.</option>
+              <option value="ศ.ดร.">ศ.ดร.</option>
+              <option value="Prof.Dr.">Prof.Dr.</option>
+              <option value="พ.ญ.">พ.ญ.</option>
+            </select>
+          </div>
+
           <div className={styles.formGroup}>
             <label className={styles.label}>ชื่อ</label>
             <input

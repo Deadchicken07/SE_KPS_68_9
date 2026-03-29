@@ -461,6 +461,7 @@ export class UserService {
         degree: body.degree,
         license: body.license,
         file_name: body.fileName,
+        title: body.title,
         status: 'ACTIVE',
         created_by: adminId,
       },
