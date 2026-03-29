@@ -34,8 +34,11 @@ function MedicinePaymentContent() {
 
     const receiptId = searchParams.get('receiptId');
 
-    const medicineCost =
-        paymentData?.prescriptionItems.reduce((sum, item) => sum + item.price * item.quantity, 0) || 0;
+    const prescriptionItems = paymentData?.prescriptionItems ?? [];
+    const medicineCost = prescriptionItems.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0,
+    );
 
     useEffect(() => {
         const fetchPaymentDetails = async () => {
@@ -56,10 +59,27 @@ function MedicinePaymentContent() {
                 }
 
                 const data = await res.json();
+                const rawItems = data?.consultations?.prescription_items ?? [];
+                const mappedItems: PrescriptionItem[] = rawItems.map((item: any) => ({
+                    medicationName: item?.medications?.name ?? 'Unknown',
+                    quantity: Number(item?.quantity ?? 0),
+                    comment: item?.comment ?? '',
+                    price: Number(item?.medications?.retail ?? 0),
+                }));
+
+                const mappedMedicineCost = mappedItems.reduce(
+                    (sum, item) => sum + item.price * item.quantity,
+                    0,
+                );
+
                 setPaymentData({
-                    prescriptionItems: data.prescriptionItems,
-                    medicineCost: data.medicineCost,
-                    receipt: { id: data.receiptId, total: data.medicineCost, status: data.status },
+                    prescriptionItems: mappedItems,
+                    medicineCost: mappedMedicineCost,
+                    receipt: {
+                        id: data?.id,
+                        total: mappedMedicineCost,
+                        status: data?.payment_status ?? null,
+                    },
                 });
             } catch (err: unknown) {
                 const message = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
@@ -191,7 +211,7 @@ function MedicinePaymentContent() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {paymentData?.prescriptionItems.map((item, idx) => (
+                                            {prescriptionItems.map((item, idx) => (
                                                 <tr key={`${item.medicationName}-${idx}`} style={{ backgroundColor: idx % 2 === 0 ? '#fff' : '#f9fafb' }}>
                                                     <td style={{ padding: '10px 14px', fontWeight: 600, color: '#1e1b4b' }}>{item.medicationName}</td>
                                                     <td style={{ padding: '10px 14px', textAlign: 'center', color: '#374151' }}>{item.quantity}</td>
