@@ -59,6 +59,7 @@ export default function ClinicLayout() {
       // Redirect even if the session is already gone.
     } finally {
       localStorage.removeItem("access_token");
+      document.cookie = "access_token=; path=/; max-age=0";
       setMe(null);
       router.push("/login");
       router.refresh();
