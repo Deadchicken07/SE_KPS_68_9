@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react';
 import axios, { AxiosError } from 'axios';
-import { AuthMeResponse } from '@/types/auth.types';
+import { AuthMeResponse, LoginResponse } from '@/types/auth.types';
 import { ErrorResponse } from '@/types/api.types';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { mapRoleIdToRole } from '@/types/role.types';
@@ -21,14 +21,21 @@ export const useLogin = () => {
       setLoading(true);
       setError(null);
 
-      await axios.post(
+      const res = await axios.post<LoginResponse>(
         `${API}/auth/login`,
         { email, password },
         { withCredentials: true }
       );
 
+      if (res.data.access_token) {
+        localStorage.setItem('access_token', res.data.access_token);
+        document.cookie = `access_token=${res.data.access_token}; path=/; max-age=86400; SameSite=Lax`;
+      }
+
+      const token = res.data.access_token;
       const me = await axios.get<AuthMeResponse>(`${API}/auth/me`, {
         withCredentials: true,
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
       setMe({ ...me.data, role: mapRoleIdToRole(me.data.role_id) });
