@@ -46,7 +46,9 @@ export class AppointmentsController {
       (!Number.isInteger(excludeAppointmentId) ||
         (excludeAppointmentId ?? 0) <= 0)
     ) {
-      throw new BadRequestException('excludeAppointmentId must be a positive integer');
+      throw new BadRequestException(
+        'excludeAppointmentId must be a positive integer',
+      );
     }
 
     const staffId = staffIdRaw ? Number.parseInt(staffIdRaw, 10) : undefined;
@@ -59,24 +61,19 @@ export class AppointmentsController {
       : undefined;
     if (
       durationMinsRaw &&
-      (!Number.isInteger(durationMins) ||
-        ![30, 60].includes(durationMins ?? 0))
+      (!Number.isInteger(durationMins) || ![30, 60].includes(durationMins ?? 0))
     ) {
       throw new BadRequestException('durationMins must be 30 or 60');
     }
 
     const userId = this.getUserIdFromRequest(req);
     const roleId = this.getRoleIdFromRequest(req);
-    return this.appointmentsService.getAvailableSlots(
-      date,
-      userId,
-      {
-        excludeAppointmentId,
-        staffId,
-        durationMins,
-        requestUserId: roleId === 2 ? userId : undefined,
-      },
-    );
+    return this.appointmentsService.getAvailableSlots(date, userId, {
+      excludeAppointmentId,
+      staffId,
+      durationMins,
+      requestUserId: roleId === 2 ? userId : undefined,
+    });
   }
 
   @Get('payments')
