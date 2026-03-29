@@ -22,11 +22,10 @@ export class AuthController {
   async login(@Body() body, @Res({ passthrough: true }) res: Response) {
     const result = await this.authService.login(body.email, body.password);
 
-    const isProd = process.env.NODE_ENV === 'production';
     res.cookie('_pgsmcmsss', result.access_token, {
       httpOnly: true,
-      sameSite: isProd ? 'none' : 'lax',
-      secure: isProd,
+      sameSite: 'none',
+      secure: true,
     });
 
     return { message: 'login success', access_token: result.access_token };

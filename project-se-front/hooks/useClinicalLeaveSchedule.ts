@@ -97,11 +97,15 @@ export function useClinicalLeaveSchedule(role: ClinicalRole) {
         staffId: String(staffId),
       });
 
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+      const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
       try {
         const response = await fetch(
           `${API_URL}/staff-home/clinic-schedule?${query.toString()}`,
           {
             credentials: 'include',
+            headers: { ...authHeaders },
           },
         );
 
@@ -247,12 +251,16 @@ export function useClinicalLeaveSchedule(role: ClinicalRole) {
 
     setSubmitting(true);
 
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+    const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
     try {
       const response = await fetch(`${API_URL}/staff-home/schedule`, {
         method: 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          ...authHeaders,
         },
         body: JSON.stringify({
           staffId: me.sub,
@@ -302,12 +310,16 @@ export function useClinicalLeaveSchedule(role: ClinicalRole) {
 
     setDeleting(true);
 
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+    const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
     try {
       const response = await fetch(`${API_URL}/staff-home/schedule`, {
         method: 'DELETE',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          ...authHeaders,
         },
         body: JSON.stringify({
           staffId: me.sub,

@@ -29,6 +29,7 @@ export const useLogin = () => {
 
       if (res.data.access_token) {
         localStorage.setItem('access_token', res.data.access_token);
+        document.cookie = `access_token=${res.data.access_token}; path=/; max-age=86400; SameSite=Lax`;
       }
 
       const token = res.data.access_token;

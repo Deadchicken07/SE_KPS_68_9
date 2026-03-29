@@ -105,11 +105,15 @@ export const useStaffAdminHome = () => {
         query.set("staffId", staffFilter);
       }
 
+      const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+      const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
       try {
         const response = await fetch(
           `${API_BASE_URL}/staff-home/clinic-schedule?${query.toString()}`,
           {
             credentials: "include",
+            headers: { ...authHeaders },
           },
         );
 
@@ -356,12 +360,16 @@ export const useStaffAdminHome = () => {
 
     setStaffScheduleSubmitting(true);
 
+    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+    const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
     try {
       const response = await fetch(`${API_BASE_URL}/staff-home/schedule`, {
         method: "POST",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
+          ...authHeaders,
         },
         body: JSON.stringify({
           staffId: Number(staffScheduleForm.staffId),

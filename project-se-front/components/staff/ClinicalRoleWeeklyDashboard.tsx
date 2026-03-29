@@ -182,6 +182,9 @@ export function ClinicalRoleWeeklyDashboard({
         staffId: String(staffId),
       });
 
+      const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+      const authHeaders: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+
       try {
         const [scheduleResponse, roleResponse] = await Promise.all([
           fetch(
@@ -189,6 +192,7 @@ export function ClinicalRoleWeeklyDashboard({
             {
               cache: "no-store",
               credentials: "include",
+              headers: authHeaders,
             },
           ),
           fetch(
@@ -196,6 +200,7 @@ export function ClinicalRoleWeeklyDashboard({
             {
               cache: "no-store",
               credentials: "include",
+              headers: authHeaders,
             },
           ),
         ]);

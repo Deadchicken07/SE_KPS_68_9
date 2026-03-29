@@ -31,13 +31,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshMe = useCallback(async () => {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+      console.log('[AuthProvider] token:', token);
       const response = await axios.get<AuthMeResponse>(`${API_URL}/auth/me`, {
         withCredentials: true,
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const data = response.data;
+      console.log('[AuthProvider] me:', data);
       setMe({ ...data, role: mapRoleIdToRole(data.role_id) });
-    } catch {
+    } catch (e) {
+      console.error('[AuthProvider] refreshMe failed:', e);
       setMe(null);
     } finally {
       setLoading(false);
