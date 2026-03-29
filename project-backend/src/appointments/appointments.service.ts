@@ -350,6 +350,7 @@ export class AppointmentsService {
         _count: { select: { prescription_items: true } },
         receipts: {
           include: { receipt_details: true },
+          orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
           take: 1,
         },
       },
@@ -953,7 +954,11 @@ export class AppointmentsService {
     };
   }
 
-  async getConsultationForAppointment(userId: number, appointmentId: number) {
+  async getConsultationForAppointment(
+    userId: number,
+    appointmentId: number,
+    receiptId?: number,
+  ) {
     const appt = await this.prisma.appointments.findFirst({
       where: {
         id: appointmentId,
@@ -1017,8 +1022,20 @@ export class AppointmentsService {
       };
     }
 
-    const firstReceipt = consultation.receipts?.[0] ?? null;
-    const receiptDetails = (firstReceipt?.receipt_details ?? []).map(
+    const fallbackReceipt = consultation.receipts?.[0] ?? null;
+    const selectedReceipt = receiptId
+      ? await this.prisma.receipts.findFirst({
+          where: {
+            id: receiptId,
+            consultation_id: consultation.id,
+            user_id: userId,
+          },
+          include: { receipt_details: true },
+        })
+      : fallbackReceipt;
+    const receipt = selectedReceipt ?? fallbackReceipt;
+
+    const receiptDetails = (receipt?.receipt_details ?? []).map(
       (detail: any) => ({
         id: detail.id,
         itemName: detail.item_name ?? detail.name ?? '-',
@@ -1068,12 +1085,13 @@ export class AppointmentsService {
         createdAt: consultation.created_at,
       },
       prescriptionItems,
-      receipt: firstReceipt
+      receipt: receipt
         ? {
-            id: firstReceipt.id,
-            total: Number(firstReceipt.total ?? 0) || serviceFee + medicineCost,
-            status: firstReceipt.payment_status ?? '-',
-            tracking: firstReceipt.tracking ?? null,
+            id: receipt.id,
+            total: Number(receipt.total ?? 0) || serviceFee + medicineCost,
+            status: receipt.payment_status ?? '-',
+            tracking: receipt.tracking ?? null,
+            slipUrl: receipt.slip_file ?? null,
           }
         : null,
       receiptDetails,

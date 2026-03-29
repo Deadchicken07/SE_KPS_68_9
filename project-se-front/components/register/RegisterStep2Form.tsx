@@ -54,7 +54,7 @@ function AddressSection({
 
       <Input
         size="large"
-        placeholder="เธฃเธฒเธขเธฅเธฐเน€เธญเธตเธขเธ”เธ—เธตเนเธญเธขเธนเน"
+        placeholder="รายละเอียดที่อยู่"
         value={detailValue}
         onChange={(e) => detailOnChange(e.target.value)}
         status={detailError ? "error" : undefined}
@@ -63,8 +63,8 @@ function AddressSection({
       />
       {detailError && <p className="text-red-500 text-sm">{detailError}</p>}
       <br />
-       <br />
-        
+      <br />
+
       <div className="grid grid-cols-2 gap-x-4 gap-y-5">
         <Select
           size="large"
@@ -72,7 +72,7 @@ function AddressSection({
           options={location.provinces.map((p) => ({ value: p.id, label: p.name }))}
           value={location.selectedProvince ?? undefined}
           onChange={(value) => location.setSelectedProvince(value ?? null)}
-          placeholder="เธเธฑเธเธซเธงเธฑเธ”"
+          placeholder="จังหวัด"
           className="select-input"
           allowClear
           disabled={disabled}
@@ -84,7 +84,7 @@ function AddressSection({
           options={location.districts.map((d) => ({ value: d.id, label: d.name }))}
           value={location.selectedDistrict ?? undefined}
           onChange={(value) => location.setSelectedDistrict(value ?? null)}
-          placeholder="เน€เธเธ•/เธญเธณเน€เธ เธญ"
+          placeholder="เขต/อำเภอ"
           className="select-input"
           allowClear
           disabled={disabled || !location.selectedProvince}
@@ -98,7 +98,7 @@ function AddressSection({
           options={location.subDistricts.map((s) => ({ value: s.id, label: s.name }))}
           value={location.selectedSubDistrict ?? undefined}
           onChange={(value) => location.setSelectedSubDistrict(value ?? null)}
-          placeholder="เนเธเธงเธ/เธ•เธณเธเธฅ"
+          placeholder="แขวง/ตำบล"
           className="select-input"
           allowClear
           disabled={disabled || !location.selectedDistrict}
@@ -110,7 +110,7 @@ function AddressSection({
           options={location.zipCodes.map((z) => ({ value: z.id, label: z.name }))}
           value={location.selectedZipCode ?? undefined}
           onChange={(value) => location.setSelectedZipCode(value ?? null)}
-          placeholder="เธฃเธซเธฑเธชเนเธเธฃเธฉเธ“เธตเธขเน"
+          placeholder="รหัสไปรษณีย์"
           className="select-input"
           allowClear
           disabled={disabled || !location.selectedSubDistrict}
@@ -198,7 +198,7 @@ export default function RegisterStep2Form({
       <div className="space-y-8">
         <div className="grid grid-cols-[1fr_2fr_2fr] gap-x-6 gap-y-6">
           <div>
-            <Label text="เธเธณเธเธณเธซเธเนเธฒ" />
+            <Label text="คำนำหน้า" />
 
             <Select
               size="large"
@@ -219,16 +219,16 @@ export default function RegisterStep2Form({
           </div>
 
           <div>
-            <Label text="เธเธทเนเธญ" />
+            <Label text="ชื่อ" />
 
             <Input
               size="large"
-              placeholder="เธเธทเนเธญ"
+              placeholder="ชื่อ"
               value={form.name}
               onChange={(e) =>
                 setForm((prev) => ({
                   ...prev,
-                  name: e.target.value.replace(/[^a-zA-Zเธ-เน\s]/g, ""),
+                  name: e.target.value.replace(/[^a-zA-Zก-๙\s]/g, ""),
                 }))
               }
               status={errors.name ? "error" : undefined}
@@ -239,16 +239,16 @@ export default function RegisterStep2Form({
           </div>
 
           <div>
-            <Label text="เธเธฒเธกเธชเธเธธเธฅ" />
+            <Label text="นามสกุล" />
 
             <Input
               size="large"
-              placeholder="เธเธฒเธกเธชเธเธธเธฅ"
+              placeholder="นามสกุล"
               value={form.surName}
               onChange={(e) =>
                 setForm((prev) => ({
                   ...prev,
-                  surName: e.target.value.replace(/[^a-zA-Zเธ-เน\s]/g, ""),
+                  surName: e.target.value.replace(/[^a-zA-Zก-๙\s]/g, ""),
                 }))
               }
               status={errors.surName ? "error" : undefined}
@@ -268,11 +268,12 @@ export default function RegisterStep2Form({
           className="input"
         />
         {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
-              <br/>
-              <br/>
+        <br />
+        <br />
+
         <div className="grid grid-cols-2 gap-x-4 gap-y-6">
           <div>
-            <Label text="เธฃเธซเธฑเธชเธเนเธฒเธ" />
+            <Label text="รหัสผ่าน" />
             <Input.Password
               size="large"
               value={form.password}
@@ -284,7 +285,7 @@ export default function RegisterStep2Form({
           </div>
 
           <div>
-            <Label text="เธขเธทเธเธขเธฑเธเธฃเธซเธฑเธชเธเนเธฒเธ" />
+            <Label text="ยืนยันรหัสผ่าน" />
             <Input.Password
               size="large"
               value={form.confirmPassword}
@@ -302,7 +303,7 @@ export default function RegisterStep2Form({
 
         <div className="grid grid-cols-3 gap-x-4 gap-y-6">
           <div>
-            <Label text="เน€เธเธญเธฃเนเนเธ—เธฃเธจเธฑเธเธ—เน" />
+            <Label text="เบอร์โทรศัพท์" />
             <Input
               size="large"
               value={form.phone}
@@ -320,10 +321,10 @@ export default function RegisterStep2Form({
           </div>
 
           <div>
-            <Label text="เนเธฃเธเธเธฃเธฐเธเธณเธ•เธฑเธง" />
+            <Label text="โรคประจำตัว" />
             <Input
               size="large"
-              placeholder="เธ–เนเธฒเนเธกเนเธกเธตเนเธซเนเนเธชเน -"
+              placeholder="ถ้าไม่มีให้ใส่ -"
               value={form.medicalCondition}
               onChange={(e) =>
                 setForm((prev) => ({
@@ -340,10 +341,10 @@ export default function RegisterStep2Form({
           </div>
 
           <div>
-            <Label text="เนเธเนเธขเธฒ" />
+            <Label text="แพ้ยา" />
             <Input
               size="large"
-              placeholder="เธ–เนเธฒเนเธกเนเธกเธตเนเธซเนเนเธชเน -"
+              placeholder="ถ้าไม่มีให้ใส่ -"
               value={form.allergyDrug}
               onChange={(e) => setForm((prev) => ({ ...prev, allergyDrug: e.target.value }))}
               status={errors.allergyDrug ? "error" : undefined}
@@ -355,7 +356,7 @@ export default function RegisterStep2Form({
       </div>
 
       <AddressSection
-        title="เธ—เธตเนเธญเธขเธนเนเธเธฑเธเธเธธเธเธฑเธ *"
+        title="ที่อยู่ปัจจุบัน *"
         detailValue={form.detail}
         detailError={errors.detail}
         detailOnChange={(value) => setForm((prev) => ({ ...prev, detail: value }))}
@@ -373,12 +374,12 @@ export default function RegisterStep2Form({
           checked={sameAsCurrentAddress}
           onChange={(e) => setSameAsCurrentAddress(e.target.checked)}
         >
-          เธ—เธตเนเธญเธขเธนเนเธ•เธฒเธกเธเธฑเธ•เธฃเน€เธซเธกเธทเธญเธเธ—เธตเนเธญเธขเธนเนเธเธฑเธเธเธธเธเธฑเธ
+          ที่อยู่ตามบัตรเหมือนที่อยู่ปัจจุบัน
         </Checkbox>
       </div>
 
       <AddressSection
-        title="เธ—เธตเนเธญเธขเธนเนเธ•เธฒเธกเธ—เธฐเน€เธเธตเธขเธ *"
+        title="ที่อยู่ตามทะเบียน *"
         detailValue={form.detailNation}
         detailError={errors.detailNation}
         detailOnChange={(value) => setForm((prev) => ({ ...prev, detailNation: value }))}

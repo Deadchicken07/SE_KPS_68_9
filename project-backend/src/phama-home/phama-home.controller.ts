@@ -32,7 +32,7 @@ export class PhamaHomeController {
   getOrders(@Req() req) {
     const auth = this.getAuthContext(req);
     this.ensurePharmacistAccess(auth.roleId);
-    return this.phamaHomeService.getOrders(auth.userId, auth.roleId);
+    return this.phamaHomeService.getOrders();
   }
 
   @Get('clinic-schedule')
