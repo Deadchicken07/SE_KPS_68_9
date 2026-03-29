@@ -1,5 +1,6 @@
 export class UpdateAdminStaffDto {
   email?: string;
+  title?: string;
   name?: string;
   surName?: string;
   password?: string;
