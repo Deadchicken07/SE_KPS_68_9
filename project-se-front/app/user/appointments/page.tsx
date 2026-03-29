@@ -307,10 +307,15 @@ export default function AppointmentsPage() {
                 throw new Error(errData.message || 'ไม่สามารถสร้างการนัดหมายได้');
             }
 
-            const data = await res.json();
+              const data = await res.json();
+              const appointmentId = data?.appointmentId ?? data?.id;
 
-            const params = new URLSearchParams({
-                id: data.appointmentId.toString(),
+              if (appointmentId == null) {
+                throw new Error('Missing appointment id in create appointment response');
+              }
+
+              const params = new URLSearchParams({
+                id: appointmentId.toString(),
                 staffName: booking.staff.name,
                 role: booking.staff.role,
                 date: booking.displayDate,
