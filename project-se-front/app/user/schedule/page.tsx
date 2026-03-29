@@ -20,6 +20,8 @@ type AppointmentStatus = "pending" | "confirmed" | "completed" | "waiting";
 
 type AppointmentItem = {
   id: number;
+  appointmentId?: number | null;
+  consultationId?: number | null;
   staffId: number | null;
   consultantName: string;
   appointmentDate: string | null;
@@ -974,6 +976,8 @@ export default function AppointmentSchedulePage() {
           {appointments.map((item, index) => {
             const isPaid = item.paymentStatus === "Paid";
             const isPending = item.paymentStatus === "Pending";
+            const consultationActionAppointmentId =
+              activeTab === "past" ? item.appointmentId ?? null : item.id;
             const joinInfo = getJoinAccessInfo(item, clock);
             const canJoin = joinInfo.state === "open";
             const isRescheduling = processingRescheduleId === item.id;
@@ -1140,7 +1144,15 @@ export default function AppointmentSchedulePage() {
                         >
                           <button
                             className="appt-btn appt-btn--ghost"
-                            onClick={() => void openConsultationModal(item.id)}
+                            disabled={!consultationActionAppointmentId}
+                            onClick={() => {
+                              if (!consultationActionAppointmentId) {
+                                return;
+                              }
+                              void openConsultationModal(
+                                consultationActionAppointmentId,
+                              );
+                            }}
                             type="button"
                           >
                             ใบเสร็จการชำระเงิน
@@ -1162,7 +1174,15 @@ export default function AppointmentSchedulePage() {
                               item.medicinePaymentStatus === "Pending") && (
                               <button
                                 className="appt-btn appt-btn--ghost"
-                                onClick={() => void openTrackingModal(item.id)}
+                                disabled={!consultationActionAppointmentId}
+                                onClick={() => {
+                                  if (!consultationActionAppointmentId) {
+                                    return;
+                                  }
+                                  void openTrackingModal(
+                                    consultationActionAppointmentId,
+                                  );
+                                }}
                                 type="button"
                                 style={{
                                   display: "flex",

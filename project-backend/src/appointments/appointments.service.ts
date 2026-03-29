@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
 
@@ -17,6 +18,8 @@ export type AppointmentStatus =
 
 export interface AppointmentScheduleItem {
   id: number;
+  appointmentId?: number | null;
+  consultationId?: number | null;
   staffId: number | null;
   consultantName: string;
   appointmentDate: string | null;
@@ -372,6 +375,8 @@ export class AppointmentsService {
         return {
           item: {
             id: record.id,
+            appointmentId: record.id,
+            consultationId: null,
             staffId: record.staff_id,
             consultantName: this.buildConsultantName(
               record.users_appointments_staff_idTousers?.name,
@@ -420,6 +425,8 @@ export class AppointmentsService {
         return {
           item: {
             id: c.id,
+            appointmentId: c.appointment_id ?? null,
+            consultationId: c.id,
             staffId: c.staff_id,
             consultantName: this.buildConsultantName(
               c.users_consultations_staff_idTousers?.name,
@@ -938,8 +945,11 @@ export class AppointmentsService {
   }
 
   async getConsultationForAppointment(userId: number, appointmentId: number) {
-    const appt = await this.prisma.appointments.findUnique({
-      where: { id: appointmentId },
+    const appt = await this.prisma.appointments.findFirst({
+      where: {
+        id: appointmentId,
+        user_id: userId,
+      },
       include: {
         users_appointments_staff_idTousers: {
           include: {
@@ -948,26 +958,42 @@ export class AppointmentsService {
         },
       },
     });
-    if (!appt || !appt.appointment_date)
+    if (!appt || !appt.appointment_date) {
       throw new NotFoundException('Appointment or date not found');
+    }
 
     const startOfDay = new Date(appt.appointment_date);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(appt.appointment_date);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const consultation = await this.prisma.consultations.findFirst({
-      where: {
-        user_id: appt.user_id,
+    const consultationLookupConditions: Prisma.consultationsWhereInput[] = [
+      { appointment_id: appointmentId },
+    ];
+    if (appt.staff_id !== null) {
+      consultationLookupConditions.push({
+        appointment_id: null,
         staff_id: appt.staff_id,
         created_at: {
           gte: startOfDay,
           lte: endOfDay,
         },
+      });
+    }
+
+    const consultation = await this.prisma.consultations.findFirst({
+      where: {
+        user_id: userId,
+        OR: consultationLookupConditions,
       },
+      orderBy: { created_at: 'desc' },
       include: {
         prescription_items: { include: { medications: true } },
-        receipts: { include: { receipt_details: true } },
+        receipts: {
+          include: { receipt_details: true },
+          orderBy: { created_at: 'desc' },
+          take: 1,
+        },
       },
     });
 

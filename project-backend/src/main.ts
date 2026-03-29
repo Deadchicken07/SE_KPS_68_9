@@ -8,7 +8,7 @@ async function bootstrap() {
   app.enableCors({
     origin: [
       'http://localhost:3000',
-      'http://localhost:3001',
+      'https://se-kps-68-9-i55b.vercel.app',
       process.env.FRONTEND_URL,
     ].filter(Boolean) as string[],
     credentials: true,
