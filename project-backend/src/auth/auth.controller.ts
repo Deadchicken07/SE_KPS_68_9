@@ -24,8 +24,8 @@ export class AuthController {
 
     res.cookie('_pgsmcmsss', result.access_token, {
       httpOnly: true,
-      sameSite: 'lax',
-      secure: false,
+      sameSite: 'none',
+      secure: true,
     });
 
     return { message: 'login success', access_token: result.access_token };
