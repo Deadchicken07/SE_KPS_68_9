@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Alert,
@@ -35,7 +35,7 @@ const getRedirectPathByRoleId = (roleId: number | null) => {
   }
 };
 
-export default function LoginPage() {
+function LoginPageContent() {
   const [api, contextHolder] = notification.useNotification();
   const { login, loading, error } = useLogin();
   const [form] = Form.useForm();
@@ -349,5 +349,13 @@ export default function LoginPage() {
         </Flex>
       </Layout>
     </>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageContent />
+    </Suspense>
   );
 }
