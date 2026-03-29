@@ -11,7 +11,7 @@ const INPUT_CLASS =
   "min-h-[46px] w-full rounded-2xl border border-[rgba(15,118,110,0.18)] bg-[#f8fcfb] px-4 text-[#173630] outline-none transition focus:border-[#0f766e] focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]";
 const TEXTAREA_CLASS =
   "min-h-[144px] w-full rounded-2xl border border-[rgba(15,118,110,0.18)] bg-[#f8fcfb] px-4 py-3 text-[#173630] outline-none transition focus:border-[#0f766e] focus:ring-4 focus:ring-[rgba(15,118,110,0.12)]";
-const WEEKDAY_SHORT_LABELS = ["เธญเธฒ.", "เธ.", "เธญ.", "เธ.", "เธเธค.", "เธจ.", "เธช."];
+const WEEKDAY_SHORT_LABELS = ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."];
 
 function cx(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(" ");
@@ -22,10 +22,10 @@ function getStatusLabel(
   selectedStaffName: string | null,
 ) {
   if (status !== "holiday") {
-    return "เน€เธเธดเธ”เธ—เธณเธเธฒเธฃ";
+    return "เปิดทำการ";
   }
 
-  return selectedStaffName ? `${selectedStaffName} เธซเธขเธธเธ”` : "เธงเธฑเธเธซเธขเธธเธ”";
+  return selectedStaffName ? `${selectedStaffName} หยุด` : "วันหยุด";
 }
 
 function getStatusBadgeClass(status: ScheduleStatus | null) {
@@ -74,7 +74,7 @@ export default function AdminWorkSchedulePage() {
       <div className="mx-auto max-w-[1400px] space-y-6">
         <section className="staff-page-header">
           <Typography.Title level={2} style={{ marginTop: 8, marginBottom: 8 }}>
-            เธ•เธฑเนเธเธงเธฑเธเธซเธขเธธเธ”เธเธฃเธฐเธเธณเธชเธฑเธเธ”เธฒเธซเนเธเธธเธเธฅเธฒเธเธฃ
+            ตั้งวันหยุดประจำสัปดาห์บุคลากร
           </Typography.Title>
         </section>
 
@@ -94,16 +94,16 @@ export default function AdminWorkSchedulePage() {
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="max-w-[34rem]">
                 <h2 className="text-[1.35rem] font-semibold text-[#173630]">
-                  เน€เธฅเธทเธญเธเธงเธฑเธเธซเธขเธธเธ”เธเธฃเธฐเธเธณเธชเธฑเธเธ”เธฒเธซเน
+                  เลือกวันหยุดประจำสัปดาห์
                 </h2>
                 <p className="mt-2 text-sm leading-7 text-[#64748b]">
-                  เน€เธฅเธทเธญเธเธงเธฑเธเนเธเธชเธฑเธเธ”เธฒเธซเนเน€เธเธทเนเธญเธเธณเธซเธเธ”เธงเธฑเธเธซเธขเธธเธ”เธเธฃเธฐเธเธณเธเธญเธเธเธธเธเธฅเธฒเธเธฃเนเธเน€เธ”เธทเธญเธเธ—เธตเนเน€เธฅเธทเธญเธ
+                  เลือกวันในสัปดาห์เพื่อกำหนดวันหยุดประจำของบุคลากรในเดือนที่เลือก
                 </p>
               </div>
 
               <div className="min-w-[220px]">
                 <label className="mb-2 block text-sm font-bold text-[#33554d]">
-                  เน€เธ”เธทเธญเธ
+                  เดือน
                 </label>
                 <input
                   type="month"
@@ -159,7 +159,7 @@ export default function AdminWorkSchedulePage() {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2 className="text-[1.35rem] font-semibold text-[#173630]">
-                  เน€เธฅเธทเธญเธเธเธธเธเธฅเธฒเธเธฃเนเธฅเธฐเธเธฑเธเธ—เธถเธเธซเธกเธฒเธขเน€เธซเธ•เธธ
+                  เลือกบุคลากรและบันทึกหมายเหตุ
                 </h2>
               </div>
               <span className={getStatusBadgeClass(selectedSchedule?.status ?? null)}>
@@ -173,18 +173,18 @@ export default function AdminWorkSchedulePage() {
             <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
               <label className="block">
                 <span className="mb-2 block text-sm font-bold text-[#33554d]">
-                  เธเธธเธเธฅเธฒเธเธฃ
+                  บุคลากร
                 </span>
                 <select
                   value={form.staffId}
                   onChange={(event) => handleStaffChange(event.target.value)}
                   className={INPUT_CLASS}
                 >
-                  <option value="">เน€เธฅเธทเธญเธเธเธธเธเธฅเธฒเธเธฃ</option>
+                  <option value="">เลือกบุคลากร</option>
                   {holidayStaffOptions.map((staff) => (
                     <option key={staff.id} value={staff.id}>
                       {staff.name}
-                      {staff.roleLabel ? ` โ€ข ${staff.roleLabel}` : ""}
+                      {staff.roleLabel ? ` โดย ${staff.roleLabel}` : ""}
                     </option>
                   ))}
                 </select>
@@ -192,14 +192,14 @@ export default function AdminWorkSchedulePage() {
 
               <label className="block">
                 <span className="mb-2 block text-sm font-bold text-[#33554d]">
-                  เธซเธกเธฒเธขเน€เธซเธ•เธธเธงเธฑเธเธซเธขเธธเธ”
+                  หมายเหตุวันหยุด
                 </span>
                 <textarea
                   maxLength={255}
                   value={form.note}
                   onChange={(event) => handleNoteChange(event.target.value)}
                   className={TEXTAREA_CLASS}
-                  placeholder="เน€เธเนเธ เธซเธขเธธเธ”เธเธฃเธฐเธเธณเธ—เธธเธเธงเธฑเธเนเธเธชเธฑเธเธ”เธฒเธซเนเธ—เธตเนเน€เธฅเธทเธญเธเธเธญเธเน€เธ”เธทเธญเธเธเธตเน"
+                  placeholder="เช่น หยุดประจำทุกวันในสัปดาห์ที่เลือกของเดือนนี้"
                 />
               </label>
 
@@ -215,7 +215,7 @@ export default function AdminWorkSchedulePage() {
                   disabled={submitting || deleting || isFetching}
                   className="inline-flex min-h-[48px] min-w-[220px] items-center justify-center rounded-full bg-[#0f766e] px-8 text-sm font-bold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:bg-[#b9c9c4]"
                 >
-                  {submitting ? "เธเธณเธฅเธฑเธเธเธฑเธเธ—เธถเธ..." : "เธเธฑเธเธ—เธถเธเธ—เธฑเนเธเน€เธ”เธทเธญเธ"}
+                  {submitting ? "กำลังบันทึก..." : "บันทึก"}
                 </button>
 
                 {selectedSchedule ? (
@@ -225,7 +225,7 @@ export default function AdminWorkSchedulePage() {
                     disabled={submitting || deleting || isFetching}
                     className="inline-flex min-h-[48px] min-w-[220px] items-center justify-center rounded-full border border-[#fda4af] bg-white px-8 text-sm font-bold text-[#be123c] transition hover:bg-[#fff1f2] disabled:cursor-not-allowed disabled:border-[#e5e7eb] disabled:text-[#9ca3af]"
                   >
-                    {deleting ? "เธเธณเธฅเธฑเธเธฅเธ..." : "เธฅเธ"}
+                    {deleting ? "กำลังลบ..." : "ลบ"}
                   </button>
                 ) : (
                   <button
@@ -233,7 +233,7 @@ export default function AdminWorkSchedulePage() {
                     disabled={submitting || deleting || isFetching}
                     className="inline-flex min-h-[48px] min-w-[220px] items-center justify-center rounded-full bg-[#0f766e] px-8 text-sm font-bold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:bg-[#b9c9c4]"
                   >
-                    {submitting ? "เธเธณเธฅเธฑเธเธเธฑเธเธ—เธถเธ..." : "เธเธฑเธเธ—เธถเธ"}
+                    {submitting ? "กำลังบันทึก..." : "บันทึก"}
                   </button>
                 )}
               </div>
