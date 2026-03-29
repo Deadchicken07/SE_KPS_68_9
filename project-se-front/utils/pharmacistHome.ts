@@ -72,7 +72,9 @@ export function formatPharmacistHomeMoney(value: number | null) {
 }
 
 export function pharmacistHomeFullName(person: PharmacistHomePerson | null) {
-  return person ? `${person.name} ${person.sur_name}`.trim() || '-' : '-'
+  return person
+    ? [person.title, person.name, person.sur_name].filter(Boolean).join(' ').trim() || '-'
+    : '-'
 }
 
 export function pharmacistHomeTextValue(

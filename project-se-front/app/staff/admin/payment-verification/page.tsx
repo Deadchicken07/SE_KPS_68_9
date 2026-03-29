@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Table, Modal, Button, message, Spin, Tag, Tabs, Popconfirm } from 'antd';
 import type { TabsProps } from 'antd';
 import { useAuth } from '@/components/providers/AuthProvider';
+import PageSkeleton from '@/components/ui/PageSkeleton';
 import { mapRoleIdToRole } from '@/types/role.types';
 import { useRouter } from 'next/navigation';
 
@@ -330,6 +331,10 @@ export default function PaymentVerificationPage() {
         return <div className="p-8 text-center"><Spin size="large" /></div>;
     }
 
+    if (loading) {
+        return <PageSkeleton cards={[{ rows: 4 }, { rows: 10 }]} />;
+    }
+
     const items: TabsProps['items'] = [
         {
             key: '1',
@@ -339,7 +344,6 @@ export default function PaymentVerificationPage() {
                     columns={appointmentColumns}
                     dataSource={appointments}
                     rowKey="id"
-                    loading={loading}
                     pagination={{ pageSize: 15 }}
                 />
             ),

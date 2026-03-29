@@ -11,11 +11,13 @@ import { QuestionnairesModule } from './questionnaires/questionnaires.module';
 import { QuestionsModule } from './questions/questions.module';
 import { ChoicesModule } from './choices/choices.module';
 import { AnswersModule } from './answers/answers.module';
+import { ResponsesModule } from './responses/responses.module';
+import { PharmacistModule } from './pharmacist/pharmacist.module';
+import { ConsultationsModule } from './consultations/consultations.module';
+import { PsychiatristDashboardModule } from './psychiatrist-dashboard/psychiatrist-dashboard.module';
+import { PsychologistDashboardModule } from './psychologist-dashboard/psychologist-dashboard.module';
 import { StaffHomeModule } from './staff-home/staff-home.module';
 import { PhamaHomeModule } from './phama-home/phama-home.module';
-import { ResponsesModule } from './responses/responses.module';
-import { ConsultationsModule } from './consultations/consultations.module';
-import { PharmacistModule } from './pharmacist/pharmacist.module';
 import { JitsiMeetModule } from './jitsi-meet/jitsi-meet.module';
 import { AdminStaffManagementModule } from './admin-staff-management/admin-staff-management.module';
 
@@ -26,16 +28,18 @@ import { AdminStaffManagementModule } from './admin-staff-management/admin-staff
     AuthModule,
     LocationModule,
     QuestionnairesModule,
-    MailModule,
     QuestionsModule,
     ChoicesModule,
     AnswersModule,
+    ResponsesModule,
+    MailModule,
     AppointmentsModule,
+    PharmacistModule,
+    ConsultationsModule,
+    PsychiatristDashboardModule,
+    PsychologistDashboardModule,
     StaffHomeModule,
     PhamaHomeModule,
-    ResponsesModule,
-    ConsultationsModule,
-    PharmacistModule,
     JitsiMeetModule,
     AdminStaffManagementModule,
   ],

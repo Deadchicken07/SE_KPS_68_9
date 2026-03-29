@@ -4,11 +4,17 @@ import { Button, Card, Col, Flex, List, Row } from "antd"
 import styles from "./page.module.css"
 import { useQuestionnaire } from "@/hooks/useQuestionnaire"
 import { useRouter } from "next/navigation"
+import PageSkeleton from "@/components/ui/PageSkeleton"
 
 
 export default function ExamsPage(){
     const {questionnaires,loading,error} =  useQuestionnaire()
     const router = useRouter()
+
+    if (loading) {
+        return <PageSkeleton cards={[{ rows: 2 }, { rows: 4 }]} />
+    }
+
     return(
         <div style={{padding : 24}}>
             <Card 

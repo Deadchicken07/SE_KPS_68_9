@@ -1,17 +1,33 @@
 import type {
   AppointmentItem,
+  DailyStat,
+  DashboardSummary,
+  DayTone,
+  EventTone,
+  KpiCard,
   MonthWeekOption,
   ParsedTimeRange,
   StaffScheduleFormState,
   TimelineBounds,
+  TimelineEvent,
 } from "@/types/staffAdminHome.types";
 
-const EVENT_TONES = [
-  { fill: "#e6fffb", border: "#0f766e" },
-  { fill: "#dff8f2", border: "#115e59" },
-  { fill: "#e9f7f4", border: "#155e75" },
-  { fill: "#edf7f3", border: "#1f6b5f" },
-  { fill: "#f1faf7", border: "#2f6f64" },
+const DAY_TONES: DayTone[] = [
+  { fill: "#f8d16c", ink: "#5e3f00" },
+  { fill: "#f89bc4", ink: "#65203d" },
+  { fill: "#65d7a0", ink: "#14492d" },
+  { fill: "#ffc449", ink: "#694500" },
+  { fill: "#79c4ff", ink: "#113a63" },
+  { fill: "#b7a3ff", ink: "#36246f" },
+  { fill: "#ff8e8a", ink: "#5f201d" },
+];
+
+const EVENT_TONES: EventTone[] = [
+  { fill: "#fce79b", border: "#c6a84a" },
+  { fill: "#f6b8dd", border: "#b76894" },
+  { fill: "#b8efd1", border: "#4c9f71" },
+  { fill: "#ffd97f", border: "#d39f2a" },
+  { fill: "#c7e4ff", border: "#6297c5" },
 ];
 
 const DEFAULT_TIMELINE_START = 8 * 60;
@@ -20,6 +36,44 @@ const TIMELINE_EVENT_ROW_HEIGHT = 68;
 const TIMELINE_EVENT_TOP_OFFSET = 10;
 const TIMELINE_MIN_LANE_HEIGHT = 92;
 const TIMELINE_COLLAPSED_TRACK_COUNT = 1;
+
+export const WEEKDAY_LABELS = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
+
+export const PAGE_BACKGROUND =
+  "radial-gradient(circle at top left, rgba(74, 124, 110, 0.18), transparent 26rem), radial-gradient(circle at bottom right, rgba(224, 182, 107, 0.18), transparent 24rem), linear-gradient(180deg, #f5efe4 0%, #efe6d8 100%)";
+export const HERO_BACKGROUND =
+  "linear-gradient(135deg, rgba(255, 248, 232, 0.3), rgba(255, 248, 232, 0.04)), linear-gradient(135deg, #183f36 0%, #24584b 56%, #2f7060 100%)";
+export const BOARD_BACKGROUND =
+  "linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(250, 245, 236, 0.96)), repeating-linear-gradient(0deg, rgba(126, 126, 126, 0.03) 0, rgba(126, 126, 126, 0.03) 2px, transparent 2px, transparent 6px)";
+export const BOARD_HEADER_BACKGROUND =
+  "linear-gradient(180deg, #fffefb 0%, #f7f1e7 100%)";
+export const TIMELINE_LANE_BACKGROUND =
+  "linear-gradient(180deg, rgba(255, 253, 247, 0.6), rgba(247, 242, 232, 0.84)), repeating-linear-gradient(0deg, rgba(128, 120, 106, 0.03) 0, rgba(128, 120, 106, 0.03) 1px, transparent 1px, transparent 52px)";
+export const TIMELINE_LANE_SELECTED_BACKGROUND =
+  "linear-gradient(180deg, rgba(229, 245, 239, 0.92), rgba(241, 246, 239, 0.92)), repeating-linear-gradient(0deg, rgba(128, 120, 106, 0.03) 0, rgba(128, 120, 106, 0.03) 1px, transparent 1px, transparent 52px)";
+
+export const PANEL_CLASS =
+  "rounded-[28px] border border-[#585c5124] bg-[#fffbf3] shadow-[0_18px_36px_rgba(51,56,48,0.08)]";
+export const INPUT_CLASS =
+  "min-h-[46px] w-full rounded-[14px] border border-[#3c524c29] bg-[#fffdf8] px-3.5 text-[#173630] outline-none transition focus:border-[#2d6a5c] focus:ring-4 focus:ring-[#2d6a5c1f]";
+export const TEXTAREA_CLASS =
+  "min-h-[132px] w-full rounded-[14px] border border-[#3c524c29] bg-[#fffdf8] px-3.5 py-3 text-[#173630] leading-7 outline-none transition focus:border-[#2d6a5c] focus:ring-4 focus:ring-[#2d6a5c1f] resize-y";
+export const PANEL_META_CLASS =
+  "inline-flex items-center justify-center rounded-full bg-[#edf3ee] px-3.5 py-2.5 text-[0.84rem] font-extrabold text-[#33554d]";
+export const EMPTY_CLASS =
+  "rounded-[20px] border border-dashed border-[#4b615a38] bg-[rgba(255,252,246,0.92)] p-[22px] leading-7 text-[#5f6b62]";
+
+export const EMPTY_SUMMARY: DashboardSummary = {
+  totalAppointments: 0,
+  uniquePatients: 0,
+  activeStaffCount: 0,
+  registeredStaffCount: 0,
+  paidAppointments: 0,
+  pendingPayments: 0,
+  onlineAppointments: 0,
+  onsiteAppointments: 0,
+  daysWithAppointments: 0,
+};
 
 export function createStaffScheduleFormState(
   dateKey: string,
@@ -31,6 +85,10 @@ export function createStaffScheduleFormState(
     status: "working",
     note: "",
   };
+}
+
+export function cx(...values: Array<string | false | null | undefined>) {
+  return values.filter(Boolean).join(" ");
 }
 
 export function getCurrentMonthKey() {
@@ -61,7 +119,36 @@ export function getDefaultSelectedDate() {
     : `${getCurrentMonthKey()}-01`;
 }
 
-export function parseStaffAdminHomeErrorMessage(payload: unknown) {
+export function formatMonthLabel(monthKey: string) {
+  return new Date(`${monthKey}-01T00:00:00`).toLocaleDateString("th-TH", {
+    month: "long",
+    year: "numeric",
+  });
+}
+
+export function formatDateLabel(dateKey: string) {
+  return new Date(`${dateKey}T00:00:00`).toLocaleDateString("th-TH", {
+    weekday: "long",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+export function formatCompactDateLabel(dateKey: string) {
+  return new Date(`${dateKey}T00:00:00`).toLocaleDateString("th-TH", {
+    day: "2-digit",
+    month: "short",
+  });
+}
+
+export function formatTimeLabel(minutes: number) {
+  const hour = Math.floor(minutes / 60);
+  const minute = minutes % 60;
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+export function parseErrorMessage(payload: unknown) {
   if (payload && typeof payload === "object" && "message" in payload) {
     const message = (payload as { message?: unknown }).message;
 
@@ -77,18 +164,6 @@ export function parseStaffAdminHomeErrorMessage(payload: unknown) {
   return "โหลดข้อมูลไม่สำเร็จ";
 }
 
-export function normalizeScheduleNoteText(note?: string | null) {
-  const trimmed = note?.trim();
-
-  if (!trimmed) {
-    return "";
-  }
-
-  const readableText = trimmed.replace(/[?]/g, "").trim();
-
-  return readableText ? trimmed : "";
-}
-
 function toDateKey(value: Date) {
   return [
     value.getUTCFullYear(),
@@ -102,13 +177,6 @@ function toMonthKey(value: Date) {
     value.getUTCFullYear(),
     String(value.getUTCMonth() + 1).padStart(2, "0"),
   ].join("-");
-}
-
-function formatCompactDateLabel(dateKey: string) {
-  return new Date(`${dateKey}T00:00:00`).toLocaleDateString("th-TH", {
-    day: "2-digit",
-    month: "short",
-  });
 }
 
 function formatWeekRangeLabel(startDateKey: string, endDateKey: string) {
@@ -203,9 +271,7 @@ function parseTimeRange(item: AppointmentItem): ParsedTimeRange | null {
   };
 }
 
-export function getTimelineBounds(
-  appointments: AppointmentItem[],
-): TimelineBounds {
+export function getTimelineBounds(appointments: AppointmentItem[]): TimelineBounds {
   const ranges = appointments
     .map(parseTimeRange)
     .filter((range): range is ParsedTimeRange => Boolean(range));
@@ -245,6 +311,11 @@ export function buildTimeMarkers(bounds: TimelineBounds) {
   }
 
   return markers;
+}
+
+export function getDayTone(dateKey: string) {
+  const day = new Date(`${dateKey}T00:00:00`).getDay();
+  return DAY_TONES[day];
 }
 
 function getEventTone(value: number) {
@@ -300,7 +371,7 @@ export function getTimelineEvents(
       top: trackIndex * TIMELINE_EVENT_ROW_HEIGHT + TIMELINE_EVENT_TOP_OFFSET,
       range,
       tone: getEventTone(appointment.staffId ?? appointment.id ?? index),
-    };
+    } satisfies TimelineEvent;
   });
 
   const trackCount = trackEnds.length;
@@ -313,4 +384,76 @@ export function getTimelineEvents(
     laneHeight: getTimelineLaneHeight(trackCount),
     trackCount,
   };
+}
+
+export function getStatusBadgeClasses(status: AppointmentItem["displayStatus"]) {
+  return cx(
+    "inline-flex items-center justify-center rounded-full px-3 py-2 text-[0.8rem] font-extrabold whitespace-nowrap",
+    status === "pending" && "bg-[#fff1d6] text-[#9b5e00]",
+    status === "confirmed" && "bg-[#dff5e8] text-[#146746]",
+    status === "completed" && "bg-[#e8edf1] text-[#42515a]",
+  );
+}
+
+export function getScheduleStatusLabel(value: string) {
+  if (value === "working") {
+    return "ทำงาน";
+  }
+
+  if (value === "leave" || value === "holiday") {
+    return "ลา";
+  }
+
+  return "ยังไม่ลงตาราง";
+}
+
+export function getScheduleBadgeClasses(value: string) {
+  return cx(
+    "inline-flex items-center gap-2 rounded-full px-3 py-2 text-[0.8rem] font-extrabold",
+    value === "working" && "bg-[#dff5e8] text-[#146746]",
+    (value === "leave" || value === "holiday") && "bg-[#ffe4e1] text-[#a23d34]",
+    value !== "working" &&
+      value !== "leave" &&
+      value !== "holiday" &&
+      "bg-[#ece8df] text-[#685e51]",
+  );
+}
+
+export function getKpiCards(
+  summary: DashboardSummary,
+  selectedDate: string,
+  selectedDayStats: DailyStat | null,
+): KpiCard[] {
+  return [
+    {
+      label: "นัดหมายทั้งหมด",
+      value: summary.totalAppointments,
+      note: `${summary.daysWithAppointments} วันที่มีการนัด`,
+    },
+    {
+      label: "ผู้รับบริการ",
+      value: summary.uniquePatients,
+      note: "นับตามคนไข้ไม่ซ้ำ",
+    },
+    {
+      label: "บุคลากรที่มีนัด",
+      value: summary.activeStaffCount,
+      note: `จากในระบบทั้งหมด ${summary.registeredStaffCount} คน`,
+    },
+    {
+      label: "ชำระแล้ว",
+      value: summary.paidAppointments,
+      note: `รอชำระ ${summary.pendingPayments} นัด`,
+    },
+    {
+      label: "ออนไลน์",
+      value: summary.onlineAppointments,
+      note: `ที่คลินิก ${summary.onsiteAppointments} นัด`,
+    },
+    {
+      label: "วันที่เลือก",
+      value: selectedDayStats?.totalAppointments ?? 0,
+      note: formatDateLabel(selectedDate),
+    },
+  ];
 }
