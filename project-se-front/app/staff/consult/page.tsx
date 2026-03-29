@@ -30,7 +30,7 @@ const { TextArea } = Input;
 
 let nextId = 1;
 
-export default function ConsultPage() {
+function ConsultPageContent() {
   const router = useRouter();
   const [messageApi, contextHolder] = message.useMessage();
   const { user, loading } = useUser();

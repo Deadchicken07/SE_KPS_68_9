@@ -1295,6 +1295,7 @@ export class AppointmentsService {
       staffId: record.staff_id ?? null,
       patientId: record.user_id ?? null,
       patientName: this.buildPatientName(
+        record.users_appointments_user_idTousers?.title,
         record.users_appointments_user_idTousers?.name,
         record.users_appointments_user_idTousers?.sur_name,
         record.users_appointments_user_idTousers?.user_id ??

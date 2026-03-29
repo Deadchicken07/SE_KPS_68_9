@@ -94,7 +94,21 @@ export class ConsultationsService {
         });
 
         if (fee) {
-          const feeAmount = Number(fee.price_per_hours ?? 0);
+          let feeAmount = Number(fee.price_per_hours ?? 0);
+
+          if (dto.appointment_id) {
+            const appt = await this.prisma.appointments.findUnique({
+              where: { id: dto.appointment_id },
+              select: { time_select: true },
+            });
+            if (appt?.time_select) {
+              const durationMinutes = this.parseAppointmentDuration(appt.time_select);
+              if (durationMinutes !== null && durationMinutes <= 30) {
+                feeAmount = feeAmount / 2;
+              }
+            }
+          }
+
           total += feeAmount;
           receiptDetails.push({
             item_name: 'ค่าบริการ',
@@ -124,5 +138,13 @@ export class ConsultationsService {
     });
 
     return consultation;
+  }
+
+  private parseAppointmentDuration(timeSelect: string): number | null {
+    const match = timeSelect.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
+    if (!match) return null;
+    const startMinutes = parseInt(match[1]) * 60 + parseInt(match[2]);
+    const endMinutes = parseInt(match[3]) * 60 + parseInt(match[4]);
+    return endMinutes - startMinutes;
   }
 }

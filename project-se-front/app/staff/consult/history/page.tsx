@@ -20,6 +20,7 @@ import { Consultation } from "@/types/consult.types";
 import { useUserResponses, useResponseDetail } from "@/hooks/useResponse";
 import { useStaffName, useUserName } from "@/hooks/useStaffName";
 import { ResponseDetail, ResponseSummary } from "@/types/response.types";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 
 function ConsultHistoryPageContent() {
   const searchParams = useSearchParams();
