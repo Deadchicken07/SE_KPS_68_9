@@ -13,14 +13,13 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { AppointmentsService } from './appointments.service';
 import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
 
 @Controller('appointments')
-@UseGuards(JwtAuthGuard)
 export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) { }
 
