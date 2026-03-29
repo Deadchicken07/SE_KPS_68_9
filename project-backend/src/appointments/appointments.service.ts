@@ -622,10 +622,20 @@ export class AppointmentsService {
       where: { payment_status: { in: ['Not_paying', 'Pending'] } },
       include: {
         users: {
-          select: { user_id: true, title: true, name: true, sur_name: true },
+          select: {
+            user_id: true,
+            title: true,
+            name: true,
+            sur_name: true,
+            phone: true,
+            nation_id: true,
+          },
         },
         consultations: {
           include: {
+            appointments: {
+              select: { appointment_date: true, appointment_type: true },
+            },
             users_consultations_staff_idTousers: {
               select: { name: true, sur_name: true },
             },
@@ -640,28 +650,46 @@ export class AppointmentsService {
         r.consultations?.prescription_items.map((p) => ({
           name: p.medications?.name || 'Unknown',
           quantity: p.quantity || 0,
-          price: p.medications?.retail ? Number(p.medications.retail) : 0,
+          unitPrice: p.medications?.retail ? Number(p.medications.retail) : 0,
+          totalPrice:
+            (p.medications?.retail ? Number(p.medications.retail) : 0) *
+            (p.quantity || 0),
         })) || [];
       const medicineCost = items.reduce(
-        (sum, item) => sum + item.price * item.quantity,
+        (sum, item) => sum + item.totalPrice,
         0,
       );
+      const hasPrescription = items.length > 0;
       return {
         id: r.id,
-        appointmentType: 'onsite',
+        user_id: r.user_id,
+        total: r.total ? Number(r.total) : medicineCost,
+        created_at: r.created_at,
+        date:
+          r.consultations?.appointments?.appointment_date?.toISOString() ?? null,
+        appointmentType:
+          r.consultations?.appointments?.appointment_type ?? 'onsite',
         patientName: this.buildPatientName(
           r.users?.title,
           r.users?.name,
           r.users?.sur_name,
           r.users?.user_id || r.user_id || 0,
         ),
+        phone: r.users?.phone ?? null,
+        nation_id: r.users?.nation_id ?? null,
         staffName: this.buildConsultantName(
           r.consultations?.users_consultations_staff_idTousers?.name,
           r.consultations?.users_consultations_staff_idTousers?.sur_name,
         ),
         medicineCost,
+        hasPrescription,
+        slipUrl: r.slip_file ?? null,
+        status: r.status ?? null,
+        paymentStatus: r.payment_status ?? null,
+        tracking: r.tracking ?? null,
         payment_status: r.payment_status,
         medicineItems: items,
+        receipt_details: [],
       };
     });
   }
