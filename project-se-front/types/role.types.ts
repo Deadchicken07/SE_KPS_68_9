@@ -46,31 +46,47 @@ export const roleLinks: Record<Roles, NavLinks[]> = {
     { name: "Payment Verification", href: "/staff/admin/payment-verification" },
     { name: "Walk-in Appointment", href: "/staff/admin/walkin-appointment" },
   ],
-  user: [{ name: "หน้าแรก", href: "/user" }],
+  user: [{ name: "Home", href: "/user" }],
   psychologist: [
+    {
+      name: "Dashboard",
+      href: "/staff/role-psychiatrist-psychologists/psychologist",
+    },
+    {
+      name: "Leave Form",
+      href: "/staff/role-psychiatrist-psychologists/psychologist-leave",
+    },
     { name: "Patient History", href: "/staff/patient-history" },
-    { name: "การนัดหมาย", href: "/staff/appointments/med" },
-    { name: "การปรึกษา", href: "/staff/consult" },
+    { name: "Appointments", href: "/staff/appointments/med" },
+    { name: "Consultations", href: "/staff/consult" },
   ],
   psychiatrist: [
+    {
+      name: "Dashboard",
+      href: "/staff/role-psychiatrist-psychologists/psychiatrist",
+    },
+    {
+      name: "Leave Form",
+      href: "/staff/role-psychiatrist-psychologists/psychiatrist-leave",
+    },
     { name: "Patient History", href: "/staff/patient-history" },
-    { name: "การนัดหมาย", href: "/staff/appointments/med" },
-    { name: "การปรึกษา", href: "/staff/consult" },
+    { name: "Appointments", href: "/staff/appointments/med" },
+    { name: "Consultations", href: "/staff/consult" },
   ],
   pharmacist: [
     { name: "Dashboard", href: "/staff/pharmacist/pharmacist_home" },
     { name: "Work Schedule", href: "/staff/pharmacist/Phama_work" },
     { name: "Medication Order", href: "/staff/pharmacist/order" },
     { name: "Delivery History", href: "/staff/pharmacist/delivery-history" },
-    { name: "Med Inventory", href: "/staff/pharmacist" },
+    { name: "Medication Inventory", href: "/staff/pharmacist" },
   ],
 };
 
 export const roleHome: Record<Roles, string> = {
   admin: "/staff/admin/admin-home",
   user: "/user",
-  psychologist: "/staff/patient-history",
-  psychiatrist: "/staff/patient-history",
+  psychologist: "/staff/role-psychiatrist-psychologists/psychologist",
+  psychiatrist: "/staff/role-psychiatrist-psychologists/psychiatrist",
   pharmacist: "/staff/pharmacist/pharmacist_home",
 };
 
@@ -88,4 +104,29 @@ export const roleRoutePrefixes: Record<Roles, readonly string[]> = {
     "/staff/consult",
   ],
   pharmacist: ["/staff/pharmacist"],
+};
+
+export const canRoleAccessPath = (
+  role: Roles,
+  pathname: string | null | undefined,
+) => {
+  if (!pathname) {
+    return false;
+  }
+
+  if (pathname === roleHome[role]) {
+    return true;
+  }
+
+  if (pathname === "/staff") {
+    return true;
+  }
+
+  return roleLinks[role].some((link) => {
+    if (pathname === link.href) {
+      return true;
+    }
+
+    return pathname.startsWith(`${link.href}/`);
+  });
 };

@@ -1,9 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
   authPages,
+  canRoleAccessPath,
   mapRoleIdToRole,
   roleHome,
-  roleRoutePrefixes,
   type Roles,
   userProtectedPrefixes,
 } from "@/types/role.types";
@@ -35,12 +35,7 @@ function isProtectedPath(pathname: string) {
 }
 
 function canAccessPath(role: Roles, pathname: string) {
-  if (pathname === "/staff") {
-    return true;
-  }
-
-  const allowedPrefixes = roleRoutePrefixes[role];
-  return allowedPrefixes.some((prefix) => matchesPrefix(pathname, prefix));
+  return canRoleAccessPath(role, pathname);
 }
 
 function buildLoginRedirect(request: NextRequest) {
