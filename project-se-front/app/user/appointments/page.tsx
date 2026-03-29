@@ -126,9 +126,39 @@ export default function AppointmentsPage() {
             const res = await fetch(`${apiUrl}/appointments/available-slots?date=${dateStr}`, {
                 credentials: 'include'
             });
+
             if (res.ok) {
-                const data = await res.json();
-                setAvailableSlotsMap(data);
+                const data = await res.json(); // ได้ { bookedSlots: [...] } มาจาก API
+
+                // ⏰ 1. กำหนดช่วงเวลาทำการทั้งหมดของคลินิก (คุณสามารถแก้ไขเวลาตรงนี้ได้ตามจริง)
+                const allPossibleSlots = [
+                    '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+                    '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'
+                ];
+
+                const mapFromBooked: Record<number, string[]> = {};
+
+                // ⏰ 2. วนลูปรายชื่อหมอทั้งหมดที่มี เพื่อสร้างเวลาว่างให้แต่ละคน
+                fetchedStaffs.forEach((s: any) => {
+                    const staffId = s.id || s.user_id;
+
+                    // กรองเอาเฉพาะคิวที่ "ถูกจองแล้ว" ของหมอคนนี้ และดึงเฉพาะเวลาเริ่มต้นออกมา
+                    const bookedTimes = (data.bookedSlots || [])
+                        .filter((booking: string) => booking.startsWith(`${staffId}_`))
+                        .map((booking: string) => {
+                            // รูปแบบที่มาคือ "1_09:00 - 09:30" แยกเอาแค่ "09:00"
+                            const timeString = booking.split('_')[1];
+                            return timeString ? timeString.split(' - ')[0].trim() : '';
+                        });
+
+                    // หักลบเวลาที่ถูกจองไปแล้ว ออกจากเวลาทำการทั้งหมด
+                    mapFromBooked[staffId] = allPossibleSlots.filter(
+                        slot => !bookedTimes.includes(slot)
+                    );
+                });
+
+                // ⏰ 3. อัปเดต State ให้ระบบนำไปแสดงผล
+                setAvailableSlotsMap(mapFromBooked);
             }
         } catch (err) {
             console.error(err);
@@ -773,7 +803,13 @@ export default function AppointmentsPage() {
                                                 เวลา <span style={{ fontSize: 14, fontWeight: 'normal', color: '#6b7280' }}>(แสดงเฉพาะเวลาที่ว่าง)</span>
                                             </h2>
                                             {(() => {
-                                                const displaySlots = filterContiguousSlots(selectedStaff.slots, selectedDuration);
+                                                // ดึงข้อมูลบุคลากรที่อัปเดต slots ล่าสุดมาจาก allStaff
+                                                const currentStaff = allStaff.find(s => s.id === selectedStaff.id);
+                                                const updatedSlots = currentStaff ? currentStaff.slots : [];
+
+                                                // นำ updatedSlots ไปกรองเวลาแทน
+                                                const displaySlots = filterContiguousSlots(updatedSlots, selectedDuration);
+
                                                 return displaySlots.length > 0 ? (
                                                     <TimeSlotGrid
                                                         slots={displaySlots}
