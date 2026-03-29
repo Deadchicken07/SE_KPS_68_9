@@ -19,7 +19,7 @@ import { useStaffAdminHome } from "@/hooks/useStaffAdminHome";
 export default function StaffAdminHomePage() {
   const state = useStaffAdminHome();
 
-  if (state.loading) {
+  if (state.isLoading) {
     return <PageSkeleton cards={[{ rows: 5 }, { rows: 8 }, { rows: 6 }]} />;
   }
 

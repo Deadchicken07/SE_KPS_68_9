@@ -17,14 +17,15 @@ export default function PharmacistHomePage() {
     generatedAtLabel,
     hasAccess,
     isDetailModalOpen,
-    loading,
+    isFetching,
+    isLoading,
     openConsultation,
     openOrderPage,
     selected,
     closeDetailModal,
   } = usePharmacistHome()
 
-  if (loading) {
+  if (isLoading) {
     return <PageSkeleton cards={[{ rows: 4 }, { rows: 10 }]} />
   }
 
@@ -52,7 +53,7 @@ export default function PharmacistHomePage() {
         </Card>
       ) : null}
 
-      {loading ? (
+      {isFetching ? (
         <Card className="staff-content-card" variant="borderless">
           <div className="flex flex-col items-center justify-center gap-4 py-8 text-center">
             <div>
@@ -65,7 +66,7 @@ export default function PharmacistHomePage() {
         </Card>
       ) : null}
 
-      {!loading ? (
+      {!isLoading ? (
         <section className="space-y-6">
           <Card
             className="staff-content-card"

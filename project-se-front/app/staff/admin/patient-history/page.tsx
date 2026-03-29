@@ -21,7 +21,8 @@ export default function PatientHistoryPage() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const {
     patients,
-    loading,
+    isLoading,
+    isFetching,
     search,
     setSearch,
     selectedPatient,
@@ -61,7 +62,7 @@ export default function PatientHistoryPage() {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return <PageSkeleton cards={[{ rows: 4 }, { rows: 8 }]} />;
   }
 
@@ -99,7 +100,7 @@ export default function PatientHistoryPage() {
               id="patient-select"
               value={selectedPatientId ?? ""}
               onChange={(event) => setSelectedPatientId(Number(event.target.value))}
-              disabled={loading || patients.length === 0}
+              disabled={isFetching || patients.length === 0}
             >
               {patients.length === 0 ? (
                 <option value="">ไม่พบข้อมูลผู้ป่วย</option>

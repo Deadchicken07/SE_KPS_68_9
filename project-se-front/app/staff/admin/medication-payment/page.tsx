@@ -7,6 +7,7 @@ import axios from "axios";
 import dayjs from "dayjs";
 import generatePayload from 'promptpay-qr';
 import { supabase } from '@/utils/supabase';
+import PageSkeleton from "@/components/ui/PageSkeleton";
 
 const { Title, Text } = Typography;
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
@@ -45,7 +46,8 @@ interface Receipt {
 
 export default function AdminMedicationPaymentPage() {
   const [messageApi, contextHolder] = message.useMessage();
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [searchText, setSearchText] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -57,7 +59,11 @@ export default function AdminMedicationPaymentPage() {
   // Fetch receipts that are pending payment at clinic
   const fetchReceipts = useCallback(async () => {
     try {
-      setLoading(true);
+      if (isLoading) {
+        setIsLoading(true);
+      } else {
+        setIsFetching(true);
+      }
       const res = await axios.get(`${API}/appointments/medicine-payments`, {
         withCredentials: true,
       });
@@ -76,7 +82,8 @@ export default function AdminMedicationPaymentPage() {
       console.error(error);
       messageApi.error("ไม่สามารถดึงข้อมูลรายการใบเสร็จได้");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
+      setIsFetching(false);
     }
   }, [messageApi]);
 
@@ -133,6 +140,10 @@ export default function AdminMedicationPaymentPage() {
     r.nation_id?.includes(searchText) ||
     r.id.toString().includes(searchText)
   );
+
+  if (isLoading) {
+    return <PageSkeleton cards={[{ rows: 4 }, { rows: 8 }]} />;
+  }
 
   const columns = [
     {
@@ -228,7 +239,7 @@ export default function AdminMedicationPaymentPage() {
           columns={columns} 
           dataSource={filteredReceipts} 
           rowKey="id" 
-          loading={loading}
+          loading={isFetching}
           pagination={{ pageSize: 10 }}
           locale={{ emptyText: "ไม่มีรายการที่รอชำระเงิน" }}
           style={{ cursor: "pointer" }}

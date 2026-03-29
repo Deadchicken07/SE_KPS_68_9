@@ -6,6 +6,7 @@ import axios from "axios";
 import { useStaff } from "@/hooks/useStaff";
 import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 
 const { Title } = Typography;
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
@@ -19,6 +20,7 @@ export default function WalkinAppointmentPage() {
   const [loading, setLoading] = useState(false);
   const [fetchingSlots, setFetchingSlots] = useState(false);
   const [fetchingPatients, setFetchingPatients] = useState(false);
+  const [hasLoadedPatients, setHasLoadedPatients] = useState(false);
 
   // Available slots mapping: { staffId: ["09:00", "09:30"] }
   const [availableSlotsMap, setAvailableSlotsMap] = useState<Record<number, string[]>>({});
@@ -42,10 +44,15 @@ export default function WalkinAppointmentPage() {
         console.error(error);
       } finally {
         setFetchingPatients(false);
+        setHasLoadedPatients(true);
       }
     };
     fetchPatients();
   }, []);
+
+  if (fetchingPatients && !hasLoadedPatients) {
+    return <PageSkeleton cards={[{ rows: 4 }, { rows: 8 }]} />;
+  }
 
   const fetchAvailableSlots = async (dateStr: string) => {
     try {

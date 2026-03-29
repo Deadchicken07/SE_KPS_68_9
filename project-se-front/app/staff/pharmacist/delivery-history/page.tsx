@@ -42,7 +42,8 @@ export default function PharmacistDeliveryHistoryPage() {
   const [messageApi, contextHolder] = message.useMessage();
   const {
     deliveries,
-    deliveriesLoading,
+    isLoading,
+    isFetching,
     deliverySearch,
     setDeliverySearch,
     deliveryStatus,
@@ -50,7 +51,7 @@ export default function PharmacistDeliveryHistoryPage() {
     fetchDeliveries,
   } = usePharmacistDeliveryHistory();
 
-  if (deliveriesLoading) {
+  if (isLoading) {
     return <PageSkeleton cards={[{ rows: 4 }, { rows: 10 }]} />;
   }
 
@@ -132,7 +133,7 @@ export default function PharmacistDeliveryHistoryPage() {
 
         <Table
           rowKey="receiptId"
-          loading={deliveriesLoading}
+          loading={isFetching}
           columns={deliveryColumns}
           dataSource={deliveries}
           expandable={{

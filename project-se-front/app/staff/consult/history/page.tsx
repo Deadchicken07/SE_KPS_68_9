@@ -29,7 +29,7 @@ function ConsultHistoryPageContent() {
   const [page, setPage] = useState(1);
 
   // --- consultation ---
-  const { data, meta, loading, error } = useConsultations(userId, page, 10);
+  const { data, meta, isLoading, isFetching, error } = useConsultations(userId, page, 10);
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Consultation | null>(null);
 
@@ -43,12 +43,17 @@ function ConsultHistoryPageContent() {
   };
 
   // --- questionnaire responses ---
-  const { data: responses, loading: resLoading, error: resError } = useUserResponses(userId);
+  const {
+    data: responses,
+    isLoading: responsesLoading,
+    isFetching: responsesFetching,
+    error: resError,
+  } = useUserResponses(userId);
   const { getResponseDetail, loading: detailLoading } = useResponseDetail();
   const [responseDetailOpen, setResponseDetailOpen] = useState(false);
   const [selectedResponse, setSelectedResponse] = useState<ResponseDetail | null>(null);
 
-  if (loading || resLoading) {
+  if (isLoading || responsesLoading) {
     return <PageSkeleton cards={[{ rows: 4 }, { rows: 7 }]} />;
   }
 
@@ -89,10 +94,10 @@ function ConsultHistoryPageContent() {
             </Button>
           }
         >
-          {loading && <Skeleton active paragraph={{ rows: 4 }} />}
+          {isFetching && <Skeleton active paragraph={{ rows: 4 }} />}
           {error && <Typography.Text type="danger">{error}</Typography.Text>}
 
-          {!loading &&
+          {!isLoading &&
             data?.map((consult) => (
               <Card
                 key={consult.id}
@@ -152,14 +157,14 @@ function ConsultHistoryPageContent() {
             </Typography.Title>
           }
         >
-          {resLoading && <Skeleton active paragraph={{ rows: 3 }} />}
+          {responsesFetching && <Skeleton active paragraph={{ rows: 3 }} />}
           {resError && <Typography.Text type="danger">{resError}</Typography.Text>}
 
-          {!resLoading && responses.length === 0 && (
+          {!responsesLoading && responses.length === 0 && (
             <Typography.Text type="secondary">ไม่มีประวัติการทำแบบประเมิน</Typography.Text>
           )}
 
-          {!resLoading &&
+          {!responsesLoading &&
             responses.map((res) => (
               <Card
                 key={res.id}

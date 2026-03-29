@@ -25,6 +25,7 @@ import {
   receiptStatusColorMap,
   type ReceiptStatus,
 } from "@/types/receipt-status.types";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 
 type OrderFormValues = {
   consultationId?: number;
@@ -70,8 +71,12 @@ function PharmacistOrderPageContent() {
   const [selectedConsultationId, setSelectedConsultationId] = useState<number | null>(null);
   const searchParams = useSearchParams();
   const { me } = useAuth();
-  const { consultations, loading, saving, consultationOptions, createOrder } =
+  const { consultations, isLoading, isFetching, saving, consultationOptions, createOrder } =
     usePharmacistOrders();
+
+  if (isLoading) {
+    return <PageSkeleton cards={[{ rows: 4 }, { rows: 10 }]} />;
+  }
 
   const paidConsultations = useMemo(
     () =>
@@ -214,7 +219,7 @@ function PharmacistOrderPageContent() {
 
       <Row gutter={[16, 16]} align="stretch">
         <Col xs={24} xl={8}>
-          <Card className="staff-content-card" variant="borderless" loading={loading}>
+          <Card className="staff-content-card" variant="borderless" loading={isFetching}>
             <Form form={form} layout="vertical">
               <Form.Item
                 name="consultationId"
@@ -299,7 +304,7 @@ function PharmacistOrderPageContent() {
         </Col>
 
         <Col xs={24} xl={16}>
-          <Card className="staff-content-card" variant="borderless" loading={loading}>
+          <Card className="staff-content-card" variant="borderless" loading={isFetching}>
             {paidConsultations.length === 0 ? (
               <Empty description="ไม่มีรายการที่ต้องจัดการในตอนนี้" />
             ) : selectedConsultation ? (

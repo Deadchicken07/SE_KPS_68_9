@@ -16,7 +16,8 @@ const getErrorMessage = (error: unknown, fallback: string) => {
 
 export const usePharmacistDeliveryHistory = () => {
   const [deliveries, setDeliveries] = useState<DeliveryHistory[]>([])
-  const [deliveriesLoading, setDeliveriesLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isFetching, setIsFetching] = useState(false)
   const [deliverySearch, setDeliverySearch] = useState('')
   const [deliveryStatus, setDeliveryStatus] = useState('all')
 
@@ -36,7 +37,11 @@ export const usePharmacistDeliveryHistory = () => {
     search = deliverySearch,
     status = deliveryStatus,
   ) => {
-    setDeliveriesLoading(true)
+    if (deliveries.length === 0) {
+      setIsLoading(true)
+    } else {
+      setIsFetching(true)
+    }
 
     try {
       const response = await axios.get<DeliveryHistory[]>(
@@ -56,13 +61,15 @@ export const usePharmacistDeliveryHistory = () => {
         message: getErrorMessage(error, 'โหลดประวัติการส่งยาไม่สำเร็จ'),
       }
     } finally {
-      setDeliveriesLoading(false)
+      setIsLoading(false)
+      setIsFetching(false)
     }
   }
 
   return {
     deliveries,
-    deliveriesLoading,
+    isLoading,
+    isFetching,
     deliverySearch,
     setDeliverySearch,
     deliveryStatus,

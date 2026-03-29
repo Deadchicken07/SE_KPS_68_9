@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { message } from "antd";
 import styles from "./page.module.css";
 import { usePharmacistPatientHistory } from "@/hooks/usePharmacistPatientHistory";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 
 const formatDateTime = (value: string) => {
   const date = new Date(value);
@@ -20,7 +21,8 @@ export default function PatientHistoryPage() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const {
     patients,
-    loading,
+    isLoading,
+    isFetching,
     search,
     setSearch,
     selectedPatient,
@@ -60,6 +62,10 @@ export default function PatientHistoryPage() {
     }
   };
 
+  if (isLoading && patients.length === 0) {
+    return <PageSkeleton cards={[{ rows: 4 }, { rows: 8 }]} />;
+  }
+
   return (
     <main className={styles.page}>
       {contextHolder}
@@ -94,7 +100,7 @@ export default function PatientHistoryPage() {
               id="patient-select"
               value={selectedPatientId ?? ""}
               onChange={(event) => setSelectedPatientId(Number(event.target.value))}
-              disabled={loading || patients.length === 0}
+              disabled={isFetching || patients.length === 0}
             >
               {patients.length === 0 ? (
                 <option value="">ไม่พบข้อมูลผู้ป่วย</option>

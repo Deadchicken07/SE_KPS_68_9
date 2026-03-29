@@ -73,7 +73,8 @@ export default function AdminManagePage() {
   const {
     hasAccess,
     staffs,
-    staffsLoading,
+    isLoading,
+    isFetching,
     savingStaff,
     staffSearch,
     setStaffSearch,
@@ -93,7 +94,7 @@ export default function AdminManagePage() {
     label: staffStatusLabelMap[item.value as AdminStaffRecord["status"]],
   }));
 
-  if (staffsLoading) {
+  if (isLoading) {
     return <PageSkeleton cards={[{ rows: 4 }, { rows: 10 }]} />;
   }
 
@@ -297,7 +298,7 @@ export default function AdminManagePage() {
           rowKey="id"
           bordered
           size="middle"
-          loading={staffsLoading}
+          loading={isFetching}
           columns={staffColumns}
           dataSource={staffs}
           locale={{ emptyText: "ยังไม่มีข้อมูลบุคลากร" }}

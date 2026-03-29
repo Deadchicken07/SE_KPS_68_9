@@ -39,7 +39,8 @@ export function useClinicalLeaveSchedule(role: ClinicalRole) {
   const [month, setMonth] = useState(currentMonthKey);
   const [selectedDate, setSelectedDate] = useState(todayDateKey);
   const [data, setData] = useState<ClinicScheduleResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [form, setForm] = useState<StaffScheduleFormState>(() =>
@@ -79,7 +80,11 @@ export function useClinicalLeaveSchedule(role: ClinicalRole) {
     let ignore = false;
 
     async function loadSchedule() {
-      setLoading(true);
+      if (isLoading) {
+        setIsLoading(true);
+      } else {
+        setIsFetching(true);
+      }
       setError(null);
 
       const query = new URLSearchParams({
@@ -118,7 +123,8 @@ export function useClinicalLeaveSchedule(role: ClinicalRole) {
         setData(null);
       } finally {
         if (!ignore) {
-          setLoading(false);
+          setIsLoading(false);
+          setIsFetching(false);
         }
       }
     }
@@ -325,7 +331,8 @@ export function useClinicalLeaveSchedule(role: ClinicalRole) {
     handleStatusChange,
     handleSubmit,
     hasAccess,
-    loading,
+    isFetching,
+    isLoading,
     month,
     scheduleEntries,
     selectedDate,

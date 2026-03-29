@@ -34,7 +34,8 @@ export const useStaffAdminHome = () => {
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<
     number | null
   >(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [authRequired, setAuthRequired] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
@@ -87,7 +88,11 @@ export const useStaffAdminHome = () => {
     let ignore = false;
 
     async function loadDashboard() {
-      setLoading(true);
+      if (isLoading) {
+        setIsLoading(true);
+      } else {
+        setIsFetching(true);
+      }
       setError(null);
       setAuthRequired(false);
 
@@ -145,7 +150,8 @@ export const useStaffAdminHome = () => {
         }
       } finally {
         if (!ignore) {
-          setLoading(false);
+          setIsLoading(false);
+          setIsFetching(false);
         }
       }
     }
@@ -416,7 +422,8 @@ export const useStaffAdminHome = () => {
     isAppointmentDetailModalOpen,
     isSelectedAppointmentsCollapsed,
     isStaffWorkModalOpen,
-    loading,
+    isFetching,
+    isLoading,
     month,
     monthWeekOptions,
     openAppointmentDetailModal,

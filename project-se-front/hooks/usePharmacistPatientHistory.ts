@@ -16,7 +16,8 @@ const getErrorMessage = (error: unknown, fallback: string) => {
 
 export const usePharmacistPatientHistory = () => {
   const [patients, setPatients] = useState<PatientHistory[]>([])
-  const [loading, setLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isFetching, setIsFetching] = useState(false)
   const [search, setSearch] = useState('')
   const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null)
 
@@ -36,7 +37,11 @@ export const usePharmacistPatientHistory = () => {
   }, [patients, selectedPatientId])
 
   const fetchPatients = async (nextSearch = search) => {
-    setLoading(true)
+    if (isLoading) {
+      setIsLoading(true)
+    } else {
+      setIsFetching(true)
+    }
 
     try {
       const response = await axios.get<PatientHistory[]>(
@@ -66,13 +71,15 @@ export const usePharmacistPatientHistory = () => {
         message: getErrorMessage(error, 'โหลดประวัติผู้ป่วยไม่สำเร็จ'),
       }
     } finally {
-      setLoading(false)
+      setIsLoading(false)
+      setIsFetching(false)
     }
   }
 
   return {
     patients,
-    loading,
+    isLoading,
+    isFetching,
     search,
     setSearch,
     selectedPatient,

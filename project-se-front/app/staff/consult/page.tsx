@@ -25,6 +25,7 @@ import { PrescriptionFormItem } from "@/types/consult.types";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePharmacistMedications } from "@/hooks/usePharmacistMedications";
 import { usePatientAppointments } from "@/hooks/usePatientAppointments";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 
 const { TextArea } = Input;
 
@@ -42,7 +43,7 @@ function ConsultPageContent() {
   const { me, loading: authLoading } = useAuth();
   const canPrescribe = !authLoading && me?.role !== "psychologist";
   const { createConsultation } = useConsultation();
-  const { medications, medicationsLoading } = usePharmacistMedications();
+  const { medications, isLoading: medicationsLoading, isFetching: medicationsFetching } = usePharmacistMedications();
   const searchParams = useSearchParams();
   const userIdFromQuery = Number(searchParams.get("userId")) || null;
   const [selectedUser, setSelectedUser] = useState<number | null>(
@@ -62,6 +63,10 @@ function ConsultPageContent() {
     value: u.user_id,
     label: `${u.name} ${u.sur_name}`,
   }));
+
+  if ((loading || authLoading) && user.length === 0) {
+    return <PageSkeleton cards={[{ rows: 4 }, { rows: 8 }]} />;
+  }
 
   const addPrescription = () => {
     setPrescriptions((prev) => [
@@ -301,7 +306,7 @@ function ConsultPageContent() {
                               value: m.id,
                               label: m.name,
                             }))}
-                            loading={medicationsLoading}
+                            loading={medicationsLoading || medicationsFetching}
                             value={item.medication_id}
                             onChange={(val) =>
                               updatePrescription(item.id, "medication_id", val)

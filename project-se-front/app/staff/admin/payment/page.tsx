@@ -6,6 +6,7 @@ import { Button, ConfigProvider, message, Spin, QRCode } from 'antd';
 import generatePayload from 'promptpay-qr';
 import locale from 'antd/locale/th_TH';
 import { supabase } from '@/utils/supabase';
+import PageSkeleton from '@/components/ui/PageSkeleton';
 
 function PaymentContent() {
     const router = useRouter();
@@ -125,11 +126,7 @@ function PaymentContent() {
     };
 
     if (isLoadingData) {
-        return (
-            <div className="appt-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                <Spin description="กำลังโหลดข้อมูลการนัดหมาย..." size="large" />
-            </div>
-        );
+        return <PageSkeleton cards={[{ rows: 4 }, { rows: 8 }]} />;
     }
 
     if (fetchError) {
@@ -280,7 +277,7 @@ export default function AdminPaymentPage() {
                     .appt-panel { padding: 30px 20px; }
                 }
             `}</style>
-            <Suspense fallback={<div style={{ textAlign: 'center', padding: '100px', fontFamily: "'Sarabun', Arial, sans-serif" }}>กำลังโหลดข้อมูล...</div>}>
+            <Suspense fallback={<PageSkeleton cards={[{ rows: 4 }, { rows: 8 }]} />}>
                 <PaymentContent />
             </Suspense>
         </ConfigProvider>

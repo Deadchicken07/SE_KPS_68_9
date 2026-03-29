@@ -51,7 +51,8 @@ export default function AdminWorkSchedulePage() {
     handleSubmit,
     hasAccess,
     holidayStaffOptions,
-    loading,
+    isFetching,
+    isLoading,
     month,
     selectedSchedule,
     selectedStaff,
@@ -60,7 +61,7 @@ export default function AdminWorkSchedulePage() {
     weekdayOptions,
   } = useAdminWorkSchedule();
 
-  if (loading) {
+  if (isLoading) {
     return <PageSkeleton cards={[{ rows: 6 }, { rows: 8 }]} />;
   }
 
@@ -211,7 +212,7 @@ export default function AdminWorkSchedulePage() {
               <div className="flex flex-wrap gap-3">
                 <button
                   type="submit"
-                  disabled={submitting || deleting || loading}
+                  disabled={submitting || deleting || isFetching}
                   className="inline-flex min-h-[48px] min-w-[220px] items-center justify-center rounded-full bg-[#0f766e] px-8 text-sm font-bold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:bg-[#b9c9c4]"
                 >
                   {submitting ? "กำลังบันทึก..." : "บันทึกทั้งเดือน"}
@@ -221,7 +222,7 @@ export default function AdminWorkSchedulePage() {
                   <button
                     type="button"
                     onClick={handleDelete}
-                    disabled={submitting || deleting || loading}
+                    disabled={submitting || deleting || isFetching}
                     className="inline-flex min-h-[48px] min-w-[220px] items-center justify-center rounded-full border border-[#fda4af] bg-white px-8 text-sm font-bold text-[#be123c] transition hover:bg-[#fff1f2] disabled:cursor-not-allowed disabled:border-[#e5e7eb] disabled:text-[#9ca3af]"
                   >
                     {deleting ? "กำลังลบ..." : "ลบทั้งเดือน"}

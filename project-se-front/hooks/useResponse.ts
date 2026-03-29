@@ -8,14 +8,19 @@ const API = process.env.NEXT_PUBLIC_API_URL;
 
 export const useUserResponses = (userId: number) => {
   const [data, setData] = useState<ResponseSummary[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!userId) return;
     const fetch = async () => {
       try {
-        setLoading(true);
+        if (data.length === 0) {
+          setIsLoading(true);
+        } else {
+          setIsFetching(true);
+        }
         setError(null);
         const res = await axios.get<ResponseSummary[]>(
           `${API}/responses/user/${userId}`,
@@ -25,13 +30,14 @@ export const useUserResponses = (userId: number) => {
       } catch {
         setError("ไม่สามารถดึงข้อมูลแบบประเมินได้");
       } finally {
-        setLoading(false);
+        setIsLoading(false);
+        setIsFetching(false);
       }
     };
     fetch();
-  }, [userId]);
+  }, [data.length, userId]);
 
-  return { data, loading, error };
+  return { data, isLoading, isFetching, error };
 };
 
 export const useResponseDetail = () => {

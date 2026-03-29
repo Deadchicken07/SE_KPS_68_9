@@ -13,7 +13,7 @@ import { useAdminReport } from "@/hooks/useAdminReport";
 export default function AdminReportPage() {
   const state = useAdminReport();
 
-  if (state.loading) {
+  if (state.isLoading) {
     return <PageSkeleton cards={[{ rows: 4 }, { rows: 5 }, { rows: 8 }]} />;
   }
 
@@ -28,7 +28,7 @@ export default function AdminReportPage() {
         <AdminReportFilterSection state={state} />
         <AdminReportErrorPanel state={state} />
 
-        {!state.loading && state.data ? (
+        {!state.isLoading && state.data ? (
           <>
             <AdminReportSummarySection state={state} />
             <AdminReportDashboardSection state={state} />

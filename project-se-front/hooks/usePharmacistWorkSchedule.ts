@@ -35,7 +35,8 @@ export const usePharmacistWorkSchedule = () => {
   const [month, setMonth] = useState(currentMonthKey)
   const [selectedDate, setSelectedDate] = useState(todayDateKey)
   const [data, setData] = useState<ClinicScheduleResponse | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isFetching, setIsFetching] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
   const [form, setForm] = useState<StaffScheduleFormState>(() =>
@@ -79,7 +80,11 @@ export const usePharmacistWorkSchedule = () => {
     let ignore = false
 
     async function loadDashboard() {
-      setLoading(true)
+      if (isLoading) {
+        setIsLoading(true)
+      } else {
+        setIsFetching(true)
+      }
       setError(null)
 
       const query = new URLSearchParams({
@@ -118,7 +123,8 @@ export const usePharmacistWorkSchedule = () => {
         setData(null)
       } finally {
         if (!ignore) {
-          setLoading(false)
+          setIsLoading(false)
+          setIsFetching(false)
         }
       }
     }
@@ -373,7 +379,8 @@ export const usePharmacistWorkSchedule = () => {
     hasAccess,
     isHolidayLocked,
     leaveDays,
-    loading,
+    isFetching,
+    isLoading,
     month,
     orderedScheduleEntries,
     scheduleEntries,

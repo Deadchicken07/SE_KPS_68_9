@@ -39,7 +39,8 @@ export default function PharmacistMedicationPage() {
   const [medicationForm] = Form.useForm<MedicationFormValues>();
   const {
     medications,
-    medicationsLoading,
+    isLoading,
+    isFetching,
     savingMedication,
     medicationSearch,
     setMedicationSearch,
@@ -55,7 +56,7 @@ export default function PharmacistMedicationPage() {
     closeMedicationModal,
   } = usePharmacistMedications();
 
-  if (medicationsLoading) {
+  if (isLoading) {
     return <PageSkeleton cards={[{ rows: 4 }, { rows: 10 }]} />;
   }
 
@@ -217,7 +218,7 @@ export default function PharmacistMedicationPage() {
           rowKey="id"
           bordered
           size="middle"
-          loading={medicationsLoading}
+          loading={isFetching}
           columns={medicationColumns}
           dataSource={medications}
           scroll={{ x: 900 }}

@@ -127,7 +127,8 @@ export function ClinicalLeavePlanner({
     handleStatusChange,
     handleSubmit,
     hasAccess,
-    loading,
+    isFetching,
+    isLoading,
     month,
     scheduleEntries,
     selectedDate,
@@ -146,7 +147,7 @@ export function ClinicalLeavePlanner({
     [month, scheduleMap, selectedDate, todayDateKey],
   );
 
-  if (loading) {
+  if (isLoading) {
     return <PageSkeleton cards={[{ rows: 4 }, { rows: 8 }]} />;
   }
 
@@ -328,7 +329,7 @@ export function ClinicalLeavePlanner({
               <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
                 <button
                   type="submit"
-                  disabled={submitting || loading}
+                  disabled={submitting || isFetching}
                   className="min-h-[48px] rounded-2xl bg-[#0f766e] px-5 font-semibold text-white transition hover:bg-[#0d6760] disabled:cursor-wait disabled:opacity-70"
                 >
                   {submitting ? 'กำลังบันทึก...' : 'บันทึกวันลา'}
@@ -337,7 +338,7 @@ export function ClinicalLeavePlanner({
                 <button
                   type="button"
                   onClick={() => void handleDelete()}
-                  disabled={!selectedSchedule || deleting}
+                  disabled={!selectedSchedule || deleting || isFetching}
                   className="min-h-[48px] rounded-2xl border border-[rgba(15,118,110,0.18)] px-5 font-semibold text-[#173630] transition hover:border-[#0f766e] hover:text-[#0f766e] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {deleting ? 'กำลังล้างข้อมูล...' : 'ล้างข้อมูลวันดังกล่าว'}

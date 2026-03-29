@@ -49,7 +49,8 @@ export const useAdminStaffManagement = () => {
   const { me, loading: authLoading } = useAuth();
   const [hasAccess, setHasAccess] = useState(false);
   const [staffs, setStaffs] = useState<AdminStaffRecord[]>([]);
-  const [staffsLoading, setStaffsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
   const [savingStaff, setSavingStaff] = useState(false);
   const [staffSearch, setStaffSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | AdminStaffStatus>(
@@ -91,7 +92,7 @@ export const useAdminStaffManagement = () => {
     search = staffSearch,
     status: "all" | AdminStaffStatus = statusFilter,
   ) => {
-    setStaffsLoading(true);
+    setIsFetching(true);
 
     try {
       const response = await axios.get<AdminStaffRecord[]>(
@@ -113,7 +114,8 @@ export const useAdminStaffManagement = () => {
         message: getErrorMessage(error, "โหลดข้อมูลบุคลากรไม่สำเร็จ"),
       };
     } finally {
-      setStaffsLoading(false);
+      setIsFetching(false);
+      setIsLoading(false);
     }
   };
 
@@ -237,7 +239,8 @@ export const useAdminStaffManagement = () => {
   return {
     hasAccess,
     staffs,
-    staffsLoading,
+    isLoading,
+    isFetching,
     savingStaff,
     staffSearch,
     setStaffSearch,

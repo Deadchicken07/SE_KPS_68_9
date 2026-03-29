@@ -147,7 +147,8 @@ export default function PharmacistWorkSchedulePage() {
     handleSubmit,
     hasAccess,
     isHolidayLocked,
-    loading,
+    isFetching,
+    isLoading,
     month,
     scheduleEntries,
     selectedDate,
@@ -165,7 +166,7 @@ export default function PharmacistWorkSchedulePage() {
     return buildCalendarDays(month, selectedDate, todayDateKey, scheduleMap);
   }, [month, scheduleMap, selectedDate, todayDateKey]);
 
-  if (loading) {
+  if (isLoading) {
     return <PageSkeleton cards={[{ rows: 6 }, { rows: 8 }]} />;
   }
 
@@ -361,7 +362,7 @@ export default function PharmacistWorkSchedulePage() {
               <div className="flex flex-wrap gap-3">
                 <button
                   type="submit"
-                  disabled={submitting || deleting || loading || isHolidayLocked}
+                  disabled={submitting || deleting || isFetching || isHolidayLocked}
                   className="inline-flex min-h-[48px] min-w-[220px] items-center justify-center rounded-full bg-[#0f766e] px-8 text-sm font-bold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:bg-[#b9c9c4]"
                 >
                   {submitting ? "กำลังบันทึก..." : "บันทึก"}
@@ -371,7 +372,7 @@ export default function PharmacistWorkSchedulePage() {
                   <button
                     type="button"
                     onClick={handleDelete}
-                    disabled={submitting || deleting || loading}
+                    disabled={submitting || deleting || isFetching}
                     className="inline-flex min-h-[48px] min-w-[220px] items-center justify-center rounded-full border border-[#fda4af] bg-white px-8 text-sm font-bold text-[#be123c] transition hover:bg-[#fff1f2] disabled:cursor-not-allowed disabled:border-[#e5e7eb] disabled:text-[#9ca3af]"
                   >
                     {deleting ? "กำลังลบ..." : "ลบ"}

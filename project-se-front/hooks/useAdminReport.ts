@@ -114,7 +114,8 @@ export function useAdminReport() {
   const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR_KEY);
   const [staffFilter, setStaffFilter] = useState("");
   const [data, setData] = useState<AdminReportResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [authRequired, setAuthRequired] = useState(false);
 
@@ -151,7 +152,11 @@ export function useAdminReport() {
     let ignore = false;
 
     async function loadReport() {
-      setLoading(true);
+      if (isLoading) {
+        setIsLoading(true);
+      } else {
+        setIsFetching(true);
+      }
       setError(null);
       setAuthRequired(false);
 
@@ -203,7 +208,8 @@ export function useAdminReport() {
         }
       } finally {
         if (!ignore) {
-          setLoading(false);
+          setIsLoading(false);
+          setIsFetching(false);
         }
       }
     }
@@ -264,7 +270,8 @@ export function useAdminReport() {
     handleSelectedMonthChange,
     handleSelectedYearChange,
     hasAccess,
-    loading,
+    isFetching,
+    isLoading,
     periodLabel,
     reportMode,
     selectedStaff,

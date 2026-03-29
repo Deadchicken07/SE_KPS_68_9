@@ -45,14 +45,19 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 export const useConsultations = (userId: number, page: number = 1, limit: number = 10) => {
   const [data, setData] = useState<Consultation[]>([]);
   const [meta, setMeta] = useState<ConsultationMeta | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!userId) return;
     const fetch = async () => {
       try {
-        setLoading(true);
+        if (data.length === 0) {
+          setIsLoading(true);
+        } else {
+          setIsFetching(true);
+        }
         setError(null);
         const res = await axios.get<{ data: Consultation[]; meta: ConsultationMeta }>(
           `${API_URL}/consultations`,
@@ -63,11 +68,12 @@ export const useConsultations = (userId: number, page: number = 1, limit: number
       } catch {
         setError("ไม่สามารถดึงประวัติการปรึกษาได้");
       } finally {
-        setLoading(false);
+        setIsLoading(false);
+        setIsFetching(false);
       }
     };
     fetch();
-  }, [userId, page, limit]);
+  }, [data.length, userId, page, limit]);
 
-  return { data, meta, loading, error };
+  return { data, meta, isLoading, isFetching, error };
 };

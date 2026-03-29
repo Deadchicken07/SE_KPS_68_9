@@ -32,7 +32,8 @@ type MedicinePaymentRecord = {
 export default function PaymentVerificationPage() {
     const [appointments, setAppointments] = useState<any[]>([]);
     const [medicinePayments, setMedicinePayments] = useState<MedicinePaymentRecord[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isFetching, setIsFetching] = useState(false);
     const [medicineLoading, setMedicineLoading] = useState(true);
     const [selectedAppointment, setSelectedAppointment] = useState<any | null>(null);
     const [selectedMedicinePayment, setSelectedMedicinePayment] = useState<MedicinePaymentRecord | null>(null);
@@ -58,7 +59,8 @@ export default function PaymentVerificationPage() {
         } catch (error: any) {
             messageApi.error(error.message || 'เกิดข้อผิดพลาดในการโหลดข้อมูล');
         } finally {
-            setLoading(false);
+            setIsFetching(false);
+            setIsLoading(false);
         }
     };
 
@@ -93,6 +95,7 @@ export default function PaymentVerificationPage() {
             }
 
             messageApi.success('ยืนยันการชำระเงินสำเร็จ');
+            setIsFetching(true);
             setSelectedAppointment(null);
             fetchPayments();
         } catch (error: any) {
@@ -112,6 +115,7 @@ export default function PaymentVerificationPage() {
             }
 
             messageApi.success('ปฏิเสธการชำระเงินสำเร็จ');
+            setIsFetching(true);
             setSelectedAppointment(null);
             fetchPayments();
         } catch (error: any) {
@@ -331,7 +335,7 @@ export default function PaymentVerificationPage() {
         return <div className="p-8 text-center"><Spin size="large" /></div>;
     }
 
-    if (loading) {
+    if (isLoading) {
         return <PageSkeleton cards={[{ rows: 4 }, { rows: 10 }]} />;
     }
 

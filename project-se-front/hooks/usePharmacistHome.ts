@@ -20,7 +20,8 @@ export const usePharmacistHome = () => {
   const { me, loading: authLoading } = useAuth()
   const [hasAccess, setHasAccess] = useState(false)
   const [data, setData] = useState<PharmacistHomeOrdersResponse | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isFetching, setIsFetching] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
@@ -51,7 +52,11 @@ export const usePharmacistHome = () => {
   }, [authLoading, me?.role_id, router])
 
   const fetchOrders = async () => {
-    setLoading(true)
+    if (isLoading) {
+      setIsLoading(true)
+    } else {
+      setIsFetching(true)
+    }
     setError(null)
 
     try {
@@ -74,7 +79,8 @@ export const usePharmacistHome = () => {
         message,
       }
     } finally {
-      setLoading(false)
+      setIsLoading(false)
+      setIsFetching(false)
     }
   }
 
@@ -189,7 +195,8 @@ export const usePharmacistHome = () => {
     hasAccess,
     isDetailModalOpen,
     clinicPickupCount,
-    loading,
+    isFetching,
+    isLoading,
     onlineDeliveryCount,
     openConsultation,
     openOrderPage,

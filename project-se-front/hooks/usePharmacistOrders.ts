@@ -40,7 +40,8 @@ const getErrorMessage = (error: unknown, fallback: string) => {
 
 export const usePharmacistOrders = () => {
   const [consultations, setConsultations] = useState<OrderFormConsultation[]>([])
-  const [loading, setLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isFetching, setIsFetching] = useState(false)
   const [saving, setSaving] = useState(false)
 
   const sortConsultations = (items: OrderFormConsultation[]) =>
@@ -69,7 +70,11 @@ export const usePharmacistOrders = () => {
   }, [])
 
   const fetchOrderForm = async () => {
-    setLoading(true)
+    if (consultations.length === 0) {
+      setIsLoading(true)
+    } else {
+      setIsFetching(true)
+    }
 
     try {
       const response = await axios.get<OrderFormData>(
@@ -84,7 +89,8 @@ export const usePharmacistOrders = () => {
         message: getErrorMessage(error, 'โหลดรายการที่ยังต้องจัดส่งไม่สำเร็จ'),
       }
     } finally {
-      setLoading(false)
+      setIsLoading(false)
+      setIsFetching(false)
     }
   }
 
@@ -115,7 +121,8 @@ export const usePharmacistOrders = () => {
 
   return {
     consultations,
-    loading,
+    isLoading,
+    isFetching,
     saving,
     consultationOptions,
     fetchOrderForm,

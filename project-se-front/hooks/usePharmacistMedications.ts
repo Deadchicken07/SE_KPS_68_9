@@ -45,7 +45,8 @@ const getErrorMessage = (error: unknown, fallback: string) => {
 
 export const usePharmacistMedications = () => {
   const [medications, setMedications] = useState<Medication[]>([])
-  const [medicationsLoading, setMedicationsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isFetching, setIsFetching] = useState(false)
   const [savingMedication, setSavingMedication] = useState(false)
   const [medicationSearch, setMedicationSearch] = useState('')
   const [editingMedication, setEditingMedication] = useState<Medication | null>(null)
@@ -68,7 +69,11 @@ export const usePharmacistMedications = () => {
   }, [])
 
   const fetchMedications = async (search = medicationSearch) => {
-    setMedicationsLoading(true)
+    if (medications.length === 0) {
+      setIsLoading(true)
+    } else {
+      setIsFetching(true)
+    }
 
     try {
       const response = await axios.get<Medication[]>(`${API_URL}/pharmacist/medications`, {
@@ -83,7 +88,8 @@ export const usePharmacistMedications = () => {
         message: getErrorMessage(error, 'โหลดรายการยาไม่สำเร็จ'),
       }
     } finally {
-      setMedicationsLoading(false)
+      setIsLoading(false)
+      setIsFetching(false)
     }
   }
 
@@ -156,7 +162,8 @@ export const usePharmacistMedications = () => {
 
   return {
     medications,
-    medicationsLoading,
+    isLoading,
+    isFetching,
     savingMedication,
     medicationSearch,
     setMedicationSearch,

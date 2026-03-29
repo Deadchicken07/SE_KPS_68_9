@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Button, ConfigProvider, Spin, QRCode } from 'antd';
+import { Button, ConfigProvider, QRCode, Spin } from 'antd';
 import generatePayload from 'promptpay-qr';
 import locale from 'antd/locale/th_TH';
+import PageSkeleton from '@/components/ui/PageSkeleton';
 import { supabase } from '@/utils/supabase';
 
 type PrescriptionItem = {
@@ -17,7 +18,7 @@ type PrescriptionItem = {
 type MedicinePaymentData = {
     prescriptionItems: PrescriptionItem[];
     medicineCost: number;
-    receipt: { id: number; total: number; status: string | null; } | null;
+    receipt: { id: number; total: number; status: string | null } | null;
 };
 
 function MedicinePaymentContent() {
@@ -27,18 +28,14 @@ function MedicinePaymentContent() {
     const [step, setStep] = useState<'payment' | 'success'>('payment');
     const [uploadedSlip, setUploadedSlip] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-
     const [paymentData, setPaymentData] = useState<MedicinePaymentData | null>(null);
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [fetchError, setFetchError] = useState<string | null>(null);
 
     const receiptId = searchParams.get('receiptId');
 
-    // Calculate medicine cost based on displayed items
-    const medicineCost = paymentData?.prescriptionItems.reduce(
-        (sum, item) => sum + (item.price * item.quantity),
-        0
-    ) || 0;
+    const medicineCost =
+        paymentData?.prescriptionItems.reduce((sum, item) => sum + item.price * item.quantity, 0) || 0;
 
     useEffect(() => {
         const fetchPaymentDetails = async () => {
@@ -51,7 +48,7 @@ function MedicinePaymentContent() {
             try {
                 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
                 const res = await fetch(`${apiUrl}/appointments/receipts/${receiptId}/payment-details`, {
-                    credentials: 'include'
+                    credentials: 'include',
                 });
 
                 if (!res.ok) {
@@ -59,33 +56,35 @@ function MedicinePaymentContent() {
                 }
 
                 const data = await res.json();
-
                 setPaymentData({
                     prescriptionItems: data.prescriptionItems,
                     medicineCost: data.medicineCost,
                     receipt: { id: data.receiptId, total: data.medicineCost, status: data.status },
                 });
-            } catch (err: any) {
+            } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
                 console.error('Fetch payment details error:', err);
-                setFetchError(err.message);
+                setFetchError(message);
             } finally {
                 setIsLoadingData(false);
             }
         };
 
-        fetchPaymentDetails();
+        void fetchPaymentDetails();
     }, [receiptId]);
 
     const handleConfirmPayment = async () => {
-        if (!uploadedSlip) return alert('กรุณาแนบสลิปการโอนเงิน');
+        if (!uploadedSlip) {
+            window.alert('กรุณาแนบสลิปการโอนเงิน');
+            return;
+        }
         if (!receiptId) {
-            alert('ไม่พบข้อมูลรหัสใบเสร็จ');
+            window.alert('ไม่พบข้อมูลรหัสใบเสร็จ');
             return;
         }
 
         setIsSubmitting(true);
         try {
-            // 1. Upload image to Supabase Storage — using Paid_medicine bucket
             const fileExt = uploadedSlip.name.split('.').pop();
             const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
             const filePath = `slips/${fileName}`;
@@ -95,24 +94,22 @@ function MedicinePaymentContent() {
                 .upload(filePath, uploadedSlip);
 
             if (uploadError) {
-                console.error("Upload error:", uploadError);
+                console.error('Upload error:', uploadError);
                 throw new Error('ไม่สามารถอัปโหลดสลิปได้');
             }
 
-            // 2. Get Public URL
-            const { data: { publicUrl } } = supabase.storage
-                .from('Paid_medicine')
-                .getPublicUrl(filePath);
+            const {
+                data: { publicUrl },
+            } = supabase.storage.from('Paid_medicine').getPublicUrl(filePath);
 
-            // 3. Send URL to backend using receiptId
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
             const response = await fetch(`${apiUrl}/appointments/receipts/${receiptId}/pay`, {
                 method: 'PATCH',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
                 credentials: 'include',
-                body: JSON.stringify({ slipUrl: publicUrl })
+                body: JSON.stringify({ slipUrl: publicUrl }),
             });
 
             if (!response.ok) {
@@ -120,20 +117,17 @@ function MedicinePaymentContent() {
             }
 
             setStep('success');
-        } catch (error: any) {
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'เกิดข้อผิดพลาดในการทำรายการ';
             console.error('Payment error:', error);
-            alert(error.message || 'เกิดข้อผิดพลาดในการทำรายการ');
+            window.alert(message);
         } finally {
             setIsSubmitting(false);
         }
     };
 
     if (isLoadingData) {
-        return (
-            <div className="med-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                <Spin size="large" />
-            </div>
-        );
+        return <PageSkeleton cards={[{ rows: 4 }, { rows: 8 }]} />;
     }
 
     if (fetchError) {
@@ -152,17 +146,26 @@ function MedicinePaymentContent() {
                 <div className="med-panel">
                     {step === 'success' ? (
                         <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: 64, marginBottom: 16 }}>✅</div>
-                            <h2 style={{ fontSize: 24, fontWeight: 800, color: '#065f46', marginBottom: 12 }}>ชำระค่ายาสำเร็จ !</h2>
+                            <div style={{ fontSize: 64, marginBottom: 16 }}>OK</div>
+                            <h2 style={{ fontSize: 24, fontWeight: 800, color: '#065f46', marginBottom: 12 }}>ชำระค่ายาสำเร็จ!</h2>
                             <p style={{ fontSize: 16, color: '#4b5563', marginBottom: 24, lineHeight: 1.6 }}>
-                                สลิปการชำระเงินของคุณได้รับการบันทึกแล้ว<br />
+                                สลิปการชำระเงินของคุณได้รับการบันทึกแล้ว
+                                <br />
                                 ยอดชำระ {medicineCost.toLocaleString()} บาท
                             </p>
                             <Button
                                 type="primary"
                                 size="large"
                                 block
-                                style={{ background: '#0f766e', borderColor: '#0f766e', fontFamily: "'Sarabun', Arial, sans-serif", height: 48, fontSize: 16, fontWeight: 700, borderRadius: 999 }}
+                                style={{
+                                    background: '#0f766e',
+                                    borderColor: '#0f766e',
+                                    fontFamily: "'Sarabun', Arial, sans-serif",
+                                    height: 48,
+                                    fontSize: 16,
+                                    fontWeight: 700,
+                                    borderRadius: 999,
+                                }}
                                 onClick={() => router.push('/user/schedule')}
                             >
                                 กลับหน้าตารางนัดหมาย
@@ -173,10 +176,9 @@ function MedicinePaymentContent() {
                             <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1e1b4b', marginBottom: 8, textAlign: 'center' }}>ชำระค่ายา</h2>
                             <p style={{ textAlign: 'center', color: '#6b7280', fontSize: 14, marginBottom: 24 }}>ชำระเฉพาะค่ายาจากใบสั่งยา</p>
 
-                            {/* Prescription items table */}
                             <div style={{ marginBottom: 20 }}>
                                 <h4 style={{ fontSize: 15, fontWeight: 700, color: '#1e1b4b', margin: '0 0 10px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                                    <span style={{ fontSize: 18 }}>💊</span> รายการยา
+                                    <span style={{ fontSize: 18 }}>Rx</span> รายการยา
                                 </h4>
                                 <div style={{ borderRadius: 12, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
                                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, fontFamily: "'Sarabun', Arial, sans-serif" }}>
@@ -190,7 +192,7 @@ function MedicinePaymentContent() {
                                         </thead>
                                         <tbody>
                                             {paymentData?.prescriptionItems.map((item, idx) => (
-                                                <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? '#fff' : '#f9fafb' }}>
+                                                <tr key={`${item.medicationName}-${idx}`} style={{ backgroundColor: idx % 2 === 0 ? '#fff' : '#f9fafb' }}>
                                                     <td style={{ padding: '10px 14px', fontWeight: 600, color: '#1e1b4b' }}>{item.medicationName}</td>
                                                     <td style={{ padding: '10px 14px', textAlign: 'center', color: '#374151' }}>{item.quantity}</td>
                                                     <td style={{ padding: '10px 14px', textAlign: 'right', color: '#374151' }}>{item.price.toLocaleString()} ฿</td>
@@ -202,22 +204,22 @@ function MedicinePaymentContent() {
                                 </div>
                             </div>
 
-                            {/* Total */}
-                            <div style={{
-                                background: '#f0fdf4',
-                                border: '1.5px solid #a7f3d0',
-                                padding: '16px 20px',
-                                borderRadius: 12,
-                                marginBottom: 24,
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                            }}>
+                            <div
+                                style={{
+                                    background: '#f0fdf4',
+                                    border: '1.5px solid #a7f3d0',
+                                    padding: '16px 20px',
+                                    borderRadius: 12,
+                                    marginBottom: 24,
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                }}
+                            >
                                 <span style={{ color: '#4b5563', fontSize: 16, fontWeight: 700 }}>ยอดค่ายาที่ต้องชำระ</span>
                                 <span style={{ fontWeight: 800, color: '#059669', fontSize: 22 }}>{medicineCost.toLocaleString()} บาท</span>
                             </div>
 
-                            {/* QR Code */}
                             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
                                 <div style={{ display: 'inline-block', padding: 16, background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb' }}>
                                     <QRCode
@@ -230,8 +232,17 @@ function MedicinePaymentContent() {
                                 </div>
                             </div>
 
-                            {/* Slip upload */}
-                            <div style={{ textAlign: 'left', marginBottom: 32, background: '#fff', padding: 20, borderRadius: 12, border: '1px solid #e5e7eb', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+                            <div
+                                style={{
+                                    textAlign: 'left',
+                                    marginBottom: 32,
+                                    background: '#fff',
+                                    padding: 20,
+                                    borderRadius: 12,
+                                    border: '1px solid #e5e7eb',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+                                }}
+                            >
                                 <label style={{ display: 'block', fontSize: 15, fontWeight: 700, color: '#374151', marginBottom: 12 }}>
                                     แนบสลิปการโอนเงิน <span style={{ color: '#ef4444' }}>*</span>
                                 </label>
@@ -250,14 +261,9 @@ function MedicinePaymentContent() {
                                         border: '2px dashed #d1d5db',
                                         borderRadius: 8,
                                         background: '#f9fafb',
-                                        cursor: 'pointer'
+                                        cursor: 'pointer',
                                     }}
                                 />
-                                {uploadedSlip && (
-                                    <p style={{ marginTop: 8, fontSize: 13, color: '#059669', fontWeight: 600 }}>
-                                        ✓ เลือกไฟล์แล้ว: {uploadedSlip.name}
-                                    </p>
-                                )}
                             </div>
 
                             <Button
@@ -272,21 +278,12 @@ function MedicinePaymentContent() {
                                     fontWeight: 700,
                                     fontSize: 16,
                                     height: 52,
-                                    boxShadow: '0 4px 14px rgba(15,118,110,0.25)'
+                                    boxShadow: '0 4px 14px rgba(15,118,110,0.25)',
                                 }}
                                 onClick={handleConfirmPayment}
                                 disabled={isSubmitting}
                             >
                                 {isSubmitting ? <Spin size="small" /> : 'แจ้งโอนเงินค่ายา'}
-                            </Button>
-
-                            <Button
-                                type="text"
-                                block
-                                style={{ marginTop: 12, color: '#6b7280', fontFamily: "'Sarabun', Arial, sans-serif", fontWeight: 600 }}
-                                onClick={() => router.push('/user/schedule')}
-                            >
-                                ยกเลิก
                             </Button>
                         </div>
                     )}
@@ -322,7 +319,7 @@ export default function MedicinePaymentPage() {
                     .med-panel { padding: 30px 20px; }
                 }
             `}</style>
-            <Suspense fallback={<div style={{ textAlign: 'center', padding: '100px', fontFamily: "'Sarabun', Arial, sans-serif" }}>กำลังโหลดข้อมูล...</div>}>
+            <Suspense fallback={<PageSkeleton cards={[{ rows: 4 }, { rows: 8 }]} />}>
                 <MedicinePaymentContent />
             </Suspense>
         </ConfigProvider>
