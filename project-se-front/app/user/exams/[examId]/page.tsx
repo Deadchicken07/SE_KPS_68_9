@@ -3,7 +3,7 @@
 import { useQuestionnaires } from "@/hooks/useQuestionnaire";
 import { useSubmitResponse } from "@/hooks/useSubmitResponse";
 import { App, Button, Card, Flex, Modal, Pagination, Radio, Spin, Tag, Typography } from "antd";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import styles from "./page.module.css";
 import { useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -18,13 +18,17 @@ export default function QuestionsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const { data, meta, loading, error } = useQuestionnaires(Number(examId), page);
   const { submit, loading: submitting } = useSubmitResponse();
+  const router = useRouter();
 
   const totalScore = Object.values(weights).reduce((sum, w) => sum + w, 0);
 
+  const MAX_SCORE = 30;
+
   const getScoreLevel = (score: number) => {
-    if (score <= 10) return { label: "ระดับน้อย", color: "green" };
-    if (score <= 20) return { label: "ระดับปานกลาง", color: "orange" };
-    return { label: "ระดับมาก", color: "red" };
+    const pct = (score / MAX_SCORE) * 100;
+    if (pct > 70) return { label: "มีความเสี่ยงมาก", color: "red" };
+    if (pct > 50) return { label: "มีความเสี่ยงปานกลาง", color: "orange" };
+    return { label: "ไม่มีความเสี่ยง", color: "green" };
   };
 
   const handleSubmit = async () => {
@@ -45,6 +49,7 @@ export default function QuestionsPage() {
       })),
     });
     setModalOpen(true);
+    
   };
 
   if (loading)
@@ -137,8 +142,8 @@ export default function QuestionsPage() {
 
       <Modal
         open={modalOpen}
-        onCancel={() => setModalOpen(false)}
-        footer={<Button type="primary" onClick={() => setModalOpen(false)}>ปิด</Button>}
+        onCancel={() => { setModalOpen(false); router.push('/user/appointments'); }}
+        footer={<Button type="primary" onClick={() => { setModalOpen(false); router.push('/user/appointments'); }}>ปิด</Button>}
         centered
       >
         <Flex vertical align="center" gap={8} style={{ padding: "24px 0" }}>

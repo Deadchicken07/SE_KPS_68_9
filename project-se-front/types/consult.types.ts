@@ -33,6 +33,7 @@ export interface CreateConsultation {
   staff_id: number;
   note: string;
   is_online: boolean;
+  appointment_id?: number | null;
   prescription_item?: PrescriptionItem[];
 }
 

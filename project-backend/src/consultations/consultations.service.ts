@@ -33,6 +33,7 @@ export class ConsultationsService {
         user_id: dto.user_id,
         staff_id: dto.staff_id,
         note: dto.note,
+        appointment_id: dto.appointment_id ?? null,
         prescription_items: {
           create: dto.prescription_item ?? [],
         },

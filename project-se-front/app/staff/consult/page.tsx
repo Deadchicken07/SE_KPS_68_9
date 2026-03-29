@@ -10,7 +10,6 @@ import {
   Skeleton,
   InputNumber,
   Divider,
-  Switch,
   message,
 } from "antd";
 import {
@@ -25,13 +24,14 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { PrescriptionFormItem } from "@/types/consult.types";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePharmacistMedications } from "@/hooks/usePharmacistMedications";
+import { usePatientAppointments } from "@/hooks/usePatientAppointments";
 
 const { TextArea } = Input;
 
 let nextId = 1;
 
 export default function ConsultPage() {
-   const router = useRouter();
+  const router = useRouter();
   const [messageApi, contextHolder] = message.useMessage();
   const { user, loading } = useUser();
   const [note, setNote] = useState("");
@@ -40,7 +40,7 @@ export default function ConsultPage() {
     [],
   );
   const { me, loading: authLoading } = useAuth();
-  const canPrescribe = !authLoading && me?.role !== 'psychologist';
+  const canPrescribe = !authLoading && me?.role !== "psychologist";
   const { createConsultation } = useConsultation();
   const { medications, medicationsLoading } = usePharmacistMedications();
   const searchParams = useSearchParams();
@@ -48,7 +48,15 @@ export default function ConsultPage() {
   const [selectedUser, setSelectedUser] = useState<number | null>(
     userIdFromQuery,
   );
-  const [isOnline, setIsOnline] = useState(false);
+  const [selectedAppointmentId, setSelectedAppointmentId] = useState<number | null>(null);
+
+  const { data: appointments, loading: apptLoading } = usePatientAppointments(selectedUser, me?.sub);
+
+  const today = new Date().toISOString().split("T")[0];
+  const todayAppointments = appointments.filter((a) => a.appointmentDate === today);
+
+  const selectedAppointment = appointments.find((a) => a.id === selectedAppointmentId) ?? null;
+  const isOnline = selectedAppointment?.appointmentType === "online";
 
   const userOptions = user.map((u) => ({
     value: u.user_id,
@@ -85,6 +93,7 @@ export default function ConsultPage() {
       staff_id: me.sub,
       note,
       is_online: isOnline,
+      appointment_id: selectedAppointmentId,
       prescription_item: prescriptions.map((p) => ({
         medication_id: p.medication_id!,
         quantity: p.quantity!,
@@ -96,6 +105,7 @@ export default function ConsultPage() {
     setNote("");
     setSelectedUser(null);
     setPrescriptions([]);
+    setSelectedAppointmentId(null);
 
     if (success) {
       messageApi.success("บันทึกการปรึกษาสำเร็จ");
@@ -106,15 +116,18 @@ export default function ConsultPage() {
   };
 
   return (
-    <div style={{ display: "flex", justifyContent: "center", padding: 24 }}>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        padding: 24,
+        gap: 16,
+        alignItems: "flex-start",
+      }}
+    >
       {contextHolder}
       <div
-        style={{
-          width: "80%",
-          display: "flex",
-          flexDirection: "column",
-          gap: 16,
-        }}
+        style={{ flex: 1, display: "flex", flexDirection: "column", gap: 16 }}
       >
         <Card
           style={{ boxShadow: "0 4px 12px rgba(0,0,0,0.1)", borderRadius: 12 }}
@@ -133,178 +146,233 @@ export default function ConsultPage() {
             <Skeleton active paragraph={{ rows: 6 }} />
           ) : (
             <>
-          <Typography.Text style={{ fontWeight: 500, color: "#374151" }}>
-            เลือกผู้ป่วย
-          </Typography.Text>
-          <Select
-            showSearch={{
-              filterOption: (input, option) =>
-                String(option?.label ?? "")
-                  .toLowerCase()
-                  .includes(input.toLowerCase()),
-            }}
-            placeholder="ค้นหาหรือเลือกผู้ป่วย"
-            style={{ width: "100%" }}
-            options={userOptions}
-            onChange={(val) => setSelectedUser(val)}
-            value={selectedUser}
-            disabled={!!userIdFromQuery}
-            notFoundContent="ไม่พบข้อมูล"
-            size="large"
-          />
-
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <Switch checked={isOnline} onChange={setIsOnline} />
-            <Typography.Text style={{ color: "#374151" }}>
-              {isOnline ? "ออนไลน์ (จัดส่ง)" : "มาพบด้วยตนเอง (รับที่คลินิก)"}
-            </Typography.Text>
-          </div>
-
-          <Typography.Text style={{ fontWeight: 500, color: "#374151" }}>
-            บันทึก / Note
-          </Typography.Text>
-          <TextArea
-            placeholder="เขียนบันทึกการปรึกษา..."
-            rows={6}
-            style={{ resize: "none", borderRadius: 8, fontSize: 15 }}
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-          />
-
-          {canPrescribe && (
-          <>
-          <Divider style={{ margin: "4px 0" }} />
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <MedicineBoxOutlined style={{ color: "#0f766e", fontSize: 16 }} />
-              <Typography.Text style={{ fontWeight: 500, color: "#374151" }}>
-                รายการยา
-              </Typography.Text>
-            </div>
-            <Button
-              type="dashed"
-              icon={<PlusOutlined />}
-              onClick={addPrescription}
-              style={{ borderColor: "#0f766e", color: "#0f766e" }}
-            >
-              เพิ่มยา
-            </Button>
-          </div>
-
-          {prescriptions.length > 0 && (
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {/* Header */}
-              <div style={{ display: "flex", gap: 12, paddingInline: 4 }}>
-                <Typography.Text
-                  type="secondary"
-                  style={{ flex: 3, fontSize: 12 }}
-                >
-                  ยา
+              <div style={{ display: "flex" }}>
+                <Typography.Text style={{ fontWeight: 500, color: "#374151" }}>
+                  เลือกผู้ป่วย
                 </Typography.Text>
                 <Typography.Text
-                  type="secondary"
-                  style={{ width: 100, fontSize: 12 }}
+                  style={{
+                    margin: "0 auto",
+                    fontWeight: 500,
+                    color: "#374151",
+                  }}
                 >
-                  จำนวน
+                  เลือกการปรึกษา
                 </Typography.Text>
-                <Typography.Text
-                  type="secondary"
-                  style={{ flex: 2, fontSize: 12 }}
-                >
-                  หมายเหตุ
-                </Typography.Text>
-                <div style={{ width: 32 }} />
               </div>
-
-              {prescriptions.map((item) => (
-                <div
-                  key={item.id}
-                  style={{ display: "flex", gap: 12, alignItems: "center" }}
-                >
-                  {/* ยา */}
-                  <Select
-                    showSearch={{
-                      filterOption: (input, option) =>
-                        String(option?.label ?? "")
-                          .toLowerCase()
-                          .includes(input.toLowerCase()),
-                    }}
-                    placeholder="ค้นหายา"
-                    style={{ flex: 3 }}
-                    options={medications.map((m) => ({ value: m.id, label: m.name }))}
-                    loading={medicationsLoading}
-                    value={item.medication_id}
-                    onChange={(val) =>
-                      updatePrescription(item.id, "medication_id", val)
-                    }
-                    notFoundContent="ไม่พบยา"
-                  />
-                  <InputNumber
-                    min={1}
-                    placeholder="จำนวน"
-                    style={{ width: 100 }}
-                    value={item.quantity}
-                    onChange={(val) =>
-                      updatePrescription(item.id, "quantity", val)
-                    }
-                  />
-                  <Input
-                    placeholder="หมายเหตุ"
-                    style={{ flex: 2 }}
-                    value={item.comment}
-                    onChange={(e) =>
-                      updatePrescription(item.id, "comment", e.target.value)
-                    }
-                  />
-                  <Button
-                    type="text"
-                    danger
-                    icon={<DeleteOutlined />}
-                    onClick={() => removePrescription(item.id)}
-                    style={{ width: 32, padding: 0 }}
-                  />
+              <div style={{ display: "flex",}}>
+                <Select
+                  showSearch={{
+                    filterOption: (input, option) =>
+                      String(option?.label ?? "")
+                        .toLowerCase()
+                        .includes(input.toLowerCase()),
+                  }}
+                  placeholder="ค้นหาหรือเลือกผู้ป่วย"
+                  style={{ width: "30%" }}
+                  options={userOptions}
+                  onChange={(val) => setSelectedUser(val)}
+                  value={selectedUser}
+                  disabled={!!userIdFromQuery}
+                  notFoundContent="ไม่พบข้อมูล"
+                  size="large"
+                />
+                <Select
+                  placeholder="เลือกการนัดหมาย"
+                  style={{ margin: "0 auto", width: "30%" }}
+                  options={todayAppointments.map((a) => ({
+                    value: a.id,
+                    label: `${a.appointmentDate ? new Date(a.appointmentDate).toLocaleDateString("th-TH", { day: "2-digit", month: "short", year: "numeric" }) : "-"} ${a.timeSelect ?? ""}`.trim(),
+                  }))}
+                  onChange={(val) => setSelectedAppointmentId(val ?? null)}
+                  value={selectedAppointmentId}
+                  disabled={!selectedUser}
+                  loading={apptLoading}
+                  allowClear
+                  notFoundContent="ไม่มีการนัดหมายที่รอดำเนินการ"
+                  size="large"
+                />
+              </div>
+              {selectedAppointmentId && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <Typography.Text type="secondary">ประเภท:</Typography.Text>
+                  <Typography.Text strong style={{ color: isOnline ? "#1677ff" : "#374151" }}>
+                    {isOnline ? "ออนไลน์ (จัดส่ง)" : "มาพบด้วยตนเอง (รับที่คลินิก)"}
+                  </Typography.Text>
                 </div>
-              ))}
-            </div>
-          )}
-          </>
-          )}
+              )}
 
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "flex-end",
-              marginTop: 4,
-            }}
-          >
-            <Button
-              type="primary"
-              size="large"
-              icon={<SendOutlined />}
-              loading={sending}
-              disabled={!selectedUser || !note.trim()}
-              onClick={handleSend}
-              style={{
-                background: "#0f766e",
-                border: "none",
-                borderRadius: 12,
-                paddingInline: 28,
-              }}
-            >
-              ส่ง
-            </Button>
-          </div>
-          </>
+              <Typography.Text style={{ fontWeight: 500, color: "#374151" }}>
+                บันทึก / Note
+              </Typography.Text>
+              <TextArea
+                placeholder="เขียนบันทึกการปรึกษา..."
+                rows={6}
+                style={{ resize: "none", borderRadius: 8, fontSize: 15 }}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+              />
+
+              {canPrescribe && (
+                <>
+                  <Divider style={{ margin: "4px 0" }} />
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 8 }}
+                    >
+                      <MedicineBoxOutlined
+                        style={{ color: "#0f766e", fontSize: 16 }}
+                      />
+                      <Typography.Text
+                        style={{ fontWeight: 500, color: "#374151" }}
+                      >
+                        รายการยา
+                      </Typography.Text>
+                    </div>
+                    <Button
+                      type="dashed"
+                      icon={<PlusOutlined />}
+                      onClick={addPrescription}
+                      style={{ borderColor: "#0f766e", color: "#0f766e" }}
+                    >
+                      เพิ่มยา
+                    </Button>
+                  </div>
+
+                  {prescriptions.length > 0 && (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 10,
+                      }}
+                    >
+                      {/* Header */}
+                      <div
+                        style={{ display: "flex", gap: 12, paddingInline: 4 }}
+                      >
+                        <Typography.Text
+                          type="secondary"
+                          style={{ flex: 3, fontSize: 12 }}
+                        >
+                          ยา
+                        </Typography.Text>
+                        <Typography.Text
+                          type="secondary"
+                          style={{ width: 100, fontSize: 12 }}
+                        >
+                          จำนวน
+                        </Typography.Text>
+                        <Typography.Text
+                          type="secondary"
+                          style={{ flex: 2, fontSize: 12 }}
+                        >
+                          หมายเหตุ
+                        </Typography.Text>
+                        <div style={{ width: 32 }} />
+                      </div>
+
+                      {prescriptions.map((item) => (
+                        <div
+                          key={item.id}
+                          style={{
+                            display: "flex",
+                            gap: 12,
+                            alignItems: "center",
+                          }}
+                        >
+                          {/* ยา */}
+                          <Select
+                            showSearch={{
+                              filterOption: (input, option) =>
+                                String(option?.label ?? "")
+                                  .toLowerCase()
+                                  .includes(input.toLowerCase()),
+                            }}
+                            placeholder="ค้นหายา"
+                            style={{ flex: 3 }}
+                            options={medications.map((m) => ({
+                              value: m.id,
+                              label: m.name,
+                            }))}
+                            loading={medicationsLoading}
+                            value={item.medication_id}
+                            onChange={(val) =>
+                              updatePrescription(item.id, "medication_id", val)
+                            }
+                            notFoundContent="ไม่พบยา"
+                          />
+                          <InputNumber
+                            min={1}
+                            placeholder="จำนวน"
+                            style={{ width: 100 }}
+                            value={item.quantity}
+                            onChange={(val) =>
+                              updatePrescription(item.id, "quantity", val)
+                            }
+                          />
+                          <Input
+                            placeholder="หมายเหตุ"
+                            style={{ flex: 2 }}
+                            value={item.comment}
+                            onChange={(e) =>
+                              updatePrescription(
+                                item.id,
+                                "comment",
+                                e.target.value,
+                              )
+                            }
+                          />
+                          <Button
+                            type="text"
+                            danger
+                            icon={<DeleteOutlined />}
+                            onClick={() => removePrescription(item.id)}
+                            style={{ width: 32, padding: 0 }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  marginTop: 4,
+                }}
+              >
+                <Button
+                  type="primary"
+                  size="large"
+                  icon={<SendOutlined />}
+                  loading={sending}
+                  disabled={!selectedUser || !note.trim()}
+                  onClick={handleSend}
+                  style={{
+                    background: "#0f766e",
+                    border: "none",
+                    borderRadius: 12,
+                    paddingInline: 28,
+                  }}
+                >
+                  ส่ง
+                </Button>
+              </div>
+            </>
           )}
         </Card>
       </div>
+
+      {/* Right: appointment selector */}
     </div>
   );
 }

@@ -853,6 +853,25 @@ export class AppointmentsService {
     return { message: 'Meet URL updated successfully', appointmentId, meetUrl };
   }
 
+  async findByPatient(userId: number, staffId?: number) {
+    const records = await this.prisma.appointments.findMany({
+      where: { user_id: userId, ...(staffId ? { staff_id: staffId } : {}) },
+      include: {
+        consultations: { select: { id: true } },
+      },
+      orderBy: { appointment_date: 'asc' },
+    });
+
+    return records
+      .filter((r) => r.consultations.length === 0)
+      .map((r) => ({
+        id: r.id,
+        appointmentDate: r.appointment_date ? r.appointment_date.toISOString().split('T')[0] : null,
+        timeSelect: r.time_select ?? null,
+        appointmentType: r.appointment_type ?? null,
+      }));
+  }
+
   async findAllByStaff(staffId: number): Promise<StaffAppointmentItem[]> {
     const records = await this.prisma.appointments.findMany({
       where: {
@@ -862,6 +881,7 @@ export class AppointmentsService {
         users_appointments_user_idTousers: {
           select: {
             user_id: true,
+            title: true,
             name: true,
             sur_name: true,
           },
@@ -877,45 +897,35 @@ export class AppointmentsService {
       ],
     });
 
-    const userIds = records
-      .map((r) => r.user_id)
-      .filter((id): id is number => id !== null);
+    const appointmentIds = records.map((r) => r.id);
 
     const consultations = await this.prisma.consultations.findMany({
       where: {
-        staff_id: staffId,
-        user_id: { in: userIds },
+        appointment_id: { in: appointmentIds },
       },
-      select: { user_id: true, created_at: true },
+      select: { appointment_id: true },
     });
 
-    return records.map((record) => {
-      const apptDateKey = record.appointment_date
-        ? this.dateToIsoDate(record.appointment_date)
-        : null;
+    const consultedAppointmentIds = new Set(
+      consultations.map((c) => c.appointment_id).filter((id): id is number => id !== null)
+    );
 
-      const hasConsultation =
-        record.user_id !== null &&
-        apptDateKey !== null &&
-        consultations.some(
-          (c) =>
-            c.user_id === record.user_id &&
-            c.created_at !== null &&
-            this.dateToIsoDate(c.created_at) === apptDateKey,
-        );
+    return records.map((record) => {
+      const hasConsultation = consultedAppointmentIds.has(record.id);
 
       return {
         id: record.id,
         staffId: record.staff_id ?? null,
         patientId: record.user_id ?? null,
         patientName: this.buildPatientName(
+          record.users_appointments_user_idTousers?.title,
           record.users_appointments_user_idTousers?.name,
           record.users_appointments_user_idTousers?.sur_name,
           record.users_appointments_user_idTousers?.user_id ??
             record.user_id ??
             null,
         ),
-        appointmentDate: apptDateKey,
+        appointmentDate: record.appointment_date ? this.dateToIsoDate(record.appointment_date) : null,
         timeSelect: record.time_select ?? null,
         appointmentType: record.appointment_type ?? null,
         paymentStatus: record.status ?? null,
@@ -927,11 +937,12 @@ export class AppointmentsService {
   }
 
   private buildPatientName(
+    title?: string | null,
     firstName?: string | null,
     lastName?: string | null,
     patientId?: number | null,
   ): string {
-    const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
+    const fullName = [title, firstName, lastName].filter(Boolean).join(' ').trim();
 
     if (fullName) {
       return fullName;

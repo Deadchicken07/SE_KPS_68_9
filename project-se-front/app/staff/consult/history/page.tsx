@@ -1,6 +1,6 @@
 "use client";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useConsultations } from "@/hooks/useConsultation";
 import {
   Button,
@@ -17,9 +17,7 @@ import {
 import { InfoCircleOutlined, PlusOutlined, ReadOutlined } from "@ant-design/icons";
 import { Consultation } from "@/types/consult.types";
 import { useUserResponses, useResponseDetail } from "@/hooks/useResponse";
-import axios from "axios";
-
-const API = process.env.NEXT_PUBLIC_API_URL;
+import { useStaffName, useUserName } from "@/hooks/useStaffName";
 import { ResponseDetail, ResponseSummary } from "@/types/response.types";
 
 export default function ConsultHistoryPage() {
@@ -32,38 +30,14 @@ export default function ConsultHistoryPage() {
   const { data, meta, loading, error } = useConsultations(userId, page, 10);
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Consultation | null>(null);
-  const [staffName, setStaffName] = useState<string | null>(null);
-  const [patientName, setPatientName] = useState<string | null>(null);
-  const [pharmacistName, setPharmacistName] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!userId) return;
-    axios.get(`${API}/users/${userId}`, { withCredentials: true })
-      .then((res) => setPatientName([res.data.name, res.data.sur_name].filter(Boolean).join(" ")))
-      .catch(() => setPatientName(null));
-  }, [userId]);
+  const patientName = useUserName(userId || null);
+  const staffName = useStaffName(selected?.staff_id ?? null);
+  const pharmacistName = useStaffName(selected?.pharmacist_id ?? null);
 
-  const handleOpen = async (consult: Consultation) => {
+  const handleOpen = (consult: Consultation) => {
     setSelected(consult);
-    setStaffName(null);
-    setPharmacistName(null);
     setOpen(true);
-    const fetches: Promise<void>[] = [];
-    if (consult.staff_id) {
-      fetches.push(
-        axios.get(`${API}/users/staff/${consult.staff_id}`, { withCredentials: true })
-          .then((res) => setStaffName([res.data.name, res.data.sur_name].filter(Boolean).join(" ")))
-          .catch(() => setStaffName(null))
-      );
-    }
-    if (consult.pharmacist_id) {
-      fetches.push(
-        axios.get(`${API}/users/staff/${consult.pharmacist_id}`, { withCredentials: true })
-          .then((res) => setPharmacistName([res.data.name, res.data.sur_name].filter(Boolean).join(" ")))
-          .catch(() => setPharmacistName(null))
-      );
-    }
-    await Promise.all(fetches);
   };
 
   // --- questionnaire responses ---
@@ -281,7 +255,7 @@ export default function ConsultHistoryPage() {
                     })
                   : "-"}
               </Typography.Text>
-              <Tag color="blue">คะแนนรวม: {selectedResponse?.total_score}</Tag>
+              <Tag color="blue">คะแนนรวม: {selectedResponse?.total_score} / 30 ({selectedResponse?.total_score != null ? Math.round((selectedResponse.total_score / 30) * 100) : '-'}%)</Tag>
             </div>
           </div>
         }
@@ -305,7 +279,7 @@ export default function ConsultHistoryPage() {
             style={{ marginBottom: 12, borderRadius: 8 }}
           >
             <Typography.Text strong>
-              {index + 1}. {a.question_text}
+              {a.question_text}
             </Typography.Text>
             <div style={{ marginTop: 8, display: "flex", justifyContent: "space-between" }}>
               <Tag color="green">{a.choice_text}</Tag>

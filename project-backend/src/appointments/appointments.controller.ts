@@ -152,6 +152,14 @@ export class AppointmentsController {
 
 
 
+  @Get('patient/:userId')
+  findByPatient(
+    @Param('userId', ParseIntPipe) userId: number,
+    @Query('staffId') staffId?: string,
+  ) {
+    return this.appointmentsService.findByPatient(userId, staffId ? Number(staffId) : undefined);
+  }
+
   @Get('staff/:staffId')
   findAllByStaff(@Req() req, @Param('staffId', ParseIntPipe) staffId: number) {
     const roleId = this.getRoleIdFromRequest(req);
