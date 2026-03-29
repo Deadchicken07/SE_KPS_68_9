@@ -484,7 +484,7 @@ export class AppointmentsService {
   ) {
     return this.prisma.appointments.update({
       where: { id: appointmentId },
-      data: { status: 'Paid', deposit_slip_file: slipUrl } as any,
+      data: { status: 'Pending', deposit_slip_file: slipUrl } as any,
     });
   }
 

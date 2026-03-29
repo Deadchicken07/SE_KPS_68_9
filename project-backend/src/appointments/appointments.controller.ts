@@ -22,7 +22,7 @@ import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
 @Controller('appointments')
 @UseGuards(JwtAuthGuard)
 export class AppointmentsController {
-  constructor(private readonly appointmentsService: AppointmentsService) { }
+  constructor(private readonly appointmentsService: AppointmentsService) {}
 
   @Get('available-slots')
   async getAvailableSlots(@Req() req, @Query('date') date: string) {
@@ -53,9 +53,11 @@ export class AppointmentsController {
     @Param('id', ParseIntPipe) receiptId: number,
   ) {
     const userId = this.getUserIdFromRequest(req);
-    return this.appointmentsService.getMedicinePaymentDetails(userId, receiptId);
+    return this.appointmentsService.getMedicinePaymentDetails(
+      userId,
+      receiptId,
+    );
   }
-
 
   @Patch(':id/confirm')
   @UseGuards(RolesGuard)
@@ -95,9 +97,12 @@ export class AppointmentsController {
     @Body() body: { slipUrl: string },
   ) {
     const userId = this.getUserIdFromRequest(req);
-    return this.appointmentsService.payMedicineByReceipt(userId, receiptId, body.slipUrl);
+    return this.appointmentsService.payMedicineByReceipt(
+      userId,
+      receiptId,
+      body.slipUrl,
+    );
   }
-
 
   @Get('staff/me')
   getMyStaffAppointments(@Req() req) {
@@ -172,10 +177,7 @@ export class AppointmentsController {
   }
 
   @Patch(':id/meet-url/delete')
-  deleteMeetUrl(
-    @Req() req,
-    @Param('id', ParseIntPipe) appointmentId: number,
-  ) {
+  deleteMeetUrl(@Req() req, @Param('id', ParseIntPipe) appointmentId: number) {
     const staffId = this.getUserIdFromRequest(req);
     return this.appointmentsService.deleteMeetUrl(staffId, appointmentId);
   }
@@ -187,7 +189,11 @@ export class AppointmentsController {
     @Body() body: { meetUrl: string },
   ) {
     const staffId = this.getUserIdFromRequest(req);
-    return this.appointmentsService.updateMeetUrl(staffId, appointmentId, body.meetUrl);
+    return this.appointmentsService.updateMeetUrl(
+      staffId,
+      appointmentId,
+      body.meetUrl,
+    );
   }
 
   @Patch(':id/pay')
@@ -206,9 +212,6 @@ export class AppointmentsController {
       isAdmin,
     );
   }
-
-
-
 
   @Patch(':id/pay-medicine')
   payMedicine(
@@ -244,7 +247,10 @@ export class AppointmentsController {
     @Param('userId', ParseIntPipe) userId: number,
     @Query('staffId') staffId?: string,
   ) {
-    return this.appointmentsService.findByPatient(userId, staffId ? Number(staffId) : undefined);
+    return this.appointmentsService.findByPatient(
+      userId,
+      staffId ? Number(staffId) : undefined,
+    );
   }
 
   @Get('staff/:staffId')
@@ -259,7 +265,6 @@ export class AppointmentsController {
     }
 
     return this.appointmentsService.findAllByStaff(staffId);
-
   }
 
   private getUserIdFromRequest(req): number {
