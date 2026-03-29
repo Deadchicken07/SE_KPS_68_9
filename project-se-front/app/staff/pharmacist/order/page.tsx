@@ -74,10 +74,6 @@ function PharmacistOrderPageContent() {
   const { consultations, isLoading, isFetching, saving, consultationOptions, createOrder } =
     usePharmacistOrders();
 
-  if (isLoading) {
-    return <PageSkeleton cards={[{ rows: 4 }, { rows: 10 }]} />;
-  }
-
   const paidConsultations = useMemo(
     () =>
       consultations.filter(
@@ -203,6 +199,10 @@ function PharmacistOrderPageContent() {
 
     messageApi.success(result.message);
   };
+
+  if (isLoading) {
+    return <PageSkeleton cards={[{ rows: 4 }, { rows: 10 }]} />;
+  }
 
   return (
     <main className="staff-shell">
