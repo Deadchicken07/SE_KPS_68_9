@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
 
@@ -106,7 +110,11 @@ export class AppointmentsService {
   private expandRangeToSlotStarts(range: TimeRange): string[] {
     const slots: string[] = [];
 
-    for (let minute = range.startMinutes; minute < range.endMinutes; minute += 30) {
+    for (
+      let minute = range.startMinutes;
+      minute < range.endMinutes;
+      minute += 30
+    ) {
       slots.push(this.minutesToTimeText(minute));
     }
 
@@ -134,7 +142,9 @@ export class AppointmentsService {
     }
 
     const targetDate =
-      appointmentDate instanceof Date ? new Date(appointmentDate) : new Date(appointmentDate);
+      appointmentDate instanceof Date
+        ? new Date(appointmentDate)
+        : new Date(appointmentDate);
 
     if (Number.isNaN(targetDate.getTime())) {
       throw new BadRequestException('Invalid appointment date');
@@ -150,7 +160,9 @@ export class AppointmentsService {
         staff_id: staffId,
         appointment_date: { gte: startOfDay, lte: endOfDay },
         status: { not: 'Not_paying' },
-        ...(excludedAppointmentId ? { id: { not: excludedAppointmentId } } : {}),
+        ...(excludedAppointmentId
+          ? { id: { not: excludedAppointmentId } }
+          : {}),
       },
       select: {
         id: true,
@@ -166,7 +178,9 @@ export class AppointmentsService {
     });
 
     if (hasConflict) {
-      throw new BadRequestException('Selected time slot is no longer available');
+      throw new BadRequestException(
+        'Selected time slot is no longer available',
+      );
     }
   }
 
@@ -196,7 +210,9 @@ export class AppointmentsService {
     });
 
     if (scheduleEntry?.status && scheduleEntry.status !== 'working') {
-      throw new BadRequestException('Staff is not available on the selected date');
+      throw new BadRequestException(
+        'Staff is not available on the selected date',
+      );
     }
   }
 
@@ -235,7 +251,9 @@ export class AppointmentsService {
         user_id: userId,
         appointment_date: { gte: startOfDay, lte: endOfDay },
         status: { not: 'Not_paying' },
-        ...(excludedAppointmentId ? { id: { not: excludedAppointmentId } } : {}),
+        ...(excludedAppointmentId
+          ? { id: { not: excludedAppointmentId } }
+          : {}),
       },
       select: {
         id: true,
@@ -894,6 +912,13 @@ export class AppointmentsService {
   async getConsultationForAppointment(userId: number, appointmentId: number) {
     const appt = await this.prisma.appointments.findUnique({
       where: { id: appointmentId },
+      include: {
+        users_appointments_staff_idTousers: {
+          include: {
+            roles: true,
+          },
+        },
+      },
     });
     if (!appt || !appt.appointment_date)
       throw new NotFoundException('Appointment or date not found');
@@ -917,7 +942,81 @@ export class AppointmentsService {
         receipts: { include: { receipt_details: true } },
       },
     });
-    return consultation;
+
+    if (!consultation) {
+      return {
+        consultation: null,
+        prescriptionItems: [],
+        receipt: null,
+        receiptDetails: [],
+        serviceFee: 0,
+        medicineCost: 0,
+      };
+    }
+
+    const firstReceipt = consultation.receipts?.[0] ?? null;
+    const receiptDetails = (firstReceipt?.receipt_details ?? []).map(
+      (detail: any) => ({
+        id: detail.id,
+        itemName: detail.item_name ?? detail.name ?? '-',
+        itemType: detail.item_type ?? null,
+        quantity: Number(detail.quantity ?? 0),
+        unitPrice: Number(detail.unit_price ?? 0),
+        totalPrice: Number(detail.total_price ?? 0),
+      }),
+    );
+
+    const medicineReceiptDetails = receiptDetails.filter(
+      (detail) => detail.itemType === 'medicine',
+    );
+
+    const prescriptionItems = medicineReceiptDetails.map((detail) => ({
+      id: detail.id,
+      medicationName: detail.itemName,
+      quantity: detail.quantity,
+      comment: '',
+      price: detail.unitPrice,
+    }));
+
+    const medicineCost = medicineReceiptDetails.reduce(
+      (sum: number, detail) => sum + detail.totalPrice,
+      0,
+    );
+
+    const fees = await this.prisma.fees.findMany();
+    const feeMap = new Map(
+      fees.map((f) => [f.id, Number(f.price_per_hours || 0)]),
+    );
+    const defaultRate = 500;
+    const timeRange = this.tryParseTimeRange(appt.time_select);
+    const durationHours = timeRange
+      ? (timeRange.endMinutes - timeRange.startMinutes) / 60
+      : 0;
+    const feeId = appt.users_appointments_staff_idTousers?.roles?.fee_id;
+    const hourlyRate =
+      feeId && feeMap.has(feeId) ? feeMap.get(feeId)! : defaultRate;
+    const serviceFee =
+      durationHours > 0 ? durationHours * hourlyRate : defaultRate;
+
+    return {
+      consultation: {
+        id: consultation.id,
+        note: consultation.note ?? '',
+        createdAt: consultation.created_at,
+      },
+      prescriptionItems,
+      receipt: firstReceipt
+        ? {
+            id: firstReceipt.id,
+            total: Number(firstReceipt.total ?? 0) || serviceFee + medicineCost,
+            status: firstReceipt.payment_status ?? '-',
+            tracking: firstReceipt.tracking ?? null,
+          }
+        : null,
+      receiptDetails,
+      serviceFee,
+      medicineCost,
+    };
   }
 
   async findByPatient(userId: number, staffId?: number) {
@@ -973,7 +1072,9 @@ export class AppointmentsService {
 
     return records.map((r) => {
       const u = r.users_appointments_user_idTousers;
-      const patientName = [u?.title, u?.name, u?.sur_name].filter(Boolean).join(' ');
+      const patientName = [u?.title, u?.name, u?.sur_name]
+        .filter(Boolean)
+        .join(' ');
       return {
         id: r.id,
         userId: r.user_id,
