@@ -224,7 +224,7 @@ export default function LoginPage() {
                           lineHeight: 1.8,
                         }}
                       >
-                        ระบบให้คำปรึกษาออนไลน์ที่ออกแบบเพื่อยความเป็นส่วนตัว
+                        ระบบให้คำปรึกษาออนไลน์ที่ออกแบบเพื่อความเป็นส่วนตัว
                       </Typography.Paragraph>
                     </div>
 
