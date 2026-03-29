@@ -177,7 +177,11 @@ function LoginPageContent() {
                     }}
                   />
 
-                  <Flex vertical justify="space-between" style={{ position: "relative", zIndex: 1, minHeight: 644 }}>
+                  <Flex
+                    vertical
+                    justify="space-between"
+                    style={{ position: "relative", zIndex: 1, minHeight: 644 }}
+                  >
                     <div>
                       <Typography.Text
                         style={{
@@ -203,7 +207,7 @@ function LoginPageContent() {
                           lineHeight: 1.08,
                         }}
                       >
-                        JITDEE
+                        JitDee Clinic
                       </Typography.Title>
 
                       <Typography.Paragraph
@@ -225,12 +229,21 @@ function LoginPageContent() {
                         <Card
                           variant="borderless"
                           styles={{ body: { padding: 16 } }}
-                          style={{ borderRadius: 20, background: "rgba(255,255,255,0.10)", color: "#fff" }}
+                          style={{
+                            borderRadius: 20,
+                            background: "rgba(255,255,255,0.10)",
+                            color: "#fff",
+                          }}
                         >
-                          <Typography.Title level={3} style={{ margin: 0, color: "#fff" }}>
+                          <Typography.Title
+                            level={3}
+                            style={{ margin: 0, color: "#fff" }}
+                          >
                             24/7
                           </Typography.Title>
-                          <Typography.Text style={{ color: "rgba(255,255,255,0.8)" }}>
+                          <Typography.Text
+                            style={{ color: "rgba(255,255,255,0.8)" }}
+                          >
                             ดูแลต่อเนื่อง
                           </Typography.Text>
                         </Card>
@@ -239,12 +252,21 @@ function LoginPageContent() {
                         <Card
                           variant="borderless"
                           styles={{ body: { padding: 16 } }}
-                          style={{ borderRadius: 20, background: "rgba(255,255,255,0.10)", color: "#fff" }}
+                          style={{
+                            borderRadius: 20,
+                            background: "rgba(255,255,255,0.10)",
+                            color: "#fff",
+                          }}
                         >
-                          <Typography.Title level={3} style={{ margin: 0, color: "#fff" }}>
+                          <Typography.Title
+                            level={3}
+                            style={{ margin: 0, color: "#fff" }}
+                          >
                             AES
                           </Typography.Title>
-                          <Typography.Text style={{ color: "rgba(255,255,255,0.8)" }}>
+                          <Typography.Text
+                            style={{ color: "rgba(255,255,255,0.8)" }}
+                          >
                             ข้อมูลปลอดภัย
                           </Typography.Text>
                         </Card>
@@ -271,7 +293,12 @@ function LoginPageContent() {
                   >
                     <Typography.Title
                       level={2}
-                      style={{ marginTop: 12, marginBottom: 0, color: "#0f172a", fontSize: 32 }}
+                      style={{
+                        marginTop: 12,
+                        marginBottom: 0,
+                        color: "#0f172a",
+                        fontSize: 32,
+                      }}
                     >
                       เข้าสู่ระบบ
                     </Typography.Title>
@@ -293,19 +320,45 @@ function LoginPageContent() {
                       style={{ marginTop: 32 }}
                     >
                       <Form.Item
-                        label={<span style={{ fontSize: 14, fontWeight: 500, color: "#475569" }}>อีเมล</span>}
+                        label={
+                          <span
+                            style={{
+                              fontSize: 14,
+                              fontWeight: 500,
+                              color: "#475569",
+                            }}
+                          >
+                            อีเมล
+                          </span>
+                        }
                         name="email"
                         style={{ marginBottom: 20 }}
                       >
-                        <Input placeholder="example@email.com" className="input" />
+                        <Input
+                          placeholder="example@email.com"
+                          className="input"
+                        />
                       </Form.Item>
 
                       <Form.Item
-                        label={<span style={{ fontSize: 14, fontWeight: 500, color: "#475569" }}>รหัสผ่าน</span>}
+                        label={
+                          <span
+                            style={{
+                              fontSize: 14,
+                              fontWeight: 500,
+                              color: "#475569",
+                            }}
+                          >
+                            รหัสผ่าน
+                          </span>
+                        }
                         name="password"
                         style={{ marginBottom: 24 }}
                       >
-                        <Input.Password placeholder="********" className="input" />
+                        <Input.Password
+                          placeholder="********"
+                          className="input"
+                        />
                       </Form.Item>
 
                       <Form.Item style={{ marginBottom: error ? 16 : 0 }}>
@@ -314,16 +367,34 @@ function LoginPageContent() {
                           htmlType="submit"
                           loading={loading}
                           disabled={isLoginDisabled}
-                          style={{ width: "100%", height: 52, border: "none", borderRadius: 12, fontWeight: 600 }}
+                          style={{
+                            width: "100%",
+                            height: 52,
+                            border: "none",
+                            borderRadius: 12,
+                            fontWeight: 600,
+                          }}
                         >
                           {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
                         </Button>
                       </Form.Item>
 
-                      {error && <Alert type="error" title={error} showIcon style={{ marginBottom: 8 }} />}
+                      {error && (
+                        <Alert
+                          type="error"
+                          title={error}
+                          showIcon
+                          style={{ marginBottom: 8 }}
+                        />
+                      )}
                     </Form>
 
-                    <Flex vertical gap={8} align="center" style={{ marginTop: 24 }}>
+                    <Flex
+                      vertical
+                      gap={8}
+                      align="center"
+                      style={{ marginTop: 24 }}
+                    >
                       {/* <Typography.Link
                         onClick={() => router.push("/login/forgot-password")}
                         style={{ color: "#0e5b50", fontSize: 14, fontWeight: 500 }}
@@ -331,7 +402,9 @@ function LoginPageContent() {
                         ลืมรหัสผ่าน?
                       </Typography.Link> */}
 
-                      <Typography.Text style={{ color: "#475569", fontSize: 14 }}>
+                      <Typography.Text
+                        style={{ color: "#475569", fontSize: 14 }}
+                      >
                         ยังไม่มีบัญชี?{" "}
                         <Typography.Link
                           onClick={() => router.push("/login/regis")}
