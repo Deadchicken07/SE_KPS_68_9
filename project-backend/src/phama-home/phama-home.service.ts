@@ -97,15 +97,14 @@ type ReceiptRow = {
 export class PhamaHomeService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getOrders(currentUserId: number, roleId: number) {
+  async getOrders() {
     const where: Prisma.consultationsWhereInput = {
       prescription_items: {
         some: {},
       },
-    };
-
-    if (roleId === 5) {
-      where.OR = [{ pharmacist_id: currentUserId }, { pharmacist_id: null }];
+      receipts: {
+        some: {},
+      },
     }
 
     const consultations = await this.prisma.consultations.findMany({
