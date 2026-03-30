@@ -627,7 +627,6 @@ export class AppointmentsService {
 
   async getAllMedicinePayments(): Promise<any[]> {
     const receipts = await this.prisma.receipts.findMany({
-      where: { payment_status: { in: ['Not_paying', 'Pending'] } },
       include: {
         users: {
           select: {
