@@ -31,7 +31,7 @@ type MedicinePaymentRecord = {
 };
 
 const canConfirmMedicinePayment = (status: string | null) =>
-    status === 'pending_delivery' || status === 'picked_up';
+    status === 'pending_delivery';
 
 export default function PaymentVerificationPage() {
     const [appointments, setAppointments] = useState<any[]>([]);
