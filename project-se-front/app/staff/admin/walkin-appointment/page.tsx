@@ -152,7 +152,7 @@ export default function WalkinAppointmentPage() {
 
       let payload: any = {
         staffId: values.staffId,
-        date: values.date.format("YYYY-MM-DD"),
+        appointmentDate: values.date.format("YYYY-MM-DD"),
         timeSelect,
         duration: values.duration,
         appointmentType: "onsite",
@@ -178,8 +178,8 @@ export default function WalkinAppointmentPage() {
         withCredentials: true,
       });
 
-      message.success("เพิ่มการนัดหมายสำเร็จ");
-      const appointmentId = res.data.appointmentId;
+      messageApi.success("เพิ่มการนัดหมายสำเร็จ");
+      const appointmentId = res.data?.appointmentId ?? res.data?.id;
       if (appointmentId) {
         router.push(`/staff/admin/payment?appointmentId=${appointmentId}`);
       } else {
