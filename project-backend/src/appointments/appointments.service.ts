@@ -658,9 +658,9 @@ export class AppointmentsService {
         r.consultations?.prescription_items.map((p) => ({
           name: p.medications?.name || 'Unknown',
           quantity: p.quantity || 0,
-          unitPrice: p.medications?.retail ? Number(p.medications.retail) : 0,
+          unitPrice: p.medications?.price ? Number(p.medications.price) : 0,
           totalPrice:
-            (p.medications?.retail ? Number(p.medications.retail) : 0) *
+            (p.medications?.price ? Number(p.medications.price) : 0) *
             (p.quantity || 0),
         })) || [];
       const medicineCost = items.reduce(

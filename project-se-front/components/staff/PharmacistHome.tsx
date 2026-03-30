@@ -252,7 +252,7 @@ export function PharmacistHomeDetailModal({
                         className={`text-sm font-medium sm:text-right ${PHARMA_TEXT}`}
                       >
                         {formatPharmacistHomeMoney(
-                          (item.medication?.retail ?? 0) * (item.quantity ?? 0),
+                          (item.medication?.price ?? 0) * (item.quantity ?? 0),
                         )}
                       </div>
                     </div>

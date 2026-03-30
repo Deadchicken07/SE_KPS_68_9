@@ -141,7 +141,7 @@ export class PharmacistService {
               select: {
                 id: true,
                 name: true,
-                retail: true,
+                price: true,
               },
             },
           },
@@ -718,7 +718,7 @@ export class PharmacistService {
               select: {
                 id: true;
                 name: true;
-                retail: true;
+                price: true;
               };
             };
           };
@@ -766,7 +766,7 @@ export class PharmacistService {
           medicationId: item.medications?.id ?? item.medication_id ?? null,
           medicationName: item.medications?.name ?? '-',
           quantity: item.quantity ?? 0,
-          unitPrice: this.toNumber(item.medications?.retail),
+          unitPrice: this.toNumber(item.medications?.price),
           comment: item.comment ?? null,
         })),
     };
@@ -812,7 +812,7 @@ export class PharmacistService {
               select: {
                 id: true,
                 name: true,
-                retail: true,
+                price: true,
               },
             },
           },
@@ -828,7 +828,7 @@ export class PharmacistService {
       (item) =>
         item.medications?.id &&
         item.medications?.name &&
-        item.medications?.retail !== null &&
+        item.medications?.price !== null &&
         item.quantity &&
         item.quantity > 0,
     );
@@ -845,7 +845,7 @@ export class PharmacistService {
         `items[${index}].quantity`,
       );
       const unitPrice = this.parseRequiredDecimal(
-        this.toNumber(medication?.retail),
+        this.toNumber(medication?.price),
         `items[${index}].unitPrice`,
       );
       const totalPrice = new Prisma.Decimal(unitPrice.mul(quantity).toFixed(2));

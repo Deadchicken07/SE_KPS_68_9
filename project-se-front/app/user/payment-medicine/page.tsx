@@ -64,7 +64,7 @@ function MedicinePaymentContent() {
                     medicationName: item?.medications?.name ?? 'Unknown',
                     quantity: Number(item?.quantity ?? 0),
                     comment: item?.comment ?? '',
-                    price: Number(item?.medications?.retail ?? 0),
+                    price: Number(item?.medications?.price ?? 0),
                 }));
 
                 const mappedMedicineCost = mappedItems.reduce(
