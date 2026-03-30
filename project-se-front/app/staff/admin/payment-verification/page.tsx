@@ -30,6 +30,9 @@ type MedicinePaymentRecord = {
     tracking: string | null;
 };
 
+const canConfirmMedicinePayment = (status: string | null) =>
+    status === 'pending_delivery' || status === 'picked_up';
+
 export default function PaymentVerificationPage() {
     const [appointments, setAppointments] = useState<any[]>([]);
     const [medicinePayments, setMedicinePayments] = useState<MedicinePaymentRecord[]>([]);
@@ -361,7 +364,7 @@ export default function PaymentVerificationPage() {
             title: 'การจัดการ',
             key: 'action',
             render: (_: any, record: MedicinePaymentRecord) => {
-                if (record.appointmentType !== 'online') {
+                if (!canConfirmMedicinePayment(record.status)) {
                     return <span className="text-gray-400">-</span>;
                 }
 
@@ -583,7 +586,9 @@ export default function PaymentVerificationPage() {
                             </div>
                         )}
 
-                        {selectedMedicinePayment.slipUrl && selectedMedicinePayment.paymentStatus === 'Pending' ? (
+                        {selectedMedicinePayment.slipUrl &&
+                        selectedMedicinePayment.paymentStatus === 'Pending' &&
+                        canConfirmMedicinePayment(selectedMedicinePayment.status) ? (
                             <div className="border-t pt-4 mt-2">
                                 <h3 className="text-lg font-bold mb-4 text-center">ยืนยันการชำระค่ายา</h3>
                                 <div className="flex justify-center gap-4">

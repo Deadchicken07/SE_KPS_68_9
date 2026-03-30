@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, receipt_status } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
 
@@ -846,11 +846,31 @@ export class AppointmentsService {
   }
 
   async confirmMedicinePayment(receiptId: number, slipUrl?: string) {
+    const receipt = await this.prisma.receipts.findUnique({
+      where: { id: receiptId },
+      select: {
+        id: true,
+        status: true,
+      },
+    });
+
+    if (!receipt) {
+      throw new NotFoundException('Receipt not found');
+    }
+
+    if (
+      receipt.status !== receipt_status.pending_delivery &&
+      receipt.status !== receipt_status.picked_up
+    ) {
+      throw new BadRequestException(
+        'Medicine payment can only be confirmed for pending delivery or picked up receipts',
+      );
+    }
+
     return this.prisma.receipts.update({
       where: { id: receiptId },
       data: {
         payment_status: 'Paid',
-        status: 'picked_up',
         slip_file: slipUrl,
       } as any,
     });
