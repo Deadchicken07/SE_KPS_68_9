@@ -90,17 +90,24 @@ function PsychiatistPageInner() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const appointments = (data ?? []).filter((a) => {
-    const apptDate = new Date(a.appointmentDate);
-    apptDate.setHours(0, 0, 0, 0);
-    if (selectedDate) {
-      const [, selMonth, selDay] = selectedDate.split("-");
-      const month = String(apptDate.getMonth() + 1).padStart(2, "0");
-      const day = String(apptDate.getDate()).padStart(2, "0");
-      return month === selMonth && day === selDay;
-    }
-    return apptDate >= today;
-  });
+  const appointments = (data ?? [])
+    .filter((a) => {
+      const apptDate = new Date(a.appointmentDate);
+      apptDate.setHours(0, 0, 0, 0);
+      if (selectedDate) {
+        const [, selMonth, selDay] = selectedDate.split("-");
+        const month = String(apptDate.getMonth() + 1).padStart(2, "0");
+        const day = String(apptDate.getDate()).padStart(2, "0");
+        return month === selMonth && day === selDay;
+      }
+      return apptDate >= today;
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.appointmentDate).getTime();
+      const dateB = new Date(b.appointmentDate).getTime();
+      if (dateA !== dateB) return dateA - dateB;
+      return (a.timeSelect ?? "").localeCompare(b.timeSelect ?? "");
+    });
 
   return (
     <>

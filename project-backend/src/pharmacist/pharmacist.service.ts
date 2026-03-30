@@ -246,6 +246,11 @@ export class PharmacistService {
 
     const receipts = await this.prisma.receipts.findMany({
       where: {
+        receipt_details: {
+          some: {
+            item_type: item_type_enum.medicine,
+          },
+        },
         ...this.buildDeliveryHistoryStatusFilter(status),
         ...(search
           ? {
@@ -264,6 +269,7 @@ export class PharmacistService {
                 {
                   receipt_details: {
                     some: {
+                      item_type: item_type_enum.medicine,
                       OR: [
                         {
                           item_name: {
@@ -325,36 +331,47 @@ export class PharmacistService {
       orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
     });
 
-    return receipts.map((receipt) => ({
-      receiptId: receipt.id,
-      consultationId: receipt.consultation_id ?? null,
-      patientId: receipt.users?.user_id ?? receipt.user_id ?? null,
-      patientName: this.buildFullName(
-        receipt.users?.title,
-        receipt.users?.name,
-        receipt.users?.sur_name,
-      ),
-      pharmacistName: this.buildFullName(
-        receipt.consultations?.users_consultations_pharmacist_idTousers?.title,
-        receipt.consultations?.users_consultations_pharmacist_idTousers?.name,
-        receipt.consultations?.users_consultations_pharmacist_idTousers
-          ?.sur_name,
-      ),
-      tracking: receipt.tracking ?? null,
-      status: receipt.status ?? null,
-      total: this.toNumber(receipt.total),
-      createdAt: this.toIsoString(receipt.created_at),
-      items: receipt.receipt_details.map((item) => ({
-        receiptDetailId: item.id,
-        itemName: item.item_name ?? item.medications?.name ?? '-',
-        itemType: item.item_type ?? null,
-        quantity: item.quantity ?? 0,
-        unitPrice: this.toNumber(item.unit_price),
-        totalPrice: this.toNumber(item.total_price),
-        medicineId: item.medicine_id ?? null,
-        medicineName: item.medications?.name ?? null,
-      })),
-    }));
+    return receipts.map((receipt) => {
+      const medicineItems = receipt.receipt_details.filter(
+        (item) => item.item_type === item_type_enum.medicine,
+      );
+
+      const medicineTotal = medicineItems.reduce(
+        (sum, item) => sum + this.toNumber(item.total_price ?? 0)!,
+        0,
+      );
+
+      return {
+        receiptId: receipt.id,
+        consultationId: receipt.consultation_id ?? null,
+        patientId: receipt.users?.user_id ?? receipt.user_id ?? null,
+        patientName: this.buildFullName(
+          receipt.users?.title,
+          receipt.users?.name,
+          receipt.users?.sur_name,
+        ),
+        pharmacistName: this.buildFullName(
+          receipt.consultations?.users_consultations_pharmacist_idTousers?.title,
+          receipt.consultations?.users_consultations_pharmacist_idTousers?.name,
+          receipt.consultations?.users_consultations_pharmacist_idTousers
+            ?.sur_name,
+        ),
+        tracking: receipt.tracking ?? null,
+        status: receipt.status ?? null,
+        total: medicineTotal,
+        createdAt: this.toIsoString(receipt.created_at),
+        items: medicineItems.map((item) => ({
+          receiptDetailId: item.id,
+          itemName: item.item_name ?? item.medications?.name ?? '-',
+          itemType: item.item_type ?? null,
+          quantity: item.quantity ?? 0,
+          unitPrice: this.toNumber(item.unit_price),
+          totalPrice: this.toNumber(item.total_price),
+          medicineId: item.medicine_id ?? null,
+          medicineName: item.medications?.name ?? null,
+        })),
+      };
+    });
   }
 
   async findPatientHistory(
