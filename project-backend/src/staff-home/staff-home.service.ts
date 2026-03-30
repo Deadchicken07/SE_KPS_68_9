@@ -1171,25 +1171,26 @@ export class StaffHomeService {
     const month = this.normalizeMonth(input?.month);
     const weekday = this.parseClinicHolidayWeekday(input?.weekday);
     const scope = this.parseClinicHolidayScope(input?.scope);
-    const workDates = this.getClinicHolidayDateKeys(month, weekday);
+    const holidayDates = this.getClinicHolidayDateKeys(month, weekday);
+    const editableMonthDates = this.getEditableMonthDateKeys(month);
     const staffIds = await this.getClinicHolidayTargetStaffIds(
       scope,
       input?.staffId,
     );
 
-    const deleted = await this.prisma.schedule.deleteMany({
+    const existingHolidayCount = await this.prisma.schedule.count({
       where: {
         staff_id: {
           in: staffIds,
         },
         work_date: {
-          in: workDates.map((workDate) => this.toDateOnlyUtc(workDate)),
+          in: holidayDates.map((workDate) => this.toDateOnlyUtc(workDate)),
         },
         status: schedule_status.holiday,
       },
     });
 
-    if (!deleted.count) {
+    if (!existingHolidayCount) {
       throw new BadRequestException(
         'ยังไม่มีวันหยุดตามเงื่อนไขนี้ในเดือนที่เลือก',
       );
@@ -1197,8 +1198,25 @@ export class StaffHomeService {
 
     return {
       message: 'ลบวันหยุดรายเดือนเรียบร้อยแล้ว',
-      affectedStaffCount: deleted.count,
-      affectedDateCount: workDates.length,
+      affectedStaffCount: (
+        await this.prisma.schedule.deleteMany({
+          where: {
+            staff_id: {
+              in: staffIds,
+            },
+            work_date: {
+              in: editableMonthDates.map((workDate) =>
+                this.toDateOnlyUtc(workDate),
+              ),
+            },
+            status: {
+              in: [schedule_status.working, schedule_status.holiday],
+            },
+          },
+        }),
+        staffIds.length
+      ),
+      affectedDateCount: editableMonthDates.length,
       month,
       weekday,
       scope,
