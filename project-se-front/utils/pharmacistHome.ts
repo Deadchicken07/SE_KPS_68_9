@@ -89,7 +89,7 @@ export function pharmacistHomeMedicineTotal(
   consultation: PharmacistHomeConsultation,
 ) {
   return consultation.prescription_items.reduce((sum, item) => {
-    return sum + (item.medication?.retail ?? 0) * (item.quantity ?? 0)
+    return sum + (item.medication?.price ?? 0) * (item.quantity ?? 0)
   }, 0)
 }
 
