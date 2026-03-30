@@ -17,7 +17,7 @@ interface RegisterStep2Props {
   setForm: Dispatch<SetStateAction<RegisterForm>>;
   titles: string[];
   handleSubmit: () => void;
-  sendOtpLoading: boolean;
+  submitLoading: boolean;
   registerLoading: boolean;
   successMessage: string | null;
   current: LocationDropdownState;
@@ -63,8 +63,8 @@ function AddressSection({
       />
       {detailError && <p className="text-red-500 text-sm">{detailError}</p>}
       <br />
-       <br />
-        
+      <br />
+
       <div className="grid grid-cols-2 gap-x-4 gap-y-5">
         <Select
           size="large"
@@ -126,7 +126,7 @@ export default function RegisterStep2Form({
   setForm,
   titles,
   handleSubmit,
-  sendOtpLoading,
+  submitLoading,
   registerLoading,
   successMessage,
   current,
@@ -268,8 +268,9 @@ export default function RegisterStep2Form({
           className="input"
         />
         {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
-              <br/>
-              <br/>
+        <br />
+        <br />
+
         <div className="grid grid-cols-2 gap-x-4 gap-y-6">
           <div>
             <Label text="รหัสผ่าน" />
@@ -397,10 +398,10 @@ export default function RegisterStep2Form({
         size="large"
         onClick={handleSubmit}
         disabled={!isStepComplete}
-        loading={sendOtpLoading}
+        loading={submitLoading || registerLoading}
         className="btn-primary"
       >
-        {sendOtpLoading ? "กำลังส่ง OTP..." : "ตรวจสอบข้อมูล"}
+        {submitLoading || registerLoading ? "กำลังสมัครสมาชิก..." : "สมัครสมาชิก"}
       </Button>
 
       {successMessage && <p className="text-green-600 text-center text-sm">{successMessage}</p>}

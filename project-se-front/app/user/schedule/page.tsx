@@ -20,6 +20,8 @@ type AppointmentStatus = "pending" | "confirmed" | "completed" | "waiting";
 
 type AppointmentItem = {
   id: number;
+  appointmentId?: number | null;
+  consultationId?: number | null;
   staffId: number | null;
   consultantName: string;
   appointmentDate: string | null;
@@ -263,8 +265,7 @@ function getJoinAccessInfo(item: AppointmentItem, now: Date): JoinAccessInfo {
     if (item.paymentStatus === "Pending") {
       return {
         state: "payment-required",
-        message:
-          "อยู่ระหว่างการพิจารณาตรวจสอบการชำระเงิน",
+        message: "อยู่ระหว่างการพิจารณาตรวจสอบการชำระเงิน",
         isWaiting: false,
       };
     }
@@ -394,10 +395,7 @@ function buildInitialRescheduleForm(
   };
 }
 
-function expandBookedSlotEntry(
-  booking: string,
-  staffId: number,
-): string[] {
+function expandBookedSlotEntry(booking: string, staffId: number): string[] {
   const prefix = `${staffId}_`;
 
   if (!booking.startsWith(prefix)) {
@@ -481,6 +479,7 @@ export default function AppointmentSchedulePage() {
       total: number;
       status: string;
       tracking: string | null;
+      slipUrl: string | null;
     } | null;
     receiptDetails: ReceiptDetail[];
     serviceFee: number;
@@ -500,32 +499,39 @@ export default function AppointmentSchedulePage() {
   const [trackingMedicines, setTrackingMedicines] = useState<any[]>([]);
   const [trackingLoading, setTrackingLoading] = useState(false);
 
-  const openConsultationModal = useCallback(async (appointmentId: number) => {
-    setConsultationAppointmentId(appointmentId);
-    setIsConsultationModalOpen(true);
-    setConsultationLoading(true);
-    setConsultationData(null);
-    try {
-      const resp = await fetch(
-        `${API_BASE_URL}/appointments/${appointmentId}/consultation`,
-        {
-          credentials: "include",
-        },
-      );
-      if (resp.ok) {
-        const data = await resp.json();
-        setConsultationData(data);
-      } else {
+  const openConsultationModal = useCallback(
+    async (appointmentId: number, receiptId?: number | null) => {
+      setConsultationAppointmentId(appointmentId);
+      setIsConsultationModalOpen(true);
+      setConsultationLoading(true);
+      setConsultationData(null);
+      try {
+        const params = new URLSearchParams();
+        if (receiptId) {
+          params.set("receiptId", String(receiptId));
+        }
+        const resp = await fetch(
+          `${API_BASE_URL}/appointments/${appointmentId}/consultation${params.toString() ? `?${params.toString()}` : ""}`,
+          {
+            credentials: "include",
+          },
+        );
+        if (resp.ok) {
+          const data = await resp.json();
+          setConsultationData(data);
+        } else {
+          setError("ไม่สามารถโหลดข้อมูลการปรึกษาได้");
+          setIsConsultationModalOpen(false);
+        }
+      } catch {
         setError("ไม่สามารถโหลดข้อมูลการปรึกษาได้");
         setIsConsultationModalOpen(false);
+      } finally {
+        setConsultationLoading(false);
       }
-    } catch {
-      setError("ไม่สามารถโหลดข้อมูลการปรึกษาได้");
-      setIsConsultationModalOpen(false);
-    } finally {
-      setConsultationLoading(false);
-    }
-  }, []);
+    },
+    [],
+  );
 
   const closeConsultationModal = useCallback(() => {
     setIsConsultationModalOpen(false);
@@ -533,30 +539,37 @@ export default function AppointmentSchedulePage() {
     setConsultationAppointmentId(null);
   }, []);
 
-  const openTrackingModal = useCallback(async (appointmentId: number) => {
-    setIsTrackingModalOpen(true);
-    setTrackingLoading(true);
-    setTrackingNumber(null);
-    setTrackingMedicines([]);
-    try {
-      const resp = await fetch(
-        `${API_BASE_URL}/appointments/${appointmentId}/consultation`,
-        {
-          credentials: "include",
-        },
-      );
-      if (resp.ok) {
-        const data = await resp.json();
-        setTrackingNumber(data?.receipt?.tracking ?? null);
-        setTrackingMedicines(data?.prescriptionItems ?? []);
-      }
-    } catch {
+  const openTrackingModal = useCallback(
+    async (appointmentId: number, receiptId?: number | null) => {
+      setIsTrackingModalOpen(true);
+      setTrackingLoading(true);
       setTrackingNumber(null);
       setTrackingMedicines([]);
-    } finally {
-      setTrackingLoading(false);
-    }
-  }, []);
+      try {
+        const params = new URLSearchParams();
+        if (receiptId) {
+          params.set("receiptId", String(receiptId));
+        }
+        const resp = await fetch(
+          `${API_BASE_URL}/appointments/${appointmentId}/consultation${params.toString() ? `?${params.toString()}` : ""}`,
+          {
+            credentials: "include",
+          },
+        );
+        if (resp.ok) {
+          const data = await resp.json();
+          setTrackingNumber(data?.receipt?.tracking ?? null);
+          setTrackingMedicines(data?.prescriptionItems ?? []);
+        }
+      } catch {
+        setTrackingNumber(null);
+        setTrackingMedicines([]);
+      } finally {
+        setTrackingLoading(false);
+      }
+    },
+    [],
+  );
 
   const closeTrackingModal = useCallback(() => {
     setIsTrackingModalOpen(false);
@@ -974,6 +987,8 @@ export default function AppointmentSchedulePage() {
           {appointments.map((item, index) => {
             const isPaid = item.paymentStatus === "Paid";
             const isPending = item.paymentStatus === "Pending";
+            const consultationActionAppointmentId =
+              activeTab === "past" ? (item.appointmentId ?? null) : item.id;
             const joinInfo = getJoinAccessInfo(item, clock);
             const canJoin = joinInfo.state === "open";
             const isRescheduling = processingRescheduleId === item.id;
@@ -1140,7 +1155,16 @@ export default function AppointmentSchedulePage() {
                         >
                           <button
                             className="appt-btn appt-btn--ghost"
-                            onClick={() => void openConsultationModal(item.id)}
+                            disabled={!consultationActionAppointmentId}
+                            onClick={() => {
+                              if (!consultationActionAppointmentId) {
+                                return;
+                              }
+                              void openConsultationModal(
+                                consultationActionAppointmentId,
+                                item.receiptId,
+                              );
+                            }}
                             type="button"
                           >
                             ใบเสร็จการชำระเงิน
@@ -1162,7 +1186,16 @@ export default function AppointmentSchedulePage() {
                               item.medicinePaymentStatus === "Pending") && (
                               <button
                                 className="appt-btn appt-btn--ghost"
-                                onClick={() => void openTrackingModal(item.id)}
+                                disabled={!consultationActionAppointmentId}
+                                onClick={() => {
+                                  if (!consultationActionAppointmentId) {
+                                    return;
+                                  }
+                                  void openTrackingModal(
+                                    consultationActionAppointmentId,
+                                    item.receiptId,
+                                  );
+                                }}
                                 type="button"
                                 style={{
                                   display: "flex",
@@ -1645,6 +1678,55 @@ export default function AppointmentSchedulePage() {
                       }}
                     >
                       ไม่มีรายการสั่งยา
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ marginBottom: 20 }}>
+                  <h4
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 700,
+                      color: "#1e1b4b",
+                      margin: "0 0 12px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <span style={{ fontSize: 20 }}>🧾</span> สลิปค่ายา
+                  </h4>
+                  {consultationData.receipt?.slipUrl ? (
+                    <div
+                      style={{
+                        borderRadius: 12,
+                        border: "1.5px solid #e5e7eb",
+                        padding: 16,
+                        background: "#fafafa",
+                      }}
+                    >
+                      <img
+                        src={consultationData.receipt.slipUrl}
+                        alt="Medicine payment slip"
+                        style={{
+                          width: "100%",
+                          maxHeight: 320,
+                          objectFit: "contain",
+                          borderRadius: 10,
+                          border: "1px solid #d1d5db",
+                          background: "#ffffff",
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        color: "#9ca3af",
+                        fontSize: 14,
+                        padding: "8px 0",
+                      }}
+                    >
+                      ยังไม่มีสลิปค่ายาที่ส่งตรวจ
                     </div>
                   )}
                 </div>

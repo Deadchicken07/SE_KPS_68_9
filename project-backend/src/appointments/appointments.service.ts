@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
 
@@ -17,6 +18,8 @@ export type AppointmentStatus =
 
 export interface AppointmentScheduleItem {
   id: number;
+  appointmentId?: number | null;
+  consultationId?: number | null;
   staffId: number | null;
   consultantName: string;
   appointmentDate: string | null;
@@ -347,6 +350,7 @@ export class AppointmentsService {
         _count: { select: { prescription_items: true } },
         receipts: {
           include: { receipt_details: true },
+          orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
           take: 1,
         },
       },
@@ -372,6 +376,8 @@ export class AppointmentsService {
         return {
           item: {
             id: record.id,
+            appointmentId: record.id,
+            consultationId: null,
             staffId: record.staff_id,
             consultantName: this.buildConsultantName(
               record.users_appointments_staff_idTousers?.name,
@@ -420,6 +426,8 @@ export class AppointmentsService {
         return {
           item: {
             id: c.id,
+            appointmentId: c.appointment_id ?? null,
+            consultationId: c.id,
             staffId: c.staff_id,
             consultantName: this.buildConsultantName(
               c.users_consultations_staff_idTousers?.name,
@@ -618,7 +626,7 @@ export class AppointmentsService {
   }
 
   async getAllMedicinePayments(): Promise<any[]> {
-    const pendingReceipts = await this.prisma.receipts.findMany({
+    const receipts = await this.prisma.receipts.findMany({
       where: { payment_status: { in: ['Not_paying', 'Pending'] } },
       include: {
         users: {
@@ -643,55 +651,60 @@ export class AppointmentsService {
           },
         },
       },
+      orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
     });
 
-    return pendingReceipts.map((r) => {
-      const items =
-        r.consultations?.prescription_items.map((p) => ({
-          name: p.medications?.name || 'Unknown',
-          quantity: p.quantity || 0,
-          unitPrice: p.medications?.retail ? Number(p.medications.retail) : 0,
-          totalPrice:
-            (p.medications?.retail ? Number(p.medications.retail) : 0) *
-            (p.quantity || 0),
-        })) || [];
-      const medicineCost = items.reduce(
-        (sum, item) => sum + item.totalPrice,
-        0,
-      );
-      const hasPrescription = items.length > 0;
-      return {
-        id: r.id,
-        user_id: r.user_id,
-        total: r.total ? Number(r.total) : medicineCost,
-        created_at: r.created_at,
-        date:
-          r.consultations?.appointments?.appointment_date?.toISOString() ?? null,
-        appointmentType:
-          r.consultations?.appointments?.appointment_type ?? 'onsite',
-        patientName: this.buildPatientName(
-          r.users?.title,
-          r.users?.name,
-          r.users?.sur_name,
-          r.users?.user_id || r.user_id || 0,
-        ),
-        phone: r.users?.phone ?? null,
-        nation_id: r.users?.nation_id ?? null,
-        staffName: this.buildConsultantName(
-          r.consultations?.users_consultations_staff_idTousers?.name,
-          r.consultations?.users_consultations_staff_idTousers?.sur_name,
-        ),
-        medicineCost,
-        hasPrescription,
-        slipUrl: r.slip_file ?? null,
-        status: r.status ?? null,
-        paymentStatus: r.payment_status ?? null,
-        tracking: r.tracking ?? null,
-        payment_status: r.payment_status,
-        medicineItems: items,
-        receipt_details: [],
-      };
-    });
+    return receipts
+      .map((r) => {
+        const items =
+          r.consultations?.prescription_items.map((p) => ({
+            name: p.medications?.name || 'Unknown',
+            quantity: p.quantity || 0,
+            unitPrice: p.medications?.price ? Number(p.medications.price) : 0,
+            totalPrice:
+              (p.medications?.price ? Number(p.medications.price) : 0) *
+              (p.quantity || 0),
+          })) || [];
+        const medicineCost = items.reduce(
+          (sum, item) => sum + item.totalPrice,
+          0,
+        );
+        const hasPrescription = items.length > 0;
+
+        return {
+          id: r.id,
+          user_id: r.user_id,
+          total: r.total ? Number(r.total) : medicineCost,
+          created_at: r.created_at,
+          date:
+            r.consultations?.appointments?.appointment_date?.toISOString() ??
+            null,
+          appointmentType:
+            r.consultations?.appointments?.appointment_type ?? 'onsite',
+          patientName: this.buildPatientName(
+            r.users?.title,
+            r.users?.name,
+            r.users?.sur_name,
+            r.users?.user_id || r.user_id || 0,
+          ),
+          phone: r.users?.phone ?? null,
+          nation_id: r.users?.nation_id ?? null,
+          staffName: this.buildConsultantName(
+            r.consultations?.users_consultations_staff_idTousers?.name,
+            r.consultations?.users_consultations_staff_idTousers?.sur_name,
+          ),
+          medicineCost,
+          hasPrescription,
+          slipUrl: r.slip_file ?? null,
+          status: r.status ?? null,
+          paymentStatus: r.payment_status ?? null,
+          tracking: r.tracking ?? null,
+          payment_status: r.payment_status,
+          medicineItems: items,
+          receipt_details: [],
+        };
+      })
+      .filter((receipt) => receipt.hasPrescription);
   }
 
   async getMedicinePaymentDetails(
@@ -713,15 +726,20 @@ export class AppointmentsService {
   }
 
   async createAppointment(userId: number, data: any) {
-    await this.ensureStaffScheduleAvailable(data.staffId, data.appointmentDate);
+    const appointmentDate = data.appointmentDate ?? data.date;
+    if (!appointmentDate) {
+      throw new BadRequestException('appointmentDate is required');
+    }
+
+    await this.ensureStaffScheduleAvailable(data.staffId, appointmentDate);
     await this.ensureStaffTimeAvailable(
       data.staffId,
-      data.appointmentDate,
+      appointmentDate,
       data.timeSelect,
     );
     await this.ensureUserTimeAvailable(
       userId,
-      data.appointmentDate,
+      appointmentDate,
       data.timeSelect,
     );
 
@@ -729,7 +747,7 @@ export class AppointmentsService {
       data: {
         user_id: userId,
         staff_id: data.staffId,
-        appointment_date: new Date(data.appointmentDate),
+        appointment_date: new Date(appointmentDate),
         time_select: data.timeSelect,
         appointment_type: data.appointmentType,
         status: 'Pending',
@@ -936,9 +954,16 @@ export class AppointmentsService {
     };
   }
 
-  async getConsultationForAppointment(userId: number, appointmentId: number) {
-    const appt = await this.prisma.appointments.findUnique({
-      where: { id: appointmentId },
+  async getConsultationForAppointment(
+    userId: number,
+    appointmentId: number,
+    receiptId?: number,
+  ) {
+    const appt = await this.prisma.appointments.findFirst({
+      where: {
+        id: appointmentId,
+        user_id: userId,
+      },
       include: {
         users_appointments_staff_idTousers: {
           include: {
@@ -947,26 +972,42 @@ export class AppointmentsService {
         },
       },
     });
-    if (!appt || !appt.appointment_date)
+    if (!appt || !appt.appointment_date) {
       throw new NotFoundException('Appointment or date not found');
+    }
 
     const startOfDay = new Date(appt.appointment_date);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(appt.appointment_date);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const consultation = await this.prisma.consultations.findFirst({
-      where: {
-        user_id: appt.user_id,
+    const consultationLookupConditions: Prisma.consultationsWhereInput[] = [
+      { appointment_id: appointmentId },
+    ];
+    if (appt.staff_id !== null) {
+      consultationLookupConditions.push({
+        appointment_id: null,
         staff_id: appt.staff_id,
         created_at: {
           gte: startOfDay,
           lte: endOfDay,
         },
+      });
+    }
+
+    const consultation = await this.prisma.consultations.findFirst({
+      where: {
+        user_id: userId,
+        OR: consultationLookupConditions,
       },
+      orderBy: { created_at: 'desc' },
       include: {
         prescription_items: { include: { medications: true } },
-        receipts: { include: { receipt_details: true } },
+        receipts: {
+          include: { receipt_details: true },
+          orderBy: { created_at: 'desc' },
+          take: 1,
+        },
       },
     });
 
@@ -981,8 +1022,20 @@ export class AppointmentsService {
       };
     }
 
-    const firstReceipt = consultation.receipts?.[0] ?? null;
-    const receiptDetails = (firstReceipt?.receipt_details ?? []).map(
+    const fallbackReceipt = consultation.receipts?.[0] ?? null;
+    const selectedReceipt = receiptId
+      ? await this.prisma.receipts.findFirst({
+          where: {
+            id: receiptId,
+            consultation_id: consultation.id,
+            user_id: userId,
+          },
+          include: { receipt_details: true },
+        })
+      : fallbackReceipt;
+    const receipt = selectedReceipt ?? fallbackReceipt;
+
+    const receiptDetails = (receipt?.receipt_details ?? []).map(
       (detail: any) => ({
         id: detail.id,
         itemName: detail.item_name ?? detail.name ?? '-',
@@ -1032,12 +1085,13 @@ export class AppointmentsService {
         createdAt: consultation.created_at,
       },
       prescriptionItems,
-      receipt: firstReceipt
+      receipt: receipt
         ? {
-            id: firstReceipt.id,
-            total: Number(firstReceipt.total ?? 0) || serviceFee + medicineCost,
-            status: firstReceipt.payment_status ?? '-',
-            tracking: firstReceipt.tracking ?? null,
+            id: receipt.id,
+            total: Number(receipt.total ?? 0) || serviceFee + medicineCost,
+            status: receipt.payment_status ?? '-',
+            tracking: receipt.tracking ?? null,
+            slipUrl: receipt.slip_file ?? null,
           }
         : null,
       receiptDetails,

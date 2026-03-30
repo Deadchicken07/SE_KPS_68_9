@@ -89,7 +89,7 @@ export function pharmacistHomeMedicineTotal(
   consultation: PharmacistHomeConsultation,
 ) {
   return consultation.prescription_items.reduce((sum, item) => {
-    return sum + (item.medication?.retail ?? 0) * (item.quantity ?? 0)
+    return sum + (item.medication?.price ?? 0) * (item.quantity ?? 0)
   }, 0)
 }
 
@@ -147,9 +147,15 @@ export function isOutstandingPharmacistHomeStatus(
 export function isPaidOutstandingPharmacistHomeConsultation(
   consultation: PharmacistHomeConsultation,
 ) {
+  const status = pharmacistHomeDisplayStatus(consultation)
+
+  if (status === 'pending_pickup') {
+    return true
+  }
+
   return (
     pharmacistHomeLatestPaymentStatus(consultation) === 'Paid' &&
-    isOutstandingPharmacistHomeStatus(pharmacistHomeDisplayStatus(consultation))
+    status === 'pending_delivery'
   )
 }
 

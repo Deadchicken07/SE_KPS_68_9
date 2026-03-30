@@ -58,25 +58,6 @@ export interface FormErrors  {
   detailNation?: string;
   detail?: string;
 };
-export interface RegisterStep3Props {
-  otp: string;
-  setOtp: Dispatch<SetStateAction<string>>;
-
-  verifyOtp: (email: string, otp: string) => Promise<boolean>;
-  verifyOtpLoading: boolean;
-
-  sendOtp: (email: string) => Promise<boolean>;
-  sendOtpLoading: boolean;
-
-  cooldown: number;
-  otpError?: string;
-
-  registering: boolean;
-  registerUser: () => Promise<void>;
-
-  email: string;
-}
-
 export interface LocationItem {
   id: number;
   name: string;

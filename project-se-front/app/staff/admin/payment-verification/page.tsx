@@ -20,6 +20,7 @@ type MedicinePaymentRecord = {
     patientName: string;
     staffName: string;
     date: string | null;
+    appointmentType: string | null;
     medicineCost: number;
     medicineItems: MedicineItem[];
     total: number;
@@ -37,12 +38,35 @@ export default function PaymentVerificationPage() {
     const [medicineLoading, setMedicineLoading] = useState(true);
     const [selectedAppointment, setSelectedAppointment] = useState<any | null>(null);
     const [selectedMedicinePayment, setSelectedMedicinePayment] = useState<MedicinePaymentRecord | null>(null);
+    const [loadErrorMessage, setLoadErrorMessage] = useState<string | null>(null);
     const { me } = useAuth();
     const router = useRouter();
     const [messageApi, contextHolder] = message.useMessage();
 
-    const role = mapRoleIdToRole(me?.role_id ?? null);
+    const role = mapRoleIdToRole(me?.role_id !== undefined && me?.role_id !== null ? Number(me.role_id) : null);
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+
+    const renderAppointmentType = (appointmentType: string | null) => {
+        if (appointmentType === 'online') {
+            return <Tag color="geekblue">online</Tag>;
+        }
+        if (appointmentType === 'onsite') {
+            return <Tag color="cyan">onsite</Tag>;
+        }
+        return <span>-</span>;
+    };
+
+    const formatBangkokDateTime = (value: string | null) => {
+        if (!value) return '-';
+        const parsedDate = new Date(value);
+        if (Number.isNaN(parsedDate.getTime())) return value;
+        return new Intl.DateTimeFormat('th-TH', {
+            timeZone: 'Asia/Bangkok',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+        }).format(parsedDate);
+    };
 
     const fetchPayments = async () => {
         try {
@@ -51,13 +75,13 @@ export default function PaymentVerificationPage() {
             });
 
             if (!response.ok) {
-                throw new Error('ไม่สามารถโหลดข้อมูลได้');
+                throw new Error(`Failed to load payments (${response.status})`);
             }
 
             const data = await response.json();
-            setAppointments(data);
+            setAppointments(Array.isArray(data) ? data : []);
         } catch (error: any) {
-            messageApi.error(error.message || 'เกิดข้อผิดพลาดในการโหลดข้อมูล');
+            setLoadErrorMessage(error?.message || 'Failed to load appointment payments');
         } finally {
             setIsFetching(false);
             setIsLoading(false);
@@ -71,13 +95,13 @@ export default function PaymentVerificationPage() {
             });
 
             if (!response.ok) {
-                throw new Error('ไม่สามารถโหลดข้อมูลค่ายาได้');
+                throw new Error(`Failed to load medicine payments (${response.status})`);
             }
 
             const data = await response.json();
-            setMedicinePayments(data);
+            setMedicinePayments(Array.isArray(data) ? data : []);
         } catch (error: any) {
-            messageApi.error(error.message || 'เกิดข้อผิดพลาดในการโหลดข้อมูลค่ายา');
+            setLoadErrorMessage(error?.message || 'Failed to load medicine payments');
         } finally {
             setMedicineLoading(false);
         }
@@ -172,6 +196,12 @@ export default function PaymentVerificationPage() {
         fetchMedicinePayments();
     }, [me, role, router]);
 
+    useEffect(() => {
+        if (!loadErrorMessage) return;
+        messageApi.error(loadErrorMessage);
+        setLoadErrorMessage(null);
+    }, [loadErrorMessage, messageApi]);
+
     // ── Columns for appointment payments (tab 1) ──
     const appointmentColumns = [
         {
@@ -188,6 +218,12 @@ export default function PaymentVerificationPage() {
             title: 'ผู้ให้บริการ',
             dataIndex: 'staffName',
             key: 'staffName',
+        },
+        {
+            title: 'ประเภท',
+            dataIndex: 'appointmentType',
+            key: 'appointmentType',
+            render: (appointmentType: string | null) => renderAppointmentType(appointmentType),
         },
         {
             title: 'วันที่นัด',
@@ -269,9 +305,16 @@ export default function PaymentVerificationPage() {
             key: 'staffName',
         },
         {
+            title: 'ประเภท',
+            dataIndex: 'appointmentType',
+            key: 'appointmentType',
+            render: (appointmentType: string | null) => renderAppointmentType(appointmentType),
+        },
+        {
             title: 'วันที่',
             dataIndex: 'date',
             key: 'date',
+            render: (date: string | null) => <span>{formatBangkokDateTime(date)}</span>,
         },
         {
             title: 'ค่ายา',
@@ -317,17 +360,23 @@ export default function PaymentVerificationPage() {
         {
             title: 'การจัดการ',
             key: 'action',
-            render: (_: any, record: MedicinePaymentRecord) => (
-                <Popconfirm
+            render: (_: any, record: MedicinePaymentRecord) => {
+                if (record.appointmentType !== 'online') {
+                    return <span className="text-gray-400">-</span>;
+                }
+
+                return (
+                    <Popconfirm
                     title="คุณแน่ใจหรือไม่ที่จะยกเลิกรายการใบเสร็จนี้?"
                     onConfirm={() => handleRejectMedicine(record.id)}
                     okText="ใช่, ยกเลิก"
                     cancelText="ไม่"
                     placement="left"
                 >
-                    <Button danger size="small">ยกเลิกรายการ</Button>
-                </Popconfirm>
-            ),
+                    <Button danger size="small">ยกเลิกการยืนยัน</Button>
+                    </Popconfirm>
+                );
+            },
         },
     ];
 
@@ -571,3 +620,4 @@ export default function PaymentVerificationPage() {
         </div>
     );
 }
+

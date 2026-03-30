@@ -277,11 +277,22 @@ export class AppointmentsController {
   getConsultationForAppointment(
     @Req() req,
     @Param('id', ParseIntPipe) appointmentId: number,
+    @Query('receiptId') receiptIdRaw?: string,
   ) {
     const userId = this.getUserIdFromRequest(req);
+    const receiptId = receiptIdRaw ? Number.parseInt(receiptIdRaw, 10) : undefined;
+
+    if (
+      receiptIdRaw &&
+      (!Number.isInteger(receiptId) || (receiptId ?? 0) <= 0)
+    ) {
+      throw new BadRequestException('receiptId must be a positive integer');
+    }
+
     return this.appointmentsService.getConsultationForAppointment(
       userId,
       appointmentId,
+      receiptId,
     );
   }
 
