@@ -184,7 +184,7 @@ export default function AdminWorkSchedulePage() {
                   {holidayStaffOptions.map((staff) => (
                     <option key={staff.id} value={staff.id}>
                       {staff.name}
-                      {staff.roleLabel ? ` โดย ${staff.roleLabel}` : ""}
+                      {staff.roleLabel ? ` : ${staff.roleLabel}` : ""}
                     </option>
                   ))}
                 </select>
