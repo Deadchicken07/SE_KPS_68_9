@@ -626,7 +626,7 @@ export class AppointmentsService {
   }
 
   async getAllMedicinePayments(): Promise<any[]> {
-    const pendingReceipts = await this.prisma.receipts.findMany({
+    const receipts = await this.prisma.receipts.findMany({
       where: { payment_status: { in: ['Not_paying', 'Pending'] } },
       include: {
         users: {
@@ -651,55 +651,60 @@ export class AppointmentsService {
           },
         },
       },
+      orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
     });
 
-    return pendingReceipts.map((r) => {
-      const items =
-        r.consultations?.prescription_items.map((p) => ({
-          name: p.medications?.name || 'Unknown',
-          quantity: p.quantity || 0,
-          unitPrice: p.medications?.retail ? Number(p.medications.retail) : 0,
-          totalPrice:
-            (p.medications?.retail ? Number(p.medications.retail) : 0) *
-            (p.quantity || 0),
-        })) || [];
-      const medicineCost = items.reduce(
-        (sum, item) => sum + item.totalPrice,
-        0,
-      );
-      const hasPrescription = items.length > 0;
-      return {
-        id: r.id,
-        user_id: r.user_id,
-        total: r.total ? Number(r.total) : medicineCost,
-        created_at: r.created_at,
-        date:
-          r.consultations?.appointments?.appointment_date?.toISOString() ?? null,
-        appointmentType:
-          r.consultations?.appointments?.appointment_type ?? 'onsite',
-        patientName: this.buildPatientName(
-          r.users?.title,
-          r.users?.name,
-          r.users?.sur_name,
-          r.users?.user_id || r.user_id || 0,
-        ),
-        phone: r.users?.phone ?? null,
-        nation_id: r.users?.nation_id ?? null,
-        staffName: this.buildConsultantName(
-          r.consultations?.users_consultations_staff_idTousers?.name,
-          r.consultations?.users_consultations_staff_idTousers?.sur_name,
-        ),
-        medicineCost,
-        hasPrescription,
-        slipUrl: r.slip_file ?? null,
-        status: r.status ?? null,
-        paymentStatus: r.payment_status ?? null,
-        tracking: r.tracking ?? null,
-        payment_status: r.payment_status,
-        medicineItems: items,
-        receipt_details: [],
-      };
-    });
+    return receipts
+      .map((r) => {
+        const items =
+          r.consultations?.prescription_items.map((p) => ({
+            name: p.medications?.name || 'Unknown',
+            quantity: p.quantity || 0,
+            unitPrice: p.medications?.price ? Number(p.medications.price) : 0,
+            totalPrice:
+              (p.medications?.price ? Number(p.medications.price) : 0) *
+              (p.quantity || 0),
+          })) || [];
+        const medicineCost = items.reduce(
+          (sum, item) => sum + item.totalPrice,
+          0,
+        );
+        const hasPrescription = items.length > 0;
+
+        return {
+          id: r.id,
+          user_id: r.user_id,
+          total: r.total ? Number(r.total) : medicineCost,
+          created_at: r.created_at,
+          date:
+            r.consultations?.appointments?.appointment_date?.toISOString() ??
+            null,
+          appointmentType:
+            r.consultations?.appointments?.appointment_type ?? 'onsite',
+          patientName: this.buildPatientName(
+            r.users?.title,
+            r.users?.name,
+            r.users?.sur_name,
+            r.users?.user_id || r.user_id || 0,
+          ),
+          phone: r.users?.phone ?? null,
+          nation_id: r.users?.nation_id ?? null,
+          staffName: this.buildConsultantName(
+            r.consultations?.users_consultations_staff_idTousers?.name,
+            r.consultations?.users_consultations_staff_idTousers?.sur_name,
+          ),
+          medicineCost,
+          hasPrescription,
+          slipUrl: r.slip_file ?? null,
+          status: r.status ?? null,
+          paymentStatus: r.payment_status ?? null,
+          tracking: r.tracking ?? null,
+          payment_status: r.payment_status,
+          medicineItems: items,
+          receipt_details: [],
+        };
+      })
+      .filter((receipt) => receipt.hasPrescription);
   }
 
   async getMedicinePaymentDetails(
@@ -721,15 +726,20 @@ export class AppointmentsService {
   }
 
   async createAppointment(userId: number, data: any) {
-    await this.ensureStaffScheduleAvailable(data.staffId, data.appointmentDate);
+    const appointmentDate = data.appointmentDate ?? data.date;
+    if (!appointmentDate) {
+      throw new BadRequestException('appointmentDate is required');
+    }
+
+    await this.ensureStaffScheduleAvailable(data.staffId, appointmentDate);
     await this.ensureStaffTimeAvailable(
       data.staffId,
-      data.appointmentDate,
+      appointmentDate,
       data.timeSelect,
     );
     await this.ensureUserTimeAvailable(
       userId,
-      data.appointmentDate,
+      appointmentDate,
       data.timeSelect,
     );
 
@@ -737,7 +747,7 @@ export class AppointmentsService {
       data: {
         user_id: userId,
         staff_id: data.staffId,
-        appointment_date: new Date(data.appointmentDate),
+        appointment_date: new Date(appointmentDate),
         time_select: data.timeSelect,
         appointment_type: data.appointmentType,
         status: 'Pending',

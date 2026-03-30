@@ -125,6 +125,16 @@ export const canRoleAccessPath = (
     return true;
   }
 
+  const allowedPrefixes = roleRoutePrefixes[role] ?? [];
+  const hasPrefixAccess = allowedPrefixes.some((prefix) => {
+    if (!prefix) return false;
+    return pathname === prefix || pathname.startsWith(`${prefix}/`);
+  });
+
+  if (hasPrefixAccess) {
+    return true;
+  }
+
   return roleLinks[role].some((link) => {
     if (pathname === link.href) {
       return true;
