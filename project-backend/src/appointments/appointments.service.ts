@@ -832,7 +832,6 @@ export class AppointmentsService {
       where: { id: receiptId },
       data: {
         payment_status: 'Paid',
-        status: 'picked_up',
         slip_file: slipUrl,
       } as any,
     });
